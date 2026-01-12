@@ -17,6 +17,7 @@
         <div class="sidebar-header">
             <span class="logo-icon">🛡️</span>
             <h1>TrueVault</h1>
+            <span class="vip-badge" id="vipBadge" style="display:none;"></span>
         </div>
         
         <nav class="sidebar-nav">
@@ -208,7 +209,27 @@
             const user = TrueVault.Auth.getUser();
             if (user) {
                 document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
-                document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+                
+                // Check VIP status and show badge
+                if (user.is_vip || user.vip_badge) {
+                    const badge = document.getElementById('vipBadge');
+                    badge.textContent = user.vip_badge || (user.vip_tier === 'vip_dedicated' ? '👑 VIP' : '⭐ VIP');
+                    badge.style.display = 'inline-block';
+                    badge.style.cssText = 'display:inline-block;background:linear-gradient(90deg,#ffd700,#ff8c00);color:#000;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;margin-left:8px;';
+                    document.getElementById('userPlan').textContent = 'Free Forever ✨';
+                } else {
+                    document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+                }
+            }
+            
+            // Check VIP status from API
+            const vipStatus = await TrueVault.API.get('/vip/status.php');
+            if (vipStatus.success && vipStatus.data.is_vip) {
+                const badge = document.getElementById('vipBadge');
+                badge.textContent = vipStatus.data.badge;
+                badge.style.display = 'inline-block';
+                badge.style.cssText = 'display:inline-block;background:linear-gradient(90deg,#ffd700,#ff8c00);color:#000;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;margin-left:8px;';
+                document.getElementById('userPlan').textContent = 'Free Forever ✨';
             }
             
             // Load profile with stats

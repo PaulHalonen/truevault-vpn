@@ -132,13 +132,13 @@
     function logout() {
         TokenManager.clear();
         UserManager.clear();
-        window.location.href = '/public/login.html';
+        window.location.href = '/login.html';
     }
     
     // Check auth and redirect if needed
     function requireAuth() {
         if (!TokenManager.isLoggedIn()) {
-            window.location.href = '/public/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+            window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
             return false;
         }
         return true;
@@ -199,6 +199,191 @@
         renderNavigation();
     }
     
+    // Auth module
+    const Auth = {
+        login: async function(email, password) {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    TokenManager.set(data.token);
+                    if (data.refresh_token) TokenManager.setRefresh(data.refresh_token);
+                    if (data.user) UserManager.set(data.user);
+                    return { success: true };
+                }
+                return { success: false, error: data.error || 'Login failed' };
+            } catch (error) {
+                console.error('Login error:', error);
+                return { success: false, error: 'Network error. Please try again.' };
+            }
+        },
+        
+        register: async function(email, password, firstName, lastName) {
+            try {
+                const response = await fetch(`${API_BASE}/auth/register.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName })
+                });
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    TokenManager.set(data.token);
+                    if (data.refresh_token) TokenManager.setRefresh(data.refresh_token);
+                    if (data.user) UserManager.set(data.user);
+                    return { success: true };
+                }
+                return { success: false, error: data.error || 'Registration failed' };
+            } catch (error) {
+                console.error('Register error:', error);
+                return { success: false, error: 'Network error. Please try again.' };
+            }
+        },
+        
+        logout: function() {
+            logout();
+        },
+        
+        isLoggedIn: function() {
+            return TokenManager.isLoggedIn();
+        },
+        
+        getUser: function() {
+            return UserManager.get();
+        },
+        
+        requireAuth: function() {
+            return requireAuth();
+        }
+    };
+    
+    // Form utilities
+    const Form = {
+        validate: function(form, rules) {
+            const errors = {};
+            let isValid = true;
+            
+            for (const [field, ruleStr] of Object.entries(rules)) {
+                const input = form.querySelector(`[name="${field}"]`);
+                if (!input) continue;
+                
+                const value = input.value.trim();
+                const fieldRules = ruleStr.split('|');
+                
+                for (const rule of fieldRules) {
+                    if (rule === 'required' && !value) {
+                        errors[field] = 'This field is required';
+                        isValid = false;
+                        break;
+                    }
+                    if (rule === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                        errors[field] = 'Please enter a valid email';
+                        isValid = false;
+                        break;
+                    }
+                    if (rule.startsWith('min:')) {
+                        const min = parseInt(rule.split(':')[1]);
+                        if (value.length < min) {
+                            errors[field] = `Must be at least ${min} characters`;
+                            isValid = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return { isValid, errors };
+        },
+        
+        showErrors: function(form, errors) {
+            // Clear previous errors
+            form.querySelectorAll('.error-message').forEach(el => el.remove());
+            form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            
+            for (const [field, message] of Object.entries(errors)) {
+                const input = form.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.classList.add('input-error');
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'error-message';
+                    errorEl.style.cssText = 'color: var(--colors-error, #ff5050); font-size: 0.85rem; margin-top: 5px;';
+                    errorEl.textContent = message;
+                    input.parentNode.appendChild(errorEl);
+                }
+            }
+        },
+        
+        serialize: function(form) {
+            const data = {};
+            const formData = new FormData(form);
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            return data;
+        }
+    };
+    
+    // Toast helper
+    const Toast = {
+        success: (msg) => showToast(msg, 'success'),
+        error: (msg) => showToast(msg, 'error'),
+        info: (msg) => showToast(msg, 'info')
+    };
+    
+    // API helper
+    const API = {
+        get: async function(endpoint) {
+            return await apiRequest(endpoint, { method: 'GET' });
+        },
+        post: async function(endpoint, data) {
+            return await apiRequest(endpoint, { method: 'POST', body: data });
+        },
+        put: async function(endpoint, data) {
+            return await apiRequest(endpoint, { method: 'PUT', body: data });
+        },
+        delete: async function(endpoint) {
+            return await apiRequest(endpoint, { method: 'DELETE' });
+        }
+    };
+    
+    // Utils
+    const Utils = {
+        formatBytes: function(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+        formatDuration: function(seconds) {
+            if (!seconds || seconds < 0) return '0m';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            if (h > 0) return `${h}h ${m}m`;
+            return `${m}m`;
+        },
+        formatDate: function(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        },
+        copyToClipboard: async function(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                Toast.success('Copied to clipboard!');
+                return true;
+            } catch (e) {
+                Toast.error('Failed to copy');
+                return false;
+            }
+        }
+    };
+    
     // Expose to global scope
     window.apiRequest = apiRequest;
     window.showToast = showToast;
@@ -208,6 +393,11 @@
     window.TrueVault = {
         TokenManager,
         UserManager,
+        Auth,
+        Form,
+        Toast,
+        API,
+        Utils,
         apiRequest,
         showToast,
         logout,

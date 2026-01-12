@@ -161,7 +161,7 @@ class Auth {
     }
     
     /**
-     * Check if user is VIP
+     * Check if user is VIP (checks vip.db)
      */
     public static function isVipUser($userId = null) {
         if ($userId === null) {
@@ -170,7 +170,58 @@ class Auth {
             $user = self::getUserById($userId);
         }
         
-        return $user && ($user['plan_type'] === 'vip' || !empty($user['is_vip']));
+        if (!$user) return false;
+        
+        // Check VIP database
+        $vipInfo = self::getVipInfo($user['email']);
+        return $vipInfo !== null;
+    }
+    
+    /**
+     * Get VIP info from vip.db
+     */
+    public static function getVipInfo($email) {
+        try {
+            $vipDbPath = __DIR__ . '/../../data/vip.db';
+            if (!file_exists($vipDbPath)) return null;
+            
+            $db = new SQLite3($vipDbPath);
+            $stmt = $db->prepare("SELECT * FROM vip_users WHERE email = ?");
+            $stmt->bindValue(1, strtolower($email), SQLITE3_TEXT);
+            $result = $stmt->execute();
+            $vip = $result->fetchArray(SQLITE3_ASSOC);
+            $db->close();
+            
+            return $vip ?: null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Check if email is in VIP list (for registration)
+     */
+    public static function isVipEmail($email) {
+        return self::getVipInfo($email) !== null;
+    }
+    
+    /**
+     * Mark VIP as activated (when they first register/login)
+     */
+    public static function activateVip($email) {
+        try {
+            $vipDbPath = __DIR__ . '/../../data/vip.db';
+            if (!file_exists($vipDbPath)) return false;
+            
+            $db = new SQLite3($vipDbPath);
+            $stmt = $db->prepare("UPDATE vip_users SET activated_at = datetime('now') WHERE email = ? AND activated_at IS NULL");
+            $stmt->bindValue(1, strtolower($email), SQLITE3_TEXT);
+            $stmt->execute();
+            $db->close();
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
     
     /**
@@ -229,6 +280,21 @@ class Auth {
         unset($user['email_verification_token']);
         unset($user['email_verify_token']);
         return $user;
+    }
+    
+    /**
+     * Update user's plan type and status
+     */
+    public static function updateUserPlan($userId, $planType, $status = 'active') {
+        try {
+            Database::execute('users', 
+                "UPDATE users SET plan_type = ?, status = ?, updated_at = datetime('now') WHERE id = ?", 
+                [$planType, $status, $userId]
+            );
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
     
     /**
