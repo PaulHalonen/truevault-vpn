@@ -1,194 +1,173 @@
 <?php
 /**
- * TrueVault VPN - VPN Connect
+ * TrueVault VPN - Connect API
  * POST /api/vpn/connect.php
  * 
- * Returns WireGuard configuration for connecting to a server
- * Keys are generated on the VPN server via API call
+ * Generates WireGuard configuration for connecting to a server
+ * Keys are generated server-side for security
  */
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/jwt.php';
 require_once __DIR__ . '/../helpers/response.php';
-require_once __DIR__ . '/../helpers/validator.php';
-require_once __DIR__ . '/../helpers/encryption.php';
 require_once __DIR__ . '/../helpers/auth.php';
-require_once __DIR__ . '/../helpers/logger.php';
-
-// Only allow POST
-Response::requireMethod('POST');
 
 // Require authentication
 $user = Auth::requireAuth();
 
-// Get input
+// Only POST
+Response::requireMethod('POST');
+
 $input = Response::getJsonInput();
 
-// Validate input
-$validator = Validator::make($input, [
-    'server_id' => 'required|integer',
-    'device_id' => 'integer',
-    'identity_id' => 'integer'
-]);
-
-if ($validator->fails()) {
-    Response::validationError($validator->errors());
+if (empty($input['server_id'])) {
+    Response::error('Server ID is required', 400);
 }
 
 $serverId = (int) $input['server_id'];
-$deviceId = $input['device_id'] ?? null;
-$identityId = $input['identity_id'] ?? null;
 
 try {
     // Get server
-    $serversDb = DatabaseManager::getInstance()->servers();
-    $stmt = $serversDb->prepare("SELECT * FROM vpn_servers WHERE id = ?");
-    $stmt->execute([$serverId]);
-    $server = $stmt->fetch();
+    $server = Database::queryOne('vpn', "SELECT * FROM vpn_servers WHERE id = ? AND status = 'online'", [$serverId]);
     
     if (!$server) {
-        Response::notFound('Server not found');
+        Response::error('Server not found or offline', 404);
     }
     
-    // Check server status
-    if ($server['status'] === 'offline') {
-        Response::error('Server is currently offline', 503);
-    }
-    
-    if ($server['status'] === 'maintenance') {
-        Response::error('Server is under maintenance', 503);
-    }
-    
-    // Check VIP restriction
-    if ($server['is_vip_only']) {
-        if (!Auth::isVipUser()) {
-            Response::forbidden('This server is reserved for VIP users');
-        }
-        // Check if this VIP server belongs to this user
-        if ($server['vip_user_email'] !== $user['email']) {
-            Response::forbidden('This VIP server is not assigned to your account');
+    // Check VIP server access
+    if ($server['is_vip'] == 1) {
+        $vipEmail = $server['vip_user_email'];
+        if ($user['email'] !== $vipEmail) {
+            Response::error('This is a VIP-only server', 403);
         }
     }
     
-    // Check server capacity
-    if ($server['current_connections'] >= $server['max_connections']) {
-        Response::error('Server is at capacity. Please try another server.', 503);
+    // Generate or retrieve user's keys
+    $userCert = Database::queryOne('certificates', 
+        "SELECT * FROM user_certificates WHERE user_id = ? AND type = 'wireguard' AND status = 'active'", 
+        [$user['id']]
+    );
+    
+    if (!$userCert) {
+        // Generate new WireGuard keypair
+        $privateKey = generateWireGuardPrivateKey();
+        $publicKey = generateWireGuardPublicKey($privateKey);
+        
+        // Store in database
+        Database::execute('certificates',
+            "INSERT INTO user_certificates (user_id, name, type, public_key, private_key, status, created_at) 
+             VALUES (?, 'WireGuard Key', 'wireguard', ?, ?, 'active', datetime('now'))",
+            [$user['id'], $publicKey, $privateKey]
+        );
+        
+        $userCert = [
+            'private_key' => $privateKey,
+            'public_key' => $publicKey
+        ];
     }
     
-    // Generate keys on the VPN server via API
-    // In production, this would make an actual API call to the VPN server
-    $keyPair = generateKeysOnServer($server);
+    // Assign IP address for this user on this server
+    $assignedIp = assignVpnIp($user['id'], $serverId);
     
-    if (!$keyPair) {
-        Response::serverError('Failed to generate VPN keys');
-    }
+    // Generate WireGuard config
+    $config = generateWireGuardConfig($server, $userCert, $assignedIp);
     
-    // Assign IP address (simplified - in production would be managed by server)
-    $assignedIp = assignClientIP($server);
+    // Log the connection attempt
+    Database::execute('vpn',
+        "INSERT INTO vpn_connections (user_id, server_id, status, assigned_ip, connected_at) 
+         VALUES (?, ?, 'pending', ?, datetime('now'))",
+        [$user['id'], $serverId, $assignedIp]
+    );
     
-    // Get identity if specified
-    $identity = null;
-    if ($identityId) {
-        $identitiesDb = DatabaseManager::getInstance()->identities();
-        $stmt = $identitiesDb->prepare("SELECT * FROM regional_identities WHERE id = ? AND user_id = ?");
-        $stmt->execute([$identityId, $user['id']]);
-        $identity = $stmt->fetch();
-    }
-    
-    // Record connection
-    $connectionsDb = DatabaseManager::getInstance()->connections();
-    $stmt = $connectionsDb->prepare("
-        INSERT INTO active_connections (user_id, server_id, device_id, client_ip, assigned_ip, public_key, identity_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([
-        $user['id'],
-        $serverId,
-        $deviceId,
-        $_SERVER['REMOTE_ADDR'] ?? null,
-        $assignedIp,
-        $keyPair['public_key'],
-        $identityId
-    ]);
-    
-    $connectionId = $connectionsDb->lastInsertId();
-    
-    // Update server connection count
-    $stmt = $serversDb->prepare("UPDATE vpn_servers SET current_connections = current_connections + 1 WHERE id = ?");
-    $stmt->execute([$serverId]);
-    
-    // Generate WireGuard configuration
-    $config = generateWireGuardConfig($server, $keyPair, $assignedIp);
-    
-    Logger::info('VPN connection initiated', [
-        'user_id' => $user['id'],
-        'server_id' => $serverId,
-        'connection_id' => $connectionId
-    ]);
+    // Log activity
+    Database::execute('logs',
+        "INSERT INTO activity_log (user_id, action, details, ip_address, created_at) 
+         VALUES (?, 'vpn_connect', ?, ?, datetime('now'))",
+        [$user['id'], json_encode(['server' => $server['name'], 'assigned_ip' => $assignedIp]), $_SERVER['REMOTE_ADDR'] ?? null]
+    );
     
     Response::success([
-        'connection_id' => $connectionId,
         'server' => [
-            'name' => $server['server_name'],
-            'region' => $server['region'],
-            'endpoint' => $server['ip_address'] . ':' . $server['wireguard_port']
+            'id' => $server['id'],
+            'name' => $server['name'],
+            'location' => $server['location'],
+            'ip' => $server['ip_address']
         ],
-        'config' => $config,
         'assigned_ip' => $assignedIp,
-        'identity' => $identity ? [
-            'region' => $identity['region_code'],
-            'timezone' => $identity['timezone']
-        ] : null
+        'config' => $config,
+        'public_key' => $userCert['public_key']
     ], 'Connection configuration generated');
-    
+
 } catch (Exception $e) {
-    Logger::error('VPN connect failed: ' . $e->getMessage());
-    Response::serverError('Failed to connect to VPN');
+    Response::serverError('Failed to connect: ' . $e->getMessage());
 }
 
 /**
- * Generate keys on the VPN server
- * In production, this makes an API call to the actual VPN server
+ * Generate WireGuard private key
+ * In production, this would use actual WireGuard key generation
  */
-function generateKeysOnServer($server) {
-    // In production, this would be:
-    // $response = callServerAPI($server['ip_address'], $server['api_port'], '/generate-keys', $server['api_secret']);
-    
-    // For now, generate locally (placeholder)
-    // IMPORTANT: Real implementation must generate on the VPN server!
-    $privateKey = base64_encode(random_bytes(32));
-    $publicKey = base64_encode(hash('sha256', base64_decode($privateKey), true));
-    
-    return [
-        'private_key' => $privateKey,
-        'public_key' => $publicKey
-    ];
+function generateWireGuardPrivateKey() {
+    // Generate a 32-byte random key and base64 encode
+    $bytes = random_bytes(32);
+    // Set the appropriate bits for Curve25519
+    $bytes[0] = chr(ord($bytes[0]) & 248);
+    $bytes[31] = chr((ord($bytes[31]) & 127) | 64);
+    return base64_encode($bytes);
 }
 
 /**
- * Assign a client IP address
+ * Generate WireGuard public key from private key
+ * In production, this would use actual Curve25519
  */
-function assignClientIP($server) {
-    // In production, this would be managed by the VPN server
-    // For now, generate a random IP in the 10.x.x.x range
-    return '10.0.' . rand(1, 254) . '.' . rand(2, 254);
+function generateWireGuardPublicKey($privateKey) {
+    // Simplified - in production use sodium_crypto_scalarmult_base
+    // For demo, we'll generate a pseudo-public key
+    $hash = hash('sha256', base64_decode($privateKey), true);
+    return base64_encode($hash);
+}
+
+/**
+ * Assign a VPN IP address to user for this server
+ */
+function assignVpnIp($userId, $serverId) {
+    // Check if user already has an IP on this server
+    $existing = Database::queryOne('vpn',
+        "SELECT assigned_ip FROM vpn_connections WHERE user_id = ? AND server_id = ? AND assigned_ip IS NOT NULL ORDER BY id DESC LIMIT 1",
+        [$userId, $serverId]
+    );
+    
+    if ($existing && $existing['assigned_ip']) {
+        return $existing['assigned_ip'];
+    }
+    
+    // Assign new IP in the 10.8.0.0/24 range
+    // Use user_id + server_id to generate consistent IP
+    $lastOctet = (($userId * 7) + $serverId) % 250 + 2; // 2-252
+    return "10.8.0.{$lastOctet}";
 }
 
 /**
  * Generate WireGuard configuration file content
  */
-function generateWireGuardConfig($server, $keyPair, $clientIp) {
-    $dns = $server['dns_servers'] ?? '1.1.1.1, 1.0.0.1';
-    $allowedIps = $server['allowed_ips'] ?? '0.0.0.0/0, ::/0';
-    $endpoint = $server['ip_address'] . ':' . $server['wireguard_port'];
+function generateWireGuardConfig($server, $userCert, $assignedIp) {
+    // Server's public key (would be stored in database in production)
+    // For now, generate based on server IP
+    $serverPublicKey = base64_encode(hash('sha256', $server['ip_address'] . '_server_key', true));
     
-    return "[Interface]
-PrivateKey = {$keyPair['private_key']}
-Address = {$clientIp}/32
-DNS = {$dns}
+    $config = "[Interface]
+# TrueVault VPN - {$server['name']}
+# Generated: " . date('Y-m-d H:i:s') . "
+PrivateKey = {$userCert['private_key']}
+Address = {$assignedIp}/24
+DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
-PublicKey = {$server['public_key']}
-AllowedIPs = {$allowedIps}
-Endpoint = {$endpoint}
-PersistentKeepalive = 25";
+# {$server['name']} ({$server['location']})
+PublicKey = {$serverPublicKey}
+Endpoint = {$server['ip_address']}:{$server['port']}
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25
+";
+    
+    return $config;
 }

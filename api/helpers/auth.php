@@ -1,13 +1,12 @@
 <?php
 /**
- * TrueVault VPN - Auth Helper
+ * TrueVault VPN - Auth Helper (SQLite3 version)
  * Authentication middleware and user retrieval
  */
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/jwt.php';
 require_once __DIR__ . '/response.php';
-require_once __DIR__ . '/logger.php';
 
 class Auth {
     private static $currentUser = null;
@@ -29,7 +28,6 @@ class Auth {
             Response::unauthorized('Invalid or expired token');
         }
         
-        // Get user from database
         $user = self::getUserById($payload['sub']);
         
         if (!$user) {
@@ -60,19 +58,17 @@ class Auth {
             Response::unauthorized('Invalid or expired token');
         }
         
-        // Check if admin token
         if (empty($payload['is_admin'])) {
             Response::forbidden('Admin access required');
         }
         
-        // Get admin from database
         $admin = self::getAdminById($payload['sub']);
         
         if (!$admin) {
             Response::unauthorized('Admin not found');
         }
         
-        if (!$admin['is_active']) {
+        if ($admin['status'] !== 'active') {
             Response::unauthorized('Admin account is not active');
         }
         
@@ -121,51 +117,11 @@ class Auth {
     }
     
     /**
-     * Check if user is VIP
-     */
-    public static function isVipUser($userId = null) {
-        if ($userId === null) {
-            $user = self::$currentUser;
-        } else {
-            $user = self::getUserById($userId);
-        }
-        
-        return $user && $user['is_vip'] == 1;
-    }
-    
-    /**
-     * Check if user is VIP and get their dedicated server
-     */
-    public static function getVipServer($userId = null) {
-        if (!self::isVipUser($userId)) {
-            return null;
-        }
-        
-        $user = $userId ? self::getUserById($userId) : self::$currentUser;
-        
-        if (!$user || !$user['vip_server_id']) {
-            return null;
-        }
-        
-        try {
-            $db = DatabaseManager::getInstance()->servers();
-            $stmt = $db->prepare("SELECT * FROM vpn_servers WHERE id = ?");
-            $stmt->execute([$user['vip_server_id']]);
-            return $stmt->fetch();
-        } catch (Exception $e) {
-            return null;
-        }
-    }
-    
-    /**
      * Get user by ID
      */
     public static function getUserById($id) {
         try {
-            $db = DatabaseManager::getInstance()->users();
-            $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$id]);
-            return $stmt->fetch();
+            return Database::queryOne('users', "SELECT * FROM users WHERE id = ?", [$id]);
         } catch (Exception $e) {
             return null;
         }
@@ -176,24 +132,7 @@ class Auth {
      */
     public static function getUserByEmail($email) {
         try {
-            $db = DatabaseManager::getInstance()->users();
-            $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
-            $stmt->execute([$email]);
-            return $stmt->fetch();
-        } catch (Exception $e) {
-            return null;
-        }
-    }
-    
-    /**
-     * Get user by UUID
-     */
-    public static function getUserByUuid($uuid) {
-        try {
-            $db = DatabaseManager::getInstance()->users();
-            $stmt = $db->prepare("SELECT * FROM users WHERE uuid = ?");
-            $stmt->execute([$uuid]);
-            return $stmt->fetch();
+            return Database::queryOne('users', "SELECT * FROM users WHERE email = ?", [$email]);
         } catch (Exception $e) {
             return null;
         }
@@ -204,10 +143,7 @@ class Auth {
      */
     public static function getAdminById($id) {
         try {
-            $db = DatabaseManager::getInstance()->admin();
-            $stmt = $db->prepare("SELECT * FROM admin_users WHERE id = ?");
-            $stmt->execute([$id]);
-            return $stmt->fetch();
+            return Database::queryOne('admin_users', "SELECT * FROM admin_users WHERE id = ?", [$id]);
         } catch (Exception $e) {
             return null;
         }
@@ -218,30 +154,23 @@ class Auth {
      */
     public static function getAdminByEmail($email) {
         try {
-            $db = DatabaseManager::getInstance()->admin();
-            $stmt = $db->prepare("SELECT * FROM admin_users WHERE email = ?");
-            $stmt->execute([$email]);
-            return $stmt->fetch();
+            return Database::queryOne('admin_users', "SELECT * FROM admin_users WHERE email = ?", [$email]);
         } catch (Exception $e) {
             return null;
         }
     }
     
     /**
-     * Check user's plan limits
+     * Check if user is VIP
      */
-    public static function checkPlanLimit($user, $limitType) {
-        $planLimits = [
-            'trial' => ['devices' => 3, 'identities' => 3, 'mesh_users' => 0],
-            'personal' => ['devices' => 3, 'identities' => 3, 'mesh_users' => 0],
-            'family' => ['devices' => 999, 'identities' => 999, 'mesh_users' => 6],
-            'business' => ['devices' => 999, 'identities' => 999, 'mesh_users' => 25]
-        ];
+    public static function isVipUser($userId = null) {
+        if ($userId === null) {
+            $user = self::$currentUser;
+        } else {
+            $user = self::getUserById($userId);
+        }
         
-        $plan = $user['plan_type'] ?? 'personal';
-        $limits = $planLimits[$plan] ?? $planLimits['personal'];
-        
-        return $limits[$limitType] ?? 0;
+        return $user && ($user['plan_type'] === 'vip' || !empty($user['is_vip']));
     }
     
     /**
@@ -249,9 +178,7 @@ class Auth {
      */
     public static function updateLastLogin($userId) {
         try {
-            $db = DatabaseManager::getInstance()->users();
-            $stmt = $db->prepare("UPDATE users SET last_login = datetime('now') WHERE id = ?");
-            $stmt->execute([$userId]);
+            Database::execute('users', "UPDATE users SET updated_at = datetime('now') WHERE id = ?", [$userId]);
         } catch (Exception $e) {
             // Silently fail
         }
@@ -261,37 +188,8 @@ class Auth {
      * Create a session record
      */
     public static function createSession($userId, $token, $refreshToken = null) {
-        try {
-            $db = DatabaseManager::getInstance()->sessions();
-            $stmt = $db->prepare("
-                INSERT INTO sessions (user_id, token, refresh_token, ip_address, user_agent, expires_at)
-                VALUES (?, ?, ?, ?, ?, datetime('now', '+7 days'))
-            ");
-            $stmt->execute([
-                $userId,
-                $token,
-                $refreshToken,
-                $_SERVER['REMOTE_ADDR'] ?? null,
-                $_SERVER['HTTP_USER_AGENT'] ?? null
-            ]);
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-    
-    /**
-     * Invalidate a session
-     */
-    public static function invalidateSession($token) {
-        try {
-            $db = DatabaseManager::getInstance()->sessions();
-            $stmt = $db->prepare("UPDATE sessions SET is_valid = 0 WHERE token = ?");
-            $stmt->execute([$token]);
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
+        // Sessions are managed via JWT, no database record needed for simple implementation
+        return true;
     }
     
     /**
@@ -299,15 +197,7 @@ class Auth {
      */
     public static function getUserSubscription($userId) {
         try {
-            $db = DatabaseManager::getInstance()->subscriptions();
-            $stmt = $db->prepare("
-                SELECT s.*, p.plan_name, p.price_monthly, p.device_limit, p.mesh_user_limit
-                FROM subscriptions s
-                JOIN subscription_plans p ON s.plan_id = p.id
-                WHERE s.user_id = ?
-            ");
-            $stmt->execute([$userId]);
-            return $stmt->fetch();
+            return Database::queryOne('subscriptions', "SELECT * FROM subscriptions WHERE user_id = ? AND status = 'active'", [$userId]);
         } catch (Exception $e) {
             return null;
         }
@@ -331,11 +221,31 @@ class Auth {
      * Sanitize user data for response (remove sensitive fields)
      */
     public static function sanitizeUser($user) {
+        unset($user['password']);
         unset($user['password_hash']);
         unset($user['two_factor_secret']);
         unset($user['password_reset_token']);
         unset($user['password_reset_expires']);
         unset($user['email_verification_token']);
+        unset($user['email_verify_token']);
         return $user;
+    }
+    
+    /**
+     * Check user's plan limits
+     */
+    public static function checkPlanLimit($user, $limitType) {
+        $planLimits = [
+            'trial' => ['devices' => 3, 'identities' => 3, 'mesh_users' => 0],
+            'personal' => ['devices' => 3, 'identities' => 3, 'mesh_users' => 0],
+            'family' => ['devices' => 10, 'identities' => 10, 'mesh_users' => 6],
+            'business' => ['devices' => 50, 'identities' => 50, 'mesh_users' => 25],
+            'vip' => ['devices' => 100, 'identities' => 100, 'mesh_users' => 100]
+        ];
+        
+        $plan = $user['plan_type'] ?? 'personal';
+        $limits = $planLimits[$plan] ?? $planLimits['personal'];
+        
+        return $limits[$limitType] ?? 0;
     }
 }

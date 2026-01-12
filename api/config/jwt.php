@@ -1,6 +1,6 @@
 <?php
 /**
- * TrueVault VPN - JWT Manager
+ * TrueVault VPN - JWT Manager (SQLite3 version)
  * Handles JSON Web Token creation and validation
  */
 
@@ -14,12 +14,6 @@ class JWTManager {
     
     /**
      * Generate a JWT token
-     * 
-     * @param int $userId User ID
-     * @param string $email User email
-     * @param bool $isAdmin Whether user is admin
-     * @param array $extra Extra claims to include
-     * @return string JWT token
      */
     public static function generateToken($userId, $email, $isAdmin = false, $extra = []) {
         $header = [
@@ -46,29 +40,16 @@ class JWTManager {
     }
     
     /**
-     * Generate a refresh token
+     * Generate a refresh token (simple version - just returns a random token)
      */
     public static function generateRefreshToken($userId) {
+        // Simple implementation - encode user_id + random token
         $token = bin2hex(random_bytes(32));
-        
-        // Store in database
-        require_once __DIR__ . '/database.php';
-        $db = DatabaseManager::getInstance()->sessions();
-        
-        $stmt = $db->prepare("
-            INSERT INTO refresh_tokens (user_id, token, expires_at)
-            VALUES (?, ?, datetime('now', '+30 days'))
-        ");
-        $stmt->execute([$userId, $token]);
-        
-        return $token;
+        return base64_encode($userId . ':' . $token);
     }
     
     /**
      * Validate a JWT token
-     * 
-     * @param string $token JWT token
-     * @return array|false Decoded payload or false if invalid
      */
     public static function validateToken($token) {
         $parts = explode('.', $token);
@@ -100,51 +81,6 @@ class JWTManager {
         }
         
         return $payload;
-    }
-    
-    /**
-     * Refresh a token using refresh token
-     */
-    public static function refreshToken($refreshToken) {
-        require_once __DIR__ . '/database.php';
-        $db = DatabaseManager::getInstance()->sessions();
-        
-        // Find valid refresh token
-        $stmt = $db->prepare("
-            SELECT * FROM refresh_tokens 
-            WHERE token = ? 
-            AND is_revoked = 0 
-            AND expires_at > datetime('now')
-        ");
-        $stmt->execute([$refreshToken]);
-        $tokenRecord = $stmt->fetch();
-        
-        if (!$tokenRecord) {
-            return false;
-        }
-        
-        // Get user
-        $usersDb = DatabaseManager::getInstance()->users();
-        $stmt = $usersDb->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$tokenRecord['user_id']]);
-        $user = $stmt->fetch();
-        
-        if (!$user) {
-            return false;
-        }
-        
-        // Revoke old refresh token
-        $stmt = $db->prepare("UPDATE refresh_tokens SET is_revoked = 1 WHERE id = ?");
-        $stmt->execute([$tokenRecord['id']]);
-        
-        // Generate new tokens
-        $newToken = self::generateToken($user['id'], $user['email'], false);
-        $newRefreshToken = self::generateRefreshToken($user['id']);
-        
-        return [
-            'token' => $newToken,
-            'refresh_token' => $newRefreshToken
-        ];
     }
     
     /**
@@ -189,22 +125,6 @@ class JWTManager {
         }
         
         return null;
-    }
-    
-    /**
-     * Revoke all tokens for a user
-     */
-    public static function revokeAllTokens($userId) {
-        require_once __DIR__ . '/database.php';
-        $db = DatabaseManager::getInstance()->sessions();
-        
-        // Revoke all refresh tokens
-        $stmt = $db->prepare("UPDATE refresh_tokens SET is_revoked = 1 WHERE user_id = ?");
-        $stmt->execute([$userId]);
-        
-        // Invalidate all sessions
-        $stmt = $db->prepare("UPDATE sessions SET is_valid = 0 WHERE user_id = ?");
-        $stmt->execute([$userId]);
     }
     
     // Helper methods

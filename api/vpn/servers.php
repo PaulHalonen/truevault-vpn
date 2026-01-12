@@ -1,114 +1,62 @@
 <?php
 /**
- * TrueVault VPN - VPN Servers List
- * GET /api/vpn/servers.php
+ * TrueVault VPN - Servers API
+ * GET /api/vpn/servers.php - List all available VPN servers
  */
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
-require_once __DIR__ . '/../helpers/logger.php';
 
-// Only allow GET
-Response::requireMethod('GET');
+// Optional auth - some info available without login
+$user = Auth::optionalAuth();
 
-// Require authentication
-$user = Auth::requireAuth();
+$method = $_SERVER['REQUEST_METHOD'];
 
-try {
-    $db = DatabaseManager::getInstance()->servers();
-    
-    // Get server ID if specific server requested
-    $serverId = $_GET['id'] ?? null;
-    
-    if ($serverId) {
-        // Get single server
-        $stmt = $db->prepare("SELECT * FROM vpn_servers WHERE id = ?");
-        $stmt->execute([$serverId]);
-        $server = $stmt->fetch();
-        
-        if (!$server) {
-            Response::notFound('Server not found');
-        }
-        
-        // Check if VIP-only server
-        if ($server['is_vip_only'] && !Auth::isVipUser()) {
-            Response::forbidden('This server is reserved for VIP users');
-        }
-        
-        // Don't expose VIP user email
-        unset($server['vip_user_email']);
-        unset($server['api_secret']);
-        
-        Response::success(['server' => $server]);
-    } else {
+if ($method === 'GET') {
+    try {
         // Get all servers
-        $isVip = Auth::isVipUser();
-        $userEmail = $user['email'];
+        $servers = Database::query('vpn', "SELECT * FROM vpn_servers ORDER BY is_vip ASC, name ASC");
         
-        if ($isVip) {
-            // VIP users see all servers
-            $stmt = $db->query("
-                SELECT * FROM vpn_servers 
-                WHERE status != 'offline'
-                ORDER BY region, server_name
-            ");
-        } else {
-            // Regular users don't see VIP-only servers
-            $stmt = $db->query("
-                SELECT * FROM vpn_servers 
-                WHERE status != 'offline' 
-                AND is_vip_only = 0
-                ORDER BY region, server_name
-            ");
-        }
-        
-        $servers = $stmt->fetchAll();
-        
-        // Clean up sensitive data and add user-specific info
-        foreach ($servers as &$server) {
-            // Check if this is the user's VIP server
-            $server['is_user_vip_server'] = ($server['vip_user_email'] === $userEmail);
-            
-            // Remove sensitive data
-            unset($server['vip_user_email']);
-            unset($server['api_secret']);
-            
-            // Calculate status indicator
-            $server['status_color'] = match($server['status']) {
-                'active' => 'green',
-                'maintenance' => 'yellow',
-                'full' => 'orange',
-                default => 'red'
-            };
-            
-            // Calculate load color
-            $load = (int) $server['load_percent'];
-            $server['load_color'] = match(true) {
-                $load < 50 => 'green',
-                $load < 80 => 'yellow',
-                default => 'red'
-            };
-        }
-        
-        // Group by region
-        $grouped = [];
+        // Filter VIP servers for non-VIP users
+        $filteredServers = [];
         foreach ($servers as $server) {
-            $region = $server['region'];
-            if (!isset($grouped[$region])) {
-                $grouped[$region] = [];
+            // If it's a VIP server
+            if ($server['is_vip'] == 1) {
+                // Only show to the VIP user it belongs to
+                if ($user && $server['vip_user_email'] === $user['email']) {
+                    $filteredServers[] = $server;
+                }
+                // Skip for other users
+                continue;
             }
-            $grouped[$region][] = $server;
+            
+            // Regular servers are visible to all
+            $filteredServers[] = $server;
+        }
+        
+        // Add connection count for each server (simulated for now)
+        foreach ($filteredServers as &$server) {
+            // Get active connections count
+            $connections = Database::queryOne('vpn', 
+                "SELECT COUNT(*) as count FROM vpn_connections WHERE server_id = ? AND status = 'connected'",
+                [$server['id']]
+            );
+            $server['active_connections'] = $connections ? (int)$connections['count'] : 0;
+            
+            // Calculate load percentage
+            $maxConnections = $server['max_connections'] ?: 50;
+            $server['current_load'] = min(100, round(($server['active_connections'] / $maxConnections) * 100));
         }
         
         Response::success([
-            'servers' => $servers,
-            'grouped' => $grouped,
-            'count' => count($servers)
+            'servers' => $filteredServers,
+            'count' => count($filteredServers)
         ]);
+        
+    } catch (Exception $e) {
+        Response::serverError('Failed to load servers: ' . $e->getMessage());
     }
-    
-} catch (Exception $e) {
-    Logger::error('Server list failed: ' . $e->getMessage());
-    Response::serverError('Failed to get servers');
+} else {
+    Response::error('Method not allowed', 405);
 }

@@ -1,34 +1,24 @@
-# TrueVault VPN - Main .htaccess
+# TrueVault VPN - .htaccess
+DirectoryIndex index.html index.php
 
-# Enable Rewrite Engine
 RewriteEngine On
-RewriteBase /
 
-# Serve public/index.html as the main page
-DirectoryIndex public/index.html index.html index.php
+# Route assets to public folder
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
 
-# API requests
-RewriteRule ^api/(.*)$ api/$1 [L]
-
-# Dashboard routes
-RewriteRule ^dashboard/?$ public/dashboard/index.html [L]
-RewriteRule ^dashboard/(.*)$ public/dashboard/$1 [L]
-
-# Admin routes  
-RewriteRule ^admin/?$ public/admin/index.html [L]
-RewriteRule ^admin/(.*)$ public/admin/$1 [L]
-
-# Login/Register
+# Route login/register to public folder
+RewriteRule ^login\.html$ public/login.html [L]
+RewriteRule ^register\.html$ public/register.html [L]
 RewriteRule ^login/?$ public/login.html [L]
 RewriteRule ^register/?$ public/register.html [L]
 
-# Serve from public directory
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
-RewriteRule ^(.*)$ public/$1 [L]
+# Route dashboard
+RewriteRule ^dashboard/?$ public/dashboard/index.html [L]
+RewriteRule ^dashboard/(.*)$ public/dashboard/$1 [L]
 
-# Default to public/index.html
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^$ public/index.html [L]
+# Route admin
+RewriteRule ^admin/?$ public/admin/index.html [L]
+RewriteRule ^admin/(.*)$ public/admin/$1 [L]
+
+# Error documents
+ErrorDocument 404 /index.html
