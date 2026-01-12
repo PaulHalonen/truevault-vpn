@@ -87,6 +87,20 @@ class Database {
     }
     
     /**
+     * Alias for query - returns all rows
+     */
+    public static function queryAll($dbName, $sql, $params = []) {
+        return self::query($dbName, $sql, $params);
+    }
+    
+    /**
+     * Get the path to a database file
+     */
+    public static function getPath($name) {
+        return self::getBasePath() . "/$name.db";
+    }
+    
+    /**
      * Execute an INSERT/UPDATE/DELETE and return affected info
      */
     public static function execute($dbName, $sql, $params = []) {

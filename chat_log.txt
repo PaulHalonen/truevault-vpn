@@ -1,167 +1,205 @@
-========================================
-TRUEVAULT VPN - CHAT LOG
-========================================
 
 ========================================
-SESSION: January 11, 2026
+SESSION: January 12, 2026 - 15:30 - 16:45 CST
+COMPLETE AUTOMATION BUILD - BILLING, PEER MANAGEMENT, DEVICES, CAMERAS
 ========================================
 
-PREVIOUS WORK COMPLETED:
-- Created full VPN infrastructure
-- Built scanner tool (Python network scanner)
-- Implemented JWT authentication
-- Database-driven theming system
-- VIP server access control
-- PayPal integration configured
-- All code committed to GitHub (commit 5f766ff)
+## MAJOR BUILD COMPLETED
 
-========================================
-DEPLOYMENT STATUS - January 11, 2026 @ 22:40 CST
-========================================
+Built complete automated system for TrueVault VPN including:
 
-FTP UPLOAD COMPLETED:
-✅ Dashboard pages uploaded to /public/dashboard/
-   - connect.html (17.79 KB)
-   - scanner.html (21.07 KB)
-   - billing.html, cameras.html, certificates.html
-   - devices.html, identities.html, index.html
-   - mesh.html, servers.html, settings.html
+### 1. PEER MANAGEMENT SYSTEM
+- **peer_api.py** - Python Flask API for each WireGuard server
+- Endpoints: /peers/add, /peers/remove, /peers/list, /peers/status, /health
+- Systemd service file for auto-start
+- Setup script for server deployment
+- Location: server-scripts/
 
-✅ API endpoints uploaded:
-   - /api/vpn/connect.php (5.43 KB)
-   - /api/vpn/servers.php (2.13 KB)
-   - /api/theme/index.php (2.29 KB)
-   - /api/cameras/sync.php (3.67 KB)
+### 2. BILLING SYSTEM (PayPal Integration)
+- **billing-manager.php** - Complete billing logic
+  - PayPal API integration (live mode)
+  - Subscription management
+  - Invoice generation
+  - Payment failure handling
+  - Grace period (7 days)
+  - Auto-revocation scheduling
+- **webhook.php** - PayPal webhook handler
+  - Handles: CHECKOUT.ORDER.APPROVED, PAYMENT.CAPTURE.*, BILLING.SUBSCRIPTION.*, CUSTOMER.DISPUTE.*
+- **checkout.php** - Create checkout session
+- **complete.php** - Complete payment after approval
+- **subscription.php** - Get current subscription
+- **cancel.php** - Cancel subscription
+- **history.php** - Get billing history
 
-✅ Downloads portal uploaded:
-   - /downloads/index.html
+### 3. DEVICE MANAGEMENT
+- **devices/manage.php** - Full device management
+  - Device registration with limits
+  - Device removal
+  - Device swapping (24h cooldown)
+  - Set primary device
+  - Camera vs device type detection
+  - Plan-based limits enforcement
 
-ENDPOINT TESTING RESULTS:
-✅ https://vpn.the-truth-publishing.com/api/vpn/servers.php - WORKING
-   Returns all 4 VPN servers (Canada, Dallas, US-East, US-Central)
-   
-✅ https://vpn.the-truth-publishing.com/api/theme/ - WORKING
-   Returns theme variables (colors, gradients, typography)
+### 4. CAMERA MANAGEMENT
+- **cameras/manage.php** - IP camera management
+  - Camera registration with server restrictions
+  - Basic/Family: NY server only
+  - Dedicated: Any server
+  - Auto port forwarding assignment
+  - Stream URL generation
+  - Vendor/type detection (Geeni, Wyze, Hikvision, etc.)
 
-✅ https://vpn.the-truth-publishing.com/dashboard/connect.html - HTTP 200
-✅ https://vpn.the-truth-publishing.com/dashboard/scanner.html - HTTP 200
-✅ https://vpn.the-truth-publishing.com/downloads/ - WORKING (shows portal)
+### 5. CRON JOB PROCESSOR
+- **cron/process.php** - Automated background tasks
+  - Process scheduled revocations
+  - Check expired subscriptions
+  - Update server peer counts
+  - Clean old logs
+  - Can run via CLI or URL with secret
 
-⚠️ STILL NEEDS UPLOAD:
-- Scanner tool files to /downloads/scanner/
-  Need: truthvault_scanner.py, run_scanner.bat, run_scanner.sh
+### 6. DATABASE SETUP
+- **setup-all.php** - Master database setup script
+  - Creates 9 separate SQLite databases:
+    - users.db - User accounts
+    - vpn.db - Servers, peers, connections
+    - billing.db - Subscriptions, invoices, orders
+    - devices.db - User devices, swaps
+    - cameras.db - IP cameras
+    - port_forwarding.db - Port forwards
+    - certificates.db - WireGuard keys
+    - vip.db - VIP users
+    - logs.db - Activity, cron logs
+  - Inserts all 4 servers with public keys
+  - Inserts all 5 VIP users
 
-SERVERS IN DATABASE:
-1. US-East (66.94.103.91) - Shared - Contabo
-2. US-Central (144.126.133.253) - VIP (seige235@yahoo.com only) - Contabo  
-3. Dallas (66.241.124.4) - Shared - Fly.io
-4. Canada (66.241.125.247) - Shared - Fly.io
+### 7. VPN CONNECT UPDATED
+- **vpn/connect.php** - Generates WireGuard configs
+  - Proper config naming: TrueVaultNY.conf, TrueVaultTX.conf, etc.
+  - Real server public keys
+  - Peer addition via API
+  - VIP/subscription validation
+  - Device limit checking
+  - Server access restrictions
 
-========================================
-ARCHITECTURE
-========================================
+### 8. USER DASHBOARD
+- **dashboard.html** - User dashboard with:
+  - VIP badge display (Owner/VIP Dedicated/VIP)
+  - Device/camera counts with limits
+  - Plan information
+  - Server list with:
+    - Status indicators
+    - Bandwidth limits
+    - Allowed uses (gaming/streaming/torrents/cameras)
+    - Instructions
+  - Config generation modal
+  - Copy-to-clipboard (no QR codes)
+  - Setup instructions
 
-Repository: E:\Documents\GitHub\truevault-vpn
-Production: https://vpn.the-truth-publishing.com
+### 9. USER API
+- **users/me.php** - Get current user info
+  - VIP detection
+  - Subscription status
+  - Device/camera counts
+  - Limits
 
-Key Features:
-- Database-driven theming (NO hardcoding)
-- JWT authentication with 24h expiration
-- VIP server filtering (is_vip flag + vip_user_email)
-- WireGuard config generation (server-side keypairs)
-- Network scanner tool for device discovery
-- PayPal webhook integration
+### 10. PAYMENT PAGES
+- **payment-success.html** - Payment confirmation
+- **payment-cancel.html** - Payment cancelled
 
-Database: SQLite (portable, in /data/ folder)
-- truevault.db - Main database (users, servers, themes, etc.)
+### 11. SERVER DEPLOYMENT SCRIPTS
+- **server-scripts/peer_api.py** - Peer management API
+- **server-scripts/setup-server.sh** - Server setup script
+- **server-scripts/truevault-peer-api.service** - Systemd service
 
-========================================
+## AUTOMATION FLOW
 
-========================================
-SESSION: January 12, 2026 - 00:00 - 01:30 CST
-WIREGUARD SERVER CLEANUP & CONFIGURATION
-========================================
+### New User Registration:
+1. User registers → Account created
+2. VIP check → If VIP, bypass payment
+3. Non-VIP → Redirect to pricing
+4. User selects plan → PayPal checkout
+5. Payment approved → webhook.php receives event
+6. BillingManager activates subscription
+7. PeerManager provisions VPN access on all servers
+8. User gets WireGuard config
 
-## CONTABO SERVERS CLEANUP
+### User Cancels:
+1. User cancels → subscription marked cancelled
+2. Access continues until end_date
+3. Cron job processes revocations
+4. PeerManager removes peers from all servers
+5. User's config becomes useless
 
-### Password Reset
-- Both servers reset to: TrueVault2026
-- Server 1 (vmi2990026): 66.94.103.91
-- Server 2 (vmi2990005): 144.126.133.253
+### Payment Fails:
+1. PayPal webhook → PAYMENT.CAPTURE.DENIED
+2. 7-day grace period starts
+3. Reminder emails queued
+4. After grace period → access revoked
+5. User re-subscribes → access restored
 
-### Server 1 (US-East) - 66.94.103.91
-- WireGuard already installed
-- Removed 9 old peers from destroyed previous build
-- Config cleaned: /etc/wireguard/wg0.conf
-- Network: 10.0.0.1/24
-- Public Key: lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s=
-- Status: ✅ Running, 0 peers
+### VIP Users:
+- Bypass all payment flows
+- Auto-activated on first login
+- Free forever (no subscription needed)
+- Higher device/camera limits
 
-### Server 2 (US-Central VIP) - 144.126.133.253
-- VIP server for seige235@yahoo.com only
-- Removed 1 old peer
-- Config cleaned: /etc/wireguard/wg0.conf
-- Network: 10.0.1.1/24
-- Public Key: qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM=
-- Status: ✅ Running, 0 peers
+## FILES CREATED THIS SESSION
 
-## FLY.IO SERVERS
+### API Files:
+- api/billing/billing-manager.php
+- api/billing/webhook.php
+- api/billing/checkout.php
+- api/billing/complete.php
+- api/billing/subscription.php
+- api/billing/cancel.php
+- api/billing/history.php
+- api/devices/manage.php
+- api/cameras/manage.php
+- api/cron/process.php
+- api/config/setup-all.php
+- api/config/setup-billing.php
+- api/config/setup-vpn.php
+- api/users/me.php
+- api/vpn/connect.php (updated)
+- api/config/database.php (updated)
 
-### Server 3 (Dallas) - 66.241.124.4
-- App: truthvault-usa
-- WireGuard running on port 51820
-- API on port 8080 (exposed as 8443)
-- Public Key: dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk=
-- Status: ✅ Running, 0 peers
+### Server Scripts:
+- server-scripts/peer_api.py
+- server-scripts/setup-server.sh
+- server-scripts/truevault-peer-api.service
 
-### Server 4 (Canada) - 66.241.125.247
-- App: truthvault-canada
-- WireGuard running on port 51820
-- Public Key: O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=
-- Status: ✅ Running, 5 old peers (needs cleanup)
+### Public Files:
+- public/dashboard.html
+- public/payment-success.html
+- public/payment-cancel.html
 
-## DATABASE UPDATES
+## PAYPAL WEBHOOK URL
+https://vpn.the-truth-publishing.com/api/billing/webhook.php
 
-- Updated setup-databases.php with all 4 public keys
-- Uploaded to server via FTP
-- Ran setup script to update vpn_servers table
-- All 4 servers now have public keys in database
+## CRON JOB SETUP
+Add to server crontab:
+*/5 * * * * curl -s "https://vpn.the-truth-publishing.com/api/cron/process.php?secret=TrueVault2026CronSecret"
 
-## ALL 4 SERVERS READY:
+## SERVER DEPLOYMENT
+On each WireGuard server, run:
+```bash
+# Copy peer_api.py to server
+scp server-scripts/peer_api.py root@SERVER_IP:/opt/truevault/
 
-| ID | Name | IP | Location | Public Key | VIP |
-|----|------|-----|----------|------------|-----|
-| 1 | US-East | 66.94.103.91 | New York | lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s= | No |
-| 2 | US-Central VIP | 144.126.133.253 | St. Louis | qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM= | Yes (seige235@yahoo.com) |
-| 3 | Dallas | 66.241.124.4 | Dallas | dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk= | No |
-| 4 | Canada | 66.241.125.247 | Toronto | O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk= | No |
-
-## REMAINING TASKS:
-1. ⏳ Clean old peers from Canada server (5 peers)
-2. ⏳ Check/setup peer_api.py on all servers
-3. ⏳ Test VPN connection end-to-end
-4. ⏳ Verify client registration and peer provisioning
-
-## TECHNICAL NOTES:
-
-### WireGuard Peer Cleanup Method:
-Runtime peer removal via `wg set` doesn't persist. Must:
-1. Stop WireGuard: wg-quick down wg0
-2. Edit config: overwrite /etc/wireguard/wg0.conf (remove [Peer] sections)
-3. Restart: wg-quick up wg0
-
-### Fly.io SSH Access:
+# SSH in and run setup
+ssh root@SERVER_IP
+chmod +x /opt/truevault/setup-server.sh
+./setup-server.sh "ServerName" "10.0.0" 8080
 ```
-fly ssh console -a truthvault-usa
-fly ssh console -a truthvault-canada
-```
 
-### Contabo SSH Access:
-```
-ssh root@66.94.103.91  (password: TrueVault2026)
-ssh root@144.126.133.253  (password: TrueVault2026)
-```
+## NEXT STEPS
+1. Upload all files to FTP
+2. Run setup-all.php to create databases
+3. Deploy peer_api.py to all 4 servers
+4. Configure PayPal webhook
+5. Set up cron job
+6. Test full registration→payment→connection flow
 
 ========================================
-END SESSION: January 12, 2026 - 01:30 CST
+END SESSION: January 12, 2026 - 16:45 CST
 ========================================

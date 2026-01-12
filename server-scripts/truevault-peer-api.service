@@ -1,0 +1,18 @@
+[Unit]
+Description=TrueVault VPN Peer Management API
+After=network.target wireguard.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/truevault
+Environment="TRUEVAULT_API_SECRET=TrueVault2026SecretKey"
+Environment="PEER_API_PORT=8080"
+Environment="SERVER_NAME=TrueVault"
+Environment="SERVER_NETWORK=10.0.0"
+ExecStart=/usr/bin/python3 /opt/truevault/peer_api.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

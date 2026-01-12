@@ -4,580 +4,439 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connect - TrueVault VPN</title>
-    <link rel="stylesheet" href="/public/assets/css/dashboard.css">
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
     <style>
-        .connection-status {
-            text-align: center;
-            padding: 40px;
-            background: var(--bg-secondary, #1a1a2e);
-            border-radius: 16px;
-            margin-bottom: 30px;
-        }
-        .status-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-        .status-icon.connected {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
-        .status-text {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .status-text.connected { color: var(--success, #00ff88); }
-        .status-text.disconnected { color: var(--text-muted, #888); }
-        .status-text.connecting { color: var(--warning, #ffbb00); }
-        .connection-details {
-            color: var(--text-muted, #888);
-            font-size: 14px;
-        }
-        .connect-btn {
-            margin-top: 20px;
-            padding: 16px 48px;
-            font-size: 18px;
-            font-weight: 600;
-            border: none;
-            border-radius: 50px;
+        .server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .server-card {
+            background: var(--colors-background-secondary);
+            border: 1px solid var(--colors-border);
+            border-radius: var(--cards-border-radius);
+            padding: 20px;
             cursor: pointer;
             transition: all 0.3s;
         }
-        .connect-btn.connect {
-            background: linear-gradient(90deg, var(--primary, #00d9ff), var(--secondary, #00ff88));
-            color: var(--bg, #0f0f1a);
+        .server-card:hover { border-color: var(--colors-primary); transform: translateY(-2px); }
+        .server-card.selected { border-color: var(--colors-secondary); background: rgba(0,255,136,0.05); }
+        .server-card.restricted { border-left: 3px solid var(--colors-warning); }
+        .server-card.vip-only { border-left: 3px solid gold; }
+        .server-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .server-flag { font-size: 2rem; }
+        .server-name { font-size: 1.1rem; font-weight: 600; }
+        .server-location { color: var(--colors-text-muted); font-size: 0.85rem; }
+        .server-type { 
+            display: inline-block; 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            text-transform: uppercase;
         }
-        .connect-btn.disconnect {
-            background: var(--error, #ff5050);
-            color: white;
-        }
-        .connect-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 217, 255, 0.3);
-        }
-        .connect-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .server-section {
-            margin-top: 30px;
-        }
-        .server-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
-        }
-        .server-card {
-            background: var(--bg-secondary, #1a1a2e);
-            border: 2px solid var(--border-color, rgba(255,255,255,0.1));
-            border-radius: 12px;
+        .type-shared { background: rgba(0,217,255,0.2); color: #00d9ff; }
+        .type-dedicated { background: rgba(255,215,0,0.2); color: gold; }
+        .type-limited { background: rgba(255,187,0,0.2); color: #ffbb00; }
+        .server-allowed { margin-top: 15px; }
+        .server-allowed h4 { font-size: 0.8rem; color: var(--colors-text-muted); margin-bottom: 8px; }
+        .tag { display: inline-block; padding: 3px 8px; margin: 2px; border-radius: 4px; font-size: 0.7rem; }
+        .tag-allow { background: rgba(0,255,136,0.15); color: var(--colors-success); }
+        .tag-deny { background: rgba(255,80,80,0.15); color: var(--colors-error); }
+        
+        .config-section { margin-top: 30px; }
+        .config-box {
+            background: #0a0a0f;
+            border: 1px solid var(--colors-border);
+            border-radius: 8px;
             padding: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
             position: relative;
         }
-        .server-card:hover {
-            border-color: var(--primary, #00d9ff);
-            transform: translateY(-2px);
-        }
-        .server-card.selected {
-            border-color: var(--secondary, #00ff88);
-            background: rgba(0, 255, 136, 0.05);
-        }
-        .server-card.vip {
-            border-color: gold;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), transparent);
-        }
-        .server-card.vip::before {
-            content: '👑 VIP';
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: gold;
-            color: #000;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .server-header {
+        .config-header {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        .server-flag {
-            font-size: 32px;
-        }
-        .server-info h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-        .server-info .location {
-            color: var(--text-muted, #888);
-            font-size: 14px;
-        }
-        .server-stats {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-        }
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: var(--text-muted, #888);
-        }
-        .stat-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        .stat-dot.online { background: var(--success, #00ff88); }
-        .stat-dot.busy { background: var(--warning, #ffbb00); }
-        .stat-dot.offline { background: var(--error, #ff5050); }
-        .load-bar {
-            width: 60px;
-            height: 6px;
-            background: var(--bg-tertiary, #252540);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .load-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-        .load-bar-fill.low { background: var(--success, #00ff88); }
-        .load-bar-fill.medium { background: var(--warning, #ffbb00); }
-        .load-bar-fill.high { background: var(--error, #ff5050); }
-
-        .quick-connect {
-            background: linear-gradient(135deg, var(--bg-secondary, #1a1a2e), var(--bg-tertiary, #252540));
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
+            align-items: center;
+            margin-bottom: 15px;
         }
-        .quick-connect h3 {
-            margin: 0;
-        }
-        .quick-connect p {
-            color: var(--text-muted, #888);
-            margin: 4px 0 0;
-            font-size: 14px;
-        }
-        .auto-btn {
-            padding: 12px 24px;
-            background: linear-gradient(90deg, var(--primary, #00d9ff), var(--secondary, #00ff88));
-            color: var(--bg, #0f0f1a);
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .auto-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .config-section {
-            margin-top: 30px;
-            padding: 20px;
-            background: var(--bg-secondary, #1a1a2e);
-            border-radius: 12px;
-        }
-        .config-section h3 {
-            margin-bottom: 16px;
+        .config-filename {
+            font-family: monospace;
+            color: var(--colors-secondary);
+            font-size: 1.1rem;
         }
         .config-content {
-            background: var(--bg-tertiary, #252540);
-            padding: 16px;
-            border-radius: 8px;
+            background: #050508;
+            border-radius: 6px;
+            padding: 15px;
             font-family: monospace;
-            font-size: 13px;
+            font-size: 0.85rem;
             white-space: pre-wrap;
             word-break: break-all;
+            color: #aaa;
             max-height: 300px;
             overflow-y: auto;
         }
-        .config-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
-        }
-        .config-btn {
+        .copy-btn {
             padding: 10px 20px;
-            border-radius: 8px;
+            background: var(--gradients-primary);
+            border: none;
+            border-radius: 6px;
+            color: #0a0a0f;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
-            border: none;
+            transition: all 0.3s;
         }
-        .config-btn.primary {
-            background: linear-gradient(90deg, var(--primary, #00d9ff), var(--secondary, #00ff88));
-            color: var(--bg, #0f0f1a);
+        .copy-btn:hover { transform: translateY(-2px); }
+        .copy-btn.copied { background: var(--colors-success); }
+        
+        .instructions {
+            background: rgba(0,217,255,0.1);
+            border: 1px solid rgba(0,217,255,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
         }
-        .config-btn.secondary {
-            background: var(--bg-tertiary, #252540);
-            color: var(--text, #fff);
-            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
-        }
-
-        .no-servers {
+        .instructions h4 { color: var(--colors-primary); margin-bottom: 10px; }
+        .instructions ul { margin-left: 20px; color: var(--colors-text-muted); }
+        .instructions li { margin-bottom: 5px; }
+        
+        .no-selection {
             text-align: center;
-            padding: 40px;
-            color: var(--text-muted, #888);
+            padding: 60px 20px;
+            color: var(--colors-text-muted);
+        }
+        .no-selection .icon { font-size: 4rem; margin-bottom: 20px; }
+        
+        .vip-badge-inline {
+            background: linear-gradient(90deg, gold, #ffaa00);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
         }
     </style>
 </head>
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <span class="logo-icon">🛡️</span>
-                <span class="logo-text">TrueVault</span>
-            </div>
-            <div class="nav-links" id="nav-links"></div>
-            <div class="sidebar-footer">
-                <div class="user-info" id="user-info"></div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo-icon">🛡️</span>
+            <h1>TrueVault</h1>
+            <span class="vip-badge" id="vipBadge" style="display:none;"></span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span>Overview</span>
+            </a>
+            <a href="/dashboard/connect.html" class="nav-item active">
+                <span class="nav-icon">🔌</span>
+                <span>Connect</span>
+            </a>
+            <a href="/dashboard/servers.html" class="nav-item">
+                <span class="nav-icon">🌐</span>
+                <span>Servers</span>
+            </a>
+            <a href="/dashboard/devices.html" class="nav-item">
+                <span class="nav-icon">📱</span>
+                <span>Devices</span>
+            </a>
+            <a href="/dashboard/cameras.html" class="nav-item">
+                <span class="nav-icon">📷</span>
+                <span>Cameras</span>
+            </a>
+            <a href="/dashboard/scanner.html" class="nav-item">
+                <span class="nav-icon">🔍</span>
+                <span>Scanner</span>
+            </a>
+            <a href="/dashboard/settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span>Settings</span>
+            </a>
         </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <div class="page-header">
-                <h1>🔗 Connect to VPN</h1>
-                <p>Select a server and connect securely</p>
-            </div>
-
-            <!-- Connection Status -->
-            <div class="connection-status" id="connection-status">
-                <div class="status-icon" id="status-icon">🔓</div>
-                <div class="status-text disconnected" id="status-text">Not Connected</div>
-                <div class="connection-details" id="connection-details">Select a server below to connect</div>
-                <button class="connect-btn connect" id="main-connect-btn" onclick="toggleConnection()">
-                    Connect
-                </button>
-            </div>
-
-            <!-- Quick Connect -->
-            <div class="quick-connect">
-                <div>
-                    <h3>⚡ Quick Connect</h3>
-                    <p>Automatically connect to the fastest available server</p>
-                </div>
-                <button class="auto-btn" onclick="autoConnect()">
-                    🚀 Auto-Connect
-                </button>
-            </div>
-
-            <!-- Server List -->
-            <div class="server-section">
-                <h2>🌍 Available Servers</h2>
-                <div class="server-grid" id="server-grid">
-                    <div class="no-servers">
-                        <p>Loading servers...</p>
-                    </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo">
+                <span class="user-avatar">👤</span>
+                <div class="user-details">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="user-plan" id="userPlan">-</span>
                 </div>
             </div>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </aside>
 
-            <!-- WireGuard Config -->
-            <div class="config-section" id="config-section" style="display: none;">
-                <h3>📄 WireGuard Configuration</h3>
-                <p style="color: var(--text-muted); margin-bottom: 16px;">
-                    Copy this configuration to your WireGuard client or download the config file:
-                </p>
-                <div class="config-content" id="config-content"></div>
-                <div class="config-actions">
-                    <button class="config-btn primary" onclick="downloadConfig()">
-                        ⬇️ Download .conf File
-                    </button>
-                    <button class="config-btn secondary" onclick="copyConfig()">
-                        📋 Copy to Clipboard
-                    </button>
-                    <button class="config-btn secondary" onclick="showQRCode()">
-                        📱 Show QR Code
-                    </button>
-                </div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Connect to VPN</h1>
+            <p>Select a server and copy your WireGuard configuration</p>
+        </header>
+
+        <section class="content-section">
+            <h2>📍 Available Servers</h2>
+            <div class="server-grid" id="serverGrid">
+                <div class="loading">Loading servers...</div>
             </div>
-        </main>
-    </div>
+        </section>
 
-    <script src="/public/assets/js/theme-loader.js"></script>
-    <script src="/public/assets/js/app.js"></script>
-    <script>
-        let servers = [];
-        let selectedServer = null;
-        let isConnected = false;
-        let currentConfig = null;
-
-        // Country flags
-        const flags = {
-            'US': '🇺🇸',
-            'CA': '🇨🇦',
-            'GB': '🇬🇧',
-            'DE': '🇩🇪',
-            'NL': '🇳🇱',
-            'JP': '🇯🇵',
-            'AU': '🇦🇺',
-            'SG': '🇸🇬',
-            'default': '🌐'
-        };
-
-        // Load servers from API
-        async function loadServers() {
-            try {
-                const response = await apiRequest('/api/vpn/servers.php');
-                
-                if (response.success && response.data) {
-                    servers = response.data.servers || response.data;
-                    renderServers();
-                } else {
-                    showNoServers();
-                }
-            } catch (error) {
-                console.error('Failed to load servers:', error);
-                showNoServers();
-            }
-        }
-
-        function showNoServers() {
-            document.getElementById('server-grid').innerHTML = `
-                <div class="no-servers">
-                    <p>⚠️ No servers available. Please try again later.</p>
-                </div>
-            `;
-        }
-
-        function renderServers() {
-            const grid = document.getElementById('server-grid');
+        <section class="content-section config-section" id="configSection" style="display:none;">
+            <h2>📋 Your Configuration</h2>
             
-            if (!servers || servers.length === 0) {
-                showNoServers();
+            <div class="config-box">
+                <div class="config-header">
+                    <span class="config-filename" id="configFilename">TrueVaultNY.conf</span>
+                    <button class="copy-btn" id="copyBtn" onclick="copyConfig()">📋 Copy Config</button>
+                </div>
+                <div class="config-content" id="configContent">
+                    Select a server above to generate your configuration
+                </div>
+            </div>
+            
+            <div class="instructions" id="serverInstructions">
+                <h4 id="instructionTitle">Usage Instructions</h4>
+                <ul id="instructionList"></ul>
+            </div>
+            
+            <div class="instructions" style="background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); margin-top: 15px;">
+                <h4 style="color: var(--colors-secondary);">📱 How to Use</h4>
+                <ul>
+                    <li>Copy the configuration above</li>
+                    <li>Open WireGuard app on your device</li>
+                    <li>Click "+" or "Add Tunnel"</li>
+                    <li>Select "Create from scratch" or "Import from file"</li>
+                    <li>Paste the configuration and save</li>
+                    <li>Turn on the tunnel to connect!</li>
+                </ul>
+            </div>
+        </section>
+        
+        <div class="no-selection" id="noSelection">
+            <div class="icon">👆</div>
+            <h3>Select a Server</h3>
+            <p>Click on a server above to generate your WireGuard configuration</p>
+        </div>
+    </main>
+
+    <script src="/assets/js/app.js"></script>
+    <script>
+        let selectedServer = null;
+        let servers = [];
+        let currentConfig = '';
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
                 return;
             }
-
+            
+            // Load user info
+            await loadUserInfo();
+            
+            // Load servers
+            await loadServers();
+            
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
+        });
+        
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/users/profile.php', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const data = await response.json();
+                
+                if (data.success && data.user) {
+                    document.getElementById('userName').textContent = data.user.first_name || data.user.email;
+                    document.getElementById('userPlan').textContent = data.user.plan_type?.toUpperCase() || 'FREE';
+                    
+                    // Show VIP badge
+                    if (data.user.is_vip) {
+                        const badge = document.getElementById('vipBadge');
+                        badge.textContent = data.user.vip_badge || '⭐ VIP';
+                        badge.style.display = 'inline-block';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load user info:', e);
+            }
+        }
+        
+        async function loadServers() {
+            try {
+                const response = await fetch('/api/vpn/config-generator.php?action=list', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const data = await response.json();
+                
+                if (data.success && data.servers) {
+                    servers = data.servers;
+                    renderServers();
+                } else {
+                    document.getElementById('serverGrid').innerHTML = '<div class="error">Failed to load servers</div>';
+                }
+            } catch (e) {
+                console.error('Failed to load servers:', e);
+                document.getElementById('serverGrid').innerHTML = '<div class="error">Failed to load servers</div>';
+            }
+        }
+        
+        function renderServers() {
+            const grid = document.getElementById('serverGrid');
+            
+            if (servers.length === 0) {
+                grid.innerHTML = '<div class="no-selection"><p>No servers available</p></div>';
+                return;
+            }
+            
             grid.innerHTML = servers.map(server => {
-                const flag = flags[server.country_code] || flags['default'];
-                const load = parseFloat(server.current_load) || 0;
-                const loadClass = load < 50 ? 'low' : load < 80 ? 'medium' : 'high';
-                const statusClass = server.status === 'online' ? 'online' : 'offline';
-                const isVip = server.is_vip == 1;
-                const isSelected = selectedServer && selectedServer.id === server.id;
-
+                const isLimited = server.bandwidth === 'limited';
+                const isVipOnly = server.type === 'dedicated' && server.vip_only;
+                const cardClass = isVipOnly ? 'vip-only' : (isLimited ? 'restricted' : '');
+                
+                let typeClass = 'type-shared';
+                let typeText = 'Shared';
+                if (server.type === 'dedicated') {
+                    typeClass = 'type-dedicated';
+                    typeText = 'Dedicated';
+                } else if (isLimited) {
+                    typeClass = 'type-limited';
+                    typeText = 'Limited';
+                }
+                
+                const allowedTags = (server.allowed || []).map(a => 
+                    `<span class="tag tag-allow">✓ ${a}</span>`
+                ).join('');
+                
+                const restrictedTags = (server.restricted || []).map(r => 
+                    `<span class="tag tag-deny">✗ ${r}</span>`
+                ).join('');
+                
                 return `
-                    <div class="server-card ${isVip ? 'vip' : ''} ${isSelected ? 'selected' : ''}" 
-                         onclick="selectServer(${server.id})"
-                         data-server-id="${server.id}">
+                    <div class="server-card ${cardClass}" data-server-id="${server.id}" onclick="selectServer(${server.id})">
                         <div class="server-header">
-                            <span class="server-flag">${flag}</span>
-                            <div class="server-info">
-                                <h3>${server.name}</h3>
-                                <div class="location">${server.location || server.region}</div>
+                            <span class="server-flag">${server.location_flag || '🌐'}</span>
+                            <div>
+                                <div class="server-name">${server.name}${isVipOnly ? '<span class="vip-badge-inline">👑 VIP</span>' : ''}</div>
+                                <div class="server-location">${server.ip}</div>
                             </div>
                         </div>
-                        <div class="server-stats">
-                            <div class="stat">
-                                <span class="stat-dot ${statusClass}"></span>
-                                <span>${server.status === 'online' ? 'Online' : 'Offline'}</span>
-                            </div>
-                            <div class="stat">
-                                <span>Load:</span>
-                                <div class="load-bar">
-                                    <div class="load-bar-fill ${loadClass}" style="width: ${load}%"></div>
-                                </div>
-                                <span>${load}%</span>
-                            </div>
+                        <span class="server-type ${typeClass}">${typeText}</span>
+                        <div class="server-allowed">
+                            <h4>Usage Rules</h4>
+                            ${allowedTags}${restrictedTags}
                         </div>
                     </div>
                 `;
             }).join('');
         }
-
-        function selectServer(serverId) {
-            selectedServer = servers.find(s => s.id === serverId);
-            
-            // Update UI
+        
+        async function selectServer(serverId) {
+            // Update selection UI
             document.querySelectorAll('.server-card').forEach(card => {
                 card.classList.remove('selected');
-                if (card.dataset.serverId == serverId) {
-                    card.classList.add('selected');
-                }
             });
-
-            // Update connection details
-            if (selectedServer) {
-                document.getElementById('connection-details').textContent = 
-                    `Selected: ${selectedServer.name} (${selectedServer.location})`;
-            }
-
-            // Enable connect button
-            document.getElementById('main-connect-btn').disabled = false;
+            document.querySelector(`[data-server-id="${serverId}"]`).classList.add('selected');
+            
+            selectedServer = servers.find(s => s.id === serverId);
+            
+            // Show config section
+            document.getElementById('noSelection').style.display = 'none';
+            document.getElementById('configSection').style.display = 'block';
+            
+            // Generate config
+            await generateConfig(serverId);
         }
-
-        async function toggleConnection() {
-            if (isConnected) {
-                disconnect();
-            } else {
-                await connect();
-            }
-        }
-
-        async function connect() {
-            if (!selectedServer) {
-                showToast('Please select a server first', 'error');
-                return;
-            }
-
-            // Update UI to connecting
-            updateConnectionStatus('connecting');
-
+        
+        async function generateConfig(serverId) {
+            const configContent = document.getElementById('configContent');
+            configContent.textContent = 'Generating configuration...';
+            
             try {
-                // Request connection config from server
-                const response = await apiRequest('/api/vpn/connect.php', {
+                const response = await fetch('/api/vpn/config-generator.php?action=generate', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        server_id: selectedServer.id
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ server_id: serverId })
                 });
-
-                if (response.success) {
-                    currentConfig = response.data.config;
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentConfig = data.config;
+                    document.getElementById('configFilename').textContent = data.config_name;
+                    configContent.textContent = data.config;
                     
-                    // Show config section
-                    document.getElementById('config-section').style.display = 'block';
-                    document.getElementById('config-content').textContent = currentConfig;
-                    
-                    // Update status
-                    updateConnectionStatus('connected', selectedServer);
-                    isConnected = true;
-                    
-                    showToast('Configuration generated! Import into WireGuard app.', 'success');
+                    // Update instructions
+                    if (data.instructions) {
+                        document.getElementById('instructionTitle').textContent = data.instructions.title || 'Usage Instructions';
+                        const list = document.getElementById('instructionList');
+                        list.innerHTML = '';
+                        
+                        if (data.instructions.allowed) {
+                            data.instructions.allowed.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item;
+                                li.style.color = 'var(--colors-success)';
+                                list.appendChild(li);
+                            });
+                        }
+                        
+                        if (data.instructions.restricted) {
+                            data.instructions.restricted.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item;
+                                li.style.color = 'var(--colors-error)';
+                                list.appendChild(li);
+                            });
+                        }
+                        
+                        if (data.instructions.note) {
+                            const li = document.createElement('li');
+                            li.textContent = data.instructions.note;
+                            li.style.color = 'var(--colors-text-muted)';
+                            li.style.fontStyle = 'italic';
+                            list.appendChild(li);
+                        }
+                    }
                 } else {
-                    updateConnectionStatus('disconnected');
-                    showToast(response.message || 'Connection failed', 'error');
+                    configContent.textContent = 'Error: ' + (data.error || 'Failed to generate config');
                 }
-            } catch (error) {
-                console.error('Connection error:', error);
-                updateConnectionStatus('disconnected');
-                showToast('Failed to connect. Please try again.', 'error');
+            } catch (e) {
+                console.error('Failed to generate config:', e);
+                configContent.textContent = 'Error: Failed to generate configuration';
             }
         }
-
-        function disconnect() {
-            isConnected = false;
-            currentConfig = null;
-            updateConnectionStatus('disconnected');
-            document.getElementById('config-section').style.display = 'none';
-            showToast('Disconnected', 'info');
-        }
-
-        function updateConnectionStatus(status, server = null) {
-            const icon = document.getElementById('status-icon');
-            const text = document.getElementById('status-text');
-            const details = document.getElementById('connection-details');
-            const btn = document.getElementById('main-connect-btn');
-
-            switch (status) {
-                case 'connected':
-                    icon.textContent = '🔒';
-                    icon.classList.add('connected');
-                    text.textContent = 'Connected';
-                    text.className = 'status-text connected';
-                    details.textContent = server ? `${server.name} • ${server.ip_address}` : 'Connected to VPN';
-                    btn.textContent = 'Disconnect';
-                    btn.className = 'connect-btn disconnect';
-                    break;
-                case 'connecting':
-                    icon.textContent = '⏳';
-                    icon.classList.remove('connected');
-                    text.textContent = 'Connecting...';
-                    text.className = 'status-text connecting';
-                    details.textContent = 'Generating secure configuration...';
-                    btn.disabled = true;
-                    break;
-                case 'disconnected':
-                default:
-                    icon.textContent = '🔓';
-                    icon.classList.remove('connected');
-                    text.textContent = 'Not Connected';
-                    text.className = 'status-text disconnected';
-                    details.textContent = selectedServer ? 
-                        `Selected: ${selectedServer.name}` : 'Select a server below to connect';
-                    btn.textContent = 'Connect';
-                    btn.className = 'connect-btn connect';
-                    btn.disabled = !selectedServer;
-                    break;
-            }
-        }
-
-        async function autoConnect() {
-            // Find best server (lowest load, online)
-            const onlineServers = servers.filter(s => s.status === 'online' && !s.is_vip);
-            
-            if (onlineServers.length === 0) {
-                showToast('No servers available', 'error');
-                return;
-            }
-
-            // Sort by load and select lowest
-            onlineServers.sort((a, b) => (a.current_load || 0) - (b.current_load || 0));
-            const bestServer = onlineServers[0];
-
-            selectServer(bestServer.id);
-            await connect();
-        }
-
-        function downloadConfig() {
-            if (!currentConfig) return;
-
-            const blob = new Blob([currentConfig], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `truevault-${selectedServer?.name?.toLowerCase().replace(/\s+/g, '-') || 'vpn'}.conf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showToast('Config file downloaded!', 'success');
-        }
-
+        
         function copyConfig() {
             if (!currentConfig) return;
-
+            
             navigator.clipboard.writeText(currentConfig).then(() => {
-                showToast('Config copied to clipboard!', 'success');
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✓ Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Config';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy. Please select and copy manually.');
             });
         }
-
-        function showQRCode() {
-            // Would generate QR code for mobile import
-            showToast('QR Code feature coming soon!', 'info');
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadServers();
-            
-            // Refresh server status every 30 seconds
-            setInterval(loadServers, 30000);
-        });
     </script>
 </body>
 </html>

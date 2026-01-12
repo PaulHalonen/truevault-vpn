@@ -1,62 +1,131 @@
 <?php
 /**
- * TrueVault VPN - Servers API
- * GET /api/vpn/servers.php - List all available VPN servers
+ * TrueVault VPN - Get Available Servers
+ * GET /api/vpn/servers.php
+ * 
+ * Returns list of servers available to the user based on their plan/VIP status
  */
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../helpers/vip.php';
 
-// Optional auth - some info available without login
-$user = Auth::optionalAuth();
+// All server info
+$ALL_SERVERS = [
+    [
+        'id' => 1,
+        'name' => 'NY',
+        'full_name' => 'New York',
+        'location' => 'New York, USA',
+        'country' => 'US',
+        'ip' => '66.94.103.91',
+        'port' => 51820,
+        'type' => 'shared',
+        'bandwidth' => 'unlimited',
+        'allowed' => ['gaming', 'streaming', 'cameras', 'torrents'],
+        'instructions' => 'RECOMMENDED FOR HOME USE - Gaming, cameras, streaming, torrents all allowed.',
+        'icon' => '🗽',
+        'vip_only' => false,
+        'filename' => 'TrueVaultNY.conf'
+    ],
+    [
+        'id' => 2,
+        'name' => 'STL',
+        'full_name' => 'St. Louis (VIP)',
+        'location' => 'St. Louis, USA',
+        'country' => 'US',
+        'ip' => '144.126.133.253',
+        'port' => 51820,
+        'type' => 'dedicated',
+        'bandwidth' => 'unlimited',
+        'allowed' => ['everything'],
+        'instructions' => 'YOUR PRIVATE SERVER - Only you can connect.',
+        'icon' => '👑',
+        'vip_only' => true,
+        'vip_email' => 'seige235@yahoo.com',
+        'filename' => 'TrueVaultSTL.conf'
+    ],
+    [
+        'id' => 3,
+        'name' => 'TX',
+        'full_name' => 'Dallas',
+        'location' => 'Dallas, USA',
+        'country' => 'US',
+        'ip' => '66.241.124.4',
+        'port' => 51820,
+        'type' => 'shared',
+        'bandwidth' => 'limited',
+        'allowed' => ['streaming'],
+        'not_allowed' => ['gaming', 'torrents', 'cameras'],
+        'instructions' => 'STREAMING ONLY - Netflix works, NO gaming/torrents/cameras.',
+        'icon' => '🤠',
+        'vip_only' => false,
+        'filename' => 'TrueVaultTX.conf'
+    ],
+    [
+        'id' => 4,
+        'name' => 'CAN',
+        'full_name' => 'Toronto',
+        'location' => 'Toronto, Canada',
+        'country' => 'CA',
+        'ip' => '66.241.125.247',
+        'port' => 51820,
+        'type' => 'shared',
+        'bandwidth' => 'limited',
+        'allowed' => ['streaming'],
+        'not_allowed' => ['gaming', 'torrents', 'cameras'],
+        'instructions' => 'CANADIAN STREAMING - Canadian Netflix, NO gaming/torrents/cameras.',
+        'icon' => '🍁',
+        'vip_only' => false,
+        'filename' => 'TrueVaultCAN.conf'
+    ]
+];
 
-$method = $_SERVER['REQUEST_METHOD'];
+// Require authentication
+$user = Auth::requireAuth();
 
-if ($method === 'GET') {
-    try {
-        // Get all servers
-        $servers = Database::query('vpn', "SELECT * FROM vpn_servers ORDER BY is_vip ASC, name ASC");
-        
-        // Filter VIP servers for non-VIP users
-        $filteredServers = [];
-        foreach ($servers as $server) {
-            // If it's a VIP server
-            if ($server['is_vip'] == 1) {
-                // Only show to the VIP user it belongs to
-                if ($user && $server['vip_user_email'] === $user['email']) {
-                    $filteredServers[] = $server;
-                }
-                // Skip for other users
-                continue;
+Response::requireMethod('GET');
+
+try {
+    $isVIP = VIPManager::isVIP($user['email']);
+    $vipDetails = $isVIP ? VIPManager::getVIPDetails($user['email']) : null;
+    
+    $availableServers = [];
+    
+    foreach ($ALL_SERVERS as $server) {
+        // Check VIP-only servers
+        if ($server['vip_only']) {
+            // Only show to the specific VIP user
+            if (isset($server['vip_email']) && strtolower($user['email']) === strtolower($server['vip_email'])) {
+                $server['your_server'] = true;
+                $availableServers[] = $server;
             }
-            
-            // Regular servers are visible to all
-            $filteredServers[] = $server;
+            continue;
         }
         
-        // Add connection count for each server (simulated for now)
-        foreach ($filteredServers as &$server) {
-            // Get active connections count
-            $connections = Database::queryOne('vpn', 
-                "SELECT COUNT(*) as count FROM vpn_connections WHERE server_id = ? AND status = 'connected'",
-                [$server['id']]
-            );
-            $server['active_connections'] = $connections ? (int)$connections['count'] : 0;
-            
-            // Calculate load percentage
-            $maxConnections = $server['max_connections'] ?: 50;
-            $server['current_load'] = min(100, round(($server['active_connections'] / $maxConnections) * 100));
-        }
-        
-        Response::success([
-            'servers' => $filteredServers,
-            'count' => count($filteredServers)
-        ]);
-        
-    } catch (Exception $e) {
-        Response::serverError('Failed to load servers: ' . $e->getMessage());
+        // Regular servers available to everyone with subscription
+        $availableServers[] = $server;
     }
-} else {
-    Response::error('Method not allowed', 405);
+    
+    // Get connection status for each server
+    foreach ($availableServers as &$server) {
+        $peer = Database::queryOne('vpn',
+            "SELECT status, assigned_ip FROM user_peers WHERE user_id = ? AND server_id = ? ORDER BY created_at DESC LIMIT 1",
+            [$user['id'], $server['id']]
+        );
+        
+        $server['connection_status'] = $peer ? $peer['status'] : 'not_configured';
+        $server['assigned_ip'] = $peer ? $peer['assigned_ip'] : null;
+    }
+    
+    Response::success([
+        'servers' => $availableServers,
+        'is_vip' => $isVIP,
+        'vip_tier' => $vipDetails ? $vipDetails['tier'] : null,
+        'total_servers' => count($availableServers)
+    ]);
+    
+} catch (Exception $e) {
+    Response::serverError('Failed to get servers: ' . $e->getMessage());
 }

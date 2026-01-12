@@ -4,13 +4,15 @@
  * POST /api/vpn/connect.php
  * 
  * Generates WireGuard configuration for connecting to a server
- * Keys are generated server-side for security
+ * Returns text config (no QR codes - users must copy/paste)
  */
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/jwt.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../helpers/vip.php';
+require_once __DIR__ . '/../billing/billing-manager.php';
 
 // Require authentication
 $user = Auth::requireAuth();
@@ -37,45 +39,71 @@ try {
     // Check VIP server access
     if ($server['is_vip'] == 1) {
         $vipEmail = $server['vip_user_email'];
-        if ($user['email'] !== $vipEmail) {
+        if (strtolower($user['email']) !== strtolower($vipEmail)) {
             Response::error('This is a VIP-only server', 403);
         }
     }
     
-    // Generate or retrieve user's keys
-    $userCert = Database::queryOne('certificates', 
-        "SELECT * FROM user_certificates WHERE user_id = ? AND type = 'wireguard' AND status = 'active'", 
+    // Check subscription status (VIPs bypass)
+    if (!VIPManager::isVIP($user['email'])) {
+        $subscription = BillingManager::getCurrentSubscription($user['id']);
+        if (!$subscription || $subscription['status'] !== 'active') {
+            Response::error('Active subscription required', 403);
+        }
+    }
+    
+    // Check device limits
+    $deviceCount = Database::queryOne('devices', 
+        "SELECT COUNT(*) as count FROM user_devices WHERE user_id = ? AND status = 'active'",
         [$user['id']]
     );
     
-    if (!$userCert) {
-        // Generate new WireGuard keypair
-        $privateKey = generateWireGuardPrivateKey();
-        $publicKey = generateWireGuardPublicKey($privateKey);
+    $limits = VIPManager::isVIP($user['email']) 
+        ? VIPManager::getVIPLimits($user['email'])
+        : ['max_devices' => $subscription['max_devices'] ?? 3];
+    
+    // Generate or retrieve user's keys
+    $userKey = PeerManager::getOrCreateUserKey($user['id']);
+    
+    // Check if already has peer on this server
+    $existingPeer = Database::queryOne('vpn',
+        "SELECT * FROM user_peers WHERE user_id = ? AND server_id = ? AND status = 'active'",
+        [$user['id'], $serverId]
+    );
+    
+    $assignedIp = null;
+    
+    if ($existingPeer) {
+        $assignedIp = $existingPeer['assigned_ip'];
+    } else {
+        // Add peer to server via API
+        $result = addPeerToServer($server, $userKey['public_key'], $user['id']);
         
-        // Store in database
-        Database::execute('certificates',
-            "INSERT INTO user_certificates (user_id, name, type, public_key, private_key, status, created_at) 
-             VALUES (?, 'WireGuard Key', 'wireguard', ?, ?, 'active', datetime('now'))",
-            [$user['id'], $publicKey, $privateKey]
-        );
-        
-        $userCert = [
-            'private_key' => $privateKey,
-            'public_key' => $publicKey
-        ];
+        if ($result['success']) {
+            $assignedIp = $result['allowed_ip'];
+            
+            // Store peer record
+            Database::execute('vpn',
+                "INSERT INTO user_peers (user_id, server_id, public_key, assigned_ip, status, created_at)
+                 VALUES (?, ?, ?, ?, 'active', datetime('now'))",
+                [$user['id'], $serverId, $userKey['public_key'], $assignedIp]
+            );
+        } else {
+            // Fallback - assign IP locally
+            $assignedIp = assignLocalIp($user['id'], $server['network_prefix']);
+        }
     }
     
-    // Assign IP address for this user on this server
-    $assignedIp = assignVpnIp($user['id'], $serverId);
+    // Generate config file name
+    $configName = generateConfigName($server);
     
     // Generate WireGuard config
-    $config = generateWireGuardConfig($server, $userCert, $assignedIp);
+    $config = generateWireGuardConfig($server, $userKey, $assignedIp, $configName);
     
-    // Log the connection attempt
+    // Log the connection
     Database::execute('vpn',
         "INSERT INTO vpn_connections (user_id, server_id, status, assigned_ip, connected_at) 
-         VALUES (?, ?, 'pending', ?, datetime('now'))",
+         VALUES (?, ?, 'active', ?, datetime('now'))",
         [$user['id'], $serverId, $assignedIp]
     );
     
@@ -91,79 +119,98 @@ try {
             'id' => $server['id'],
             'name' => $server['name'],
             'location' => $server['location'],
-            'ip' => $server['ip_address']
+            'ip' => $server['ip_address'],
+            'instructions' => $server['instructions'],
+            'allowed_uses' => explode(',', $server['allowed_uses']),
+            'bandwidth_limit' => $server['bandwidth_limit']
         ],
         'assigned_ip' => $assignedIp,
+        'config_name' => $configName,
         'config' => $config,
-        'public_key' => $userCert['public_key']
-    ], 'Connection configuration generated');
+        'public_key' => $userKey['public_key'],
+        'instructions' => [
+            '1. Copy the configuration text below',
+            '2. Open WireGuard on your device',
+            '3. Click "Add Tunnel" → "Add empty tunnel" (or import from text)',
+            '4. Paste the configuration',
+            '5. Save as "' . $configName . '"',
+            '6. Activate the tunnel'
+        ]
+    ], 'Configuration generated');
 
 } catch (Exception $e) {
     Response::serverError('Failed to connect: ' . $e->getMessage());
 }
 
 /**
- * Generate WireGuard private key
- * In production, this would use actual WireGuard key generation
+ * Generate config file name based on server
  */
-function generateWireGuardPrivateKey() {
-    // Generate a 32-byte random key and base64 encode
-    $bytes = random_bytes(32);
-    // Set the appropriate bits for Curve25519
-    $bytes[0] = chr(ord($bytes[0]) & 248);
-    $bytes[31] = chr((ord($bytes[31]) & 127) | 64);
-    return base64_encode($bytes);
-}
-
-/**
- * Generate WireGuard public key from private key
- * In production, this would use actual Curve25519
- */
-function generateWireGuardPublicKey($privateKey) {
-    // Simplified - in production use sodium_crypto_scalarmult_base
-    // For demo, we'll generate a pseudo-public key
-    $hash = hash('sha256', base64_decode($privateKey), true);
-    return base64_encode($hash);
-}
-
-/**
- * Assign a VPN IP address to user for this server
- */
-function assignVpnIp($userId, $serverId) {
-    // Check if user already has an IP on this server
-    $existing = Database::queryOne('vpn',
-        "SELECT assigned_ip FROM vpn_connections WHERE user_id = ? AND server_id = ? AND assigned_ip IS NOT NULL ORDER BY id DESC LIMIT 1",
-        [$userId, $serverId]
-    );
+function generateConfigName($server) {
+    $names = [
+        'New York' => 'TrueVaultNY',
+        'St. Louis VIP' => 'TrueVaultSTL',
+        'Dallas' => 'TrueVaultTX',
+        'Toronto' => 'TrueVaultCAN'
+    ];
     
-    if ($existing && $existing['assigned_ip']) {
-        return $existing['assigned_ip'];
+    return ($names[$server['name']] ?? 'TrueVault' . $server['id']) . '.conf';
+}
+
+/**
+ * Add peer to VPN server via API
+ */
+function addPeerToServer($server, $publicKey, $userId) {
+    $url = "http://{$server['ip_address']}:{$server['api_port']}/peers/add";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer TrueVault2026SecretKey'
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'public_key' => $publicKey,
+        'user_id' => $userId
+    ]));
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 || $httpCode === 201) {
+        return json_decode($response, true) ?: ['success' => false];
     }
     
-    // Assign new IP in the 10.8.0.0/24 range
-    // Use user_id + server_id to generate consistent IP
-    $lastOctet = (($userId * 7) + $serverId) % 250 + 2; // 2-252
-    return "10.8.0.{$lastOctet}";
+    return ['success' => false, 'error' => 'Server unreachable'];
+}
+
+/**
+ * Assign IP locally as fallback
+ */
+function assignLocalIp($userId, $networkPrefix) {
+    $lastOctet = ($userId % 250) + 2;
+    return "{$networkPrefix}.{$lastOctet}";
 }
 
 /**
  * Generate WireGuard configuration file content
  */
-function generateWireGuardConfig($server, $userCert, $assignedIp) {
-    // Server's public key (would be stored in database in production)
-    // For now, generate based on server IP
-    $serverPublicKey = base64_encode(hash('sha256', $server['ip_address'] . '_server_key', true));
-    
+function generateWireGuardConfig($server, $userKey, $assignedIp, $configName) {
     $config = "[Interface]
 # TrueVault VPN - {$server['name']}
+# Config: {$configName}
 # Generated: " . date('Y-m-d H:i:s') . "
-PrivateKey = {$userCert['private_key']}
-Address = {$assignedIp}/24
+# Location: {$server['location']}
+PrivateKey = {$userKey['private_key']}
+Address = {$assignedIp}/32
 DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
-# {$server['name']} ({$server['location']})
-PublicKey = {$serverPublicKey}
+# TrueVault {$server['name']} Server
+PublicKey = {$server['public_key']}
 Endpoint = {$server['ip_address']}:{$server['port']}
 AllowedIPs = 0.0.0.0/0, ::/0
 PersistentKeepalive = 25

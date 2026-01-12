@@ -1,0 +1,268 @@
+
+========================================
+SESSION: January 12, 2026 - 14:30 - 16:00 CST
+COMPLETE AUTOMATION & BILLING SYSTEM BUILD
+========================================
+
+## MASTER BUILD - COMPLETE AUTOMATION SYSTEM
+
+### 1. PEER MANAGEMENT API (peer_api.py)
+Location: server-scripts/peer_api.py
+
+Features:
+- POST /peers/add - Add new peer to WireGuard server
+- POST /peers/remove - Remove peer from WireGuard server
+- GET /peers/list - List all peers
+- GET /peers/status - Check specific peer status
+- GET /health - Health check
+
+Authentication: Bearer token (TrueVault2026SecretKey)
+
+Deployment files:
+- server-scripts/truevault-peer-api.service (systemd)
+- server-scripts/deploy-peer-api.sh (deployment script)
+
+### 2. COMPLETE BILLING SYSTEM
+
+**Files Created:**
+
+api/billing/billing-manager.php
+- BillingManager class
+  - createCheckout($userId, $planId)
+  - completePayment($orderId)
+  - activateSubscription($userId, $planId, $paymentId)
+  - cancelSubscription($userId, $reason)
+  - handlePaymentFailure($userId)
+  - scheduleAccessRevocation($userId, $revokeDate)
+  - processRevocations() - cron job
+  - createInvoice($userId, $planId, $amount, $paymentId)
+  - getBillingHistory($userId)
+  - getCurrentSubscription($userId)
+
+- PayPalAPI class
+  - getAccessToken()
+  - request($method, $endpoint, $data)
+  - createSubscription($planId, $userId, $email)
+  - capturePayment($orderId)
+
+- PeerManager class
+  - provisionUser($userId) - Adds peer to all accessible servers
+  - revokeAllAccess($userId) - Removes peer from all servers
+  - getOrCreateUserKey($userId)
+  - getAccessibleServers($email)
+  - serverRequest($serverId, $method, $endpoint, $data)
+
+api/billing/webhook.php
+- PayPal webhook handler
+- Handles events:
+  - PAYMENT.CAPTURE.COMPLETED
+  - PAYMENT.CAPTURE.DENIED/DECLINED
+  - BILLING.SUBSCRIPTION.CREATED/ACTIVATED/CANCELLED/SUSPENDED
+  - BILLING.SUBSCRIPTION.PAYMENT.FAILED
+  - BILLING.SUBSCRIPTION.RENEWED
+  - CUSTOMER.DISPUTE.CREATED/RESOLVED
+
+api/billing/checkout.php - Create checkout session
+api/billing/complete.php - Complete payment after approval
+api/billing/subscription.php - Get subscription status
+api/billing/cancel.php - Cancel subscription
+api/billing/setup-billing.php - Database setup
+
+### 3. VPN CONFIG GENERATOR
+
+api/vpn/config.php
+- Generates WireGuard config files with REAL public keys:
+  - TrueVaultNY.conf (66.94.103.91)
+  - TrueVaultSTL.conf (144.126.133.253) - VIP only
+  - TrueVaultTX.conf (66.241.124.4)
+  - TrueVaultCAN.conf (66.241.125.247)
+
+api/vpn/servers.php
+- Returns available servers based on user's plan/VIP status
+- Includes usage instructions per server
+
+api/vpn/connect.php (UPDATED)
+- Complete connection flow:
+  1. Validates subscription/VIP status
+  2. Checks device limits
+  3. Generates/retrieves user's keypair
+  4. Provisions peer on server (calls peer_api.py)
+  5. Returns WireGuard config
+
+### 4. DEVICE MANAGEMENT
+
+api/devices/manage.php
+- GET - List user's devices
+- POST - Register new device (checks limits)
+- DELETE - Remove device
+
+Limits:
+- Basic: 3 devices
+- Family: 5 devices
+- Dedicated: Unlimited
+- VIP Basic: 8 devices
+- VIP Dedicated: Unlimited
+
+### 5. CAMERA MANAGEMENT
+
+api/cameras/manage.php
+- GET - List user's cameras
+- POST - Add camera (checks limits)
+- PUT - Update camera
+- DELETE - Remove camera
+
+Limits:
+- Basic: 1 camera, NY only
+- Family: 2 cameras, NY only
+- Dedicated: 12 cameras, any server
+- VIP Basic: 2 cameras
+- VIP Dedicated: 12 cameras, any server
+
+### 6. CRON JOB HANDLER
+
+api/cron/run.php
+Tasks:
+1. Process scheduled revocations
+2. Check expiring subscriptions (3-day warning)
+3. Auto-suspend expired subscriptions
+4. Cleanup old logs (30/90 days)
+5. Health check all VPN servers
+
+Cron entry:
+*/5 * * * * php /path/to/api/cron/run.php
+
+Or via URL:
+https://vpn.the-truth-publishing.com/api/cron/run.php?key=TrueVault2026CronKey
+
+### 7. COMPLETE DATABASE SETUP
+
+api/config/setup-all.php
+Creates all tables:
+- users (users.db)
+- subscriptions, pending_orders, invoices, scheduled_revocations, payment_failures, disputes (billing.db)
+- vpn_servers, user_peers, vpn_connections (vpn.db)
+- user_devices (devices.db)
+- user_cameras (cameras.db)
+- user_certificates (certificates.db)
+- activity_log, webhook_log (logs.db)
+- themes, theme_variables (themes.db)
+
+Inserts default servers with real public keys.
+
+### 8. PAYMENT PAGES
+
+public/payment-success.html
+- Auto-completes payment on load
+- Shows order details
+- Redirects to dashboard
+
+public/payment-cancel.html
+- Shows cancellation message
+- Clears pending order
+- Links to try again or dashboard
+
+### 9. PLAN STRUCTURE
+
+| Plan | Price | Devices | Cameras | Camera Server |
+|------|-------|---------|---------|---------------|
+| Basic | $9.99/mo | 3 | 1 | NY only |
+| Family | $14.99/mo | 5 | 2 | NY only |
+| Dedicated | $29.99/mo | Unlimited | 12 | Any |
+| VIP Upgrade | $9.97/mo | Unlimited | 12 | Any |
+
+VIP (Free):
+- VIP Basic: 8 devices, 2 cameras
+- VIP Dedicated: Unlimited, 12 cameras, own server
+
+### 10. BILLING FLOW (Automated)
+
+**New User:**
+1. User registers
+2. User selects plan on pricing page
+3. API creates PayPal checkout
+4. User approves on PayPal
+5. Redirected to payment-success.html
+6. API captures payment
+7. Creates invoice
+8. Activates subscription
+9. Provisions peer on all accessible servers
+10. User can now connect to VPN
+
+**Payment Fails:**
+1. PayPal sends webhook (PAYMENT.CAPTURE.DENIED)
+2. handlePaymentFailure() called
+3. Subscription marked as payment_failed
+4. 7-day grace period scheduled
+5. User notified (TODO: email)
+6. After 7 days, processRevocations() removes peers
+7. User status set to suspended
+8. VPN configs become useless
+
+**User Cancels:**
+1. User calls /api/billing/cancel.php
+2. Subscription marked as cancelled
+3. Access continues until end_date
+4. Revocation scheduled for end_date
+5. After end_date, peers removed
+
+**Subscription Renewed:**
+1. PayPal sends webhook (BILLING.SUBSCRIPTION.RENEWED)
+2. end_date extended by 1 month
+3. New invoice created
+4. Any pending revocations cancelled
+5. Peer access ensured active
+
+## SERVER DEPLOYMENT NEEDED
+
+Deploy peer_api.py to each server:
+
+```bash
+# SSH to server
+ssh root@66.94.103.91  # NY
+ssh root@144.126.133.253  # STL
+ssh root@66.241.124.4  # TX (fly.io - use fly ssh)
+ssh root@66.241.125.247  # CAN (fly.io - use fly ssh)
+
+# Run deployment
+./deploy-peer-api.sh NY   # or STL, TX, CAN
+```
+
+## FILES CREATED THIS SESSION
+
+1. server-scripts/peer_api.py
+2. server-scripts/truevault-peer-api.service
+3. server-scripts/deploy-peer-api.sh
+4. api/billing/billing-manager.php
+5. api/billing/webhook.php
+6. api/billing/checkout.php
+7. api/billing/complete.php
+8. api/billing/subscription.php
+9. api/billing/cancel.php
+10. api/billing/setup-billing.php
+11. api/vpn/config.php
+12. api/vpn/servers.php (updated)
+13. api/vpn/connect.php (rewritten)
+14. api/devices/manage.php
+15. api/cameras/manage.php
+16. api/cron/run.php
+17. api/config/setup-all.php
+18. public/payment-success.html
+19. public/payment-cancel.html
+
+## REMAINING TASKS
+
+1. ⏳ Deploy peer_api.py to all 4 servers
+2. ⏳ Run setup-all.php to create database tables
+3. ⏳ Configure PayPal webhook URL
+4. ⏳ Set up cron job for /api/cron/run.php
+5. ⏳ Build dashboard UI with VPN connection
+6. ⏳ Test end-to-end payment flow
+7. ⏳ Test VPN connection with real config
+
+## WEBHOOK URL TO CONFIGURE IN PAYPAL
+
+https://vpn.the-truth-publishing.com/api/billing/webhook.php
+
+========================================
+END SESSION: January 12, 2026 - 16:00 CST
+========================================

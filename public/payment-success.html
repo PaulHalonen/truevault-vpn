@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - TrueVault VPN</title>
+    <link rel="stylesheet" href="assets/css/theme.css">
+    <style>
+        .success-container {
+            max-width: 500px;
+            margin: 100px auto;
+            text-align: center;
+            padding: 2rem;
+        }
+        .success-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        .success-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--success);
+        }
+        .success-message {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        .action-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✅</div>
+        <h1 class="success-title">Payment Successful!</h1>
+        <p class="success-message">
+            Thank you for subscribing to TrueVault VPN. Your account has been activated and you can now connect to all available servers.
+        </p>
+        <p id="processingMessage" style="display: none; color: var(--warning);">
+            Processing your subscription...
+        </p>
+        <a href="dashboard.html" class="action-btn">Go to Dashboard</a>
+    </div>
+
+    <script>
+        // Complete the payment if we have an order ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('token');
+        
+        if (orderId) {
+            document.getElementById('processingMessage').style.display = 'block';
+            
+            fetch('/api/billing/complete.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('truevault_token')
+                },
+                body: JSON.stringify({ order_id: orderId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('processingMessage').style.display = 'none';
+                if (data.success) {
+                    console.log('Payment completed:', data);
+                } else {
+                    console.error('Payment completion failed:', data);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('processingMessage').style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>
