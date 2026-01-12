@@ -1,66 +1,75 @@
 <?php
 /**
  * TrueVault VPN - Database Manager
- * Handles connections to all SQLite databases
+ * Handles connections to all 21 SQLite databases
  * 
  * Usage:
- *   $db = DatabaseManager::getInstance();
- *   $users = $db->getConnection('core', 'users');
- *   $users->query("SELECT * FROM users");
+ *   $db = Database::getConnection('users');
+ *   $db->query("SELECT * FROM users");
  */
 
-class DatabaseManager {
-    private static $instance = null;
-    private $connections = [];
-    private $basePath;
+class Database {
+    private static $connections = [];
+    private static $basePath = null;
     
-    // Database structure
-    private $databases = [
-        'core' => ['users', 'sessions', 'admin'],
-        'vpn' => ['servers', 'connections', 'certificates', 'identities', 'routing'],
-        'devices' => ['discovered', 'cameras', 'port_forwarding', 'mesh_network'],
-        'billing' => ['subscriptions', 'invoices', 'payments', 'transactions'],
-        'cms' => ['pages', 'themes', 'templates', 'media'],
-        'automation' => ['workflows', 'tasks', 'logs', 'emails'],
-        'analytics' => ['usage', 'bandwidth', 'events']
+    // All available databases
+    private static $databases = [
+        'users',           // User accounts
+        'admin_users',     // Admin accounts
+        'subscriptions',   // Subscription plans
+        'payments',        // Payment history
+        'vpn',             // VPN servers and connections
+        'certificates',    // SSL/VPN certificates
+        'devices',         // User devices
+        'identities',      // Regional identities
+        'mesh',            // Mesh networking
+        'cameras',         // IP cameras
+        'themes',          // UI themes
+        'pages',           // CMS pages
+        'emails',          // Email templates
+        'media',           // Media files
+        'logs',            // System logs
+        'settings',        // System settings
+        'automation',      // Workflow automation
+        'notifications',   // User notifications
+        'analytics',       // Analytics data
+        'bandwidth',       // Bandwidth usage
+        'support'          // Support tickets
     ];
     
-    private function __construct() {
-        $this->basePath = __DIR__ . '/../databases';
-    }
-    
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new self();
+    /**
+     * Get database base path
+     */
+    private static function getBasePath() {
+        if (self::$basePath === null) {
+            self::$basePath = __DIR__ . '/../../data';
         }
-        return self::$instance;
+        return self::$basePath;
     }
     
     /**
-     * Get a database connection
+     * Get a database connection by name
      * 
-     * @param string $folder The database folder (core, vpn, devices, etc.)
-     * @param string $name The database name (users, servers, etc.)
+     * @param string $name The database name (users, vpn, themes, etc.)
      * @return PDO The database connection
      */
-    public function getConnection($folder, $name) {
-        $key = "$folder/$name";
-        
-        if (!isset($this->connections[$key])) {
-            $this->connections[$key] = $this->createConnection($folder, $name);
+    public static function getConnection($name) {
+        if (!isset(self::$connections[$name])) {
+            self::$connections[$name] = self::createConnection($name);
         }
-        
-        return $this->connections[$key];
+        return self::$connections[$name];
     }
     
     /**
      * Create a new database connection
      */
-    private function createConnection($folder, $name) {
-        $dbPath = "{$this->basePath}/{$folder}/{$name}.db";
+    private static function createConnection($name) {
+        $basePath = self::getBasePath();
+        $dbPath = "$basePath/$name.db";
         
-        if (!file_exists($dbPath)) {
-            throw new Exception("Database not found: $dbPath. Run setup-databases.php first.");
+        // Create data directory if it doesn't exist
+        if (!is_dir($basePath)) {
+            mkdir($basePath, 0755, true);
         }
         
         try {
@@ -73,166 +82,65 @@ class DatabaseManager {
             
             return $pdo;
         } catch (PDOException $e) {
-            throw new Exception("Failed to connect to database $folder/$name: " . $e->getMessage());
+            throw new Exception("Failed to connect to database $name: " . $e->getMessage());
         }
-    }
-    
-    // Convenience methods for common databases
-    
-    public function users() {
-        return $this->getConnection('core', 'users');
-    }
-    
-    public function sessions() {
-        return $this->getConnection('core', 'sessions');
-    }
-    
-    public function admin() {
-        return $this->getConnection('core', 'admin');
-    }
-    
-    public function servers() {
-        return $this->getConnection('vpn', 'servers');
-    }
-    
-    public function connections() {
-        return $this->getConnection('vpn', 'connections');
-    }
-    
-    public function certificates() {
-        return $this->getConnection('vpn', 'certificates');
-    }
-    
-    public function identities() {
-        return $this->getConnection('vpn', 'identities');
-    }
-    
-    public function routing() {
-        return $this->getConnection('vpn', 'routing');
-    }
-    
-    public function discovered() {
-        return $this->getConnection('devices', 'discovered');
-    }
-    
-    public function cameras() {
-        return $this->getConnection('devices', 'cameras');
-    }
-    
-    public function portForwarding() {
-        return $this->getConnection('devices', 'port_forwarding');
-    }
-    
-    public function meshNetwork() {
-        return $this->getConnection('devices', 'mesh_network');
-    }
-    
-    public function subscriptions() {
-        return $this->getConnection('billing', 'subscriptions');
-    }
-    
-    public function invoices() {
-        return $this->getConnection('billing', 'invoices');
-    }
-    
-    public function payments() {
-        return $this->getConnection('billing', 'payments');
-    }
-    
-    public function transactions() {
-        return $this->getConnection('billing', 'transactions');
-    }
-    
-    public function pages() {
-        return $this->getConnection('cms', 'pages');
-    }
-    
-    public function themes() {
-        return $this->getConnection('cms', 'themes');
-    }
-    
-    public function templates() {
-        return $this->getConnection('cms', 'templates');
-    }
-    
-    public function media() {
-        return $this->getConnection('cms', 'media');
-    }
-    
-    public function workflows() {
-        return $this->getConnection('automation', 'workflows');
-    }
-    
-    public function tasks() {
-        return $this->getConnection('automation', 'tasks');
-    }
-    
-    public function logs() {
-        return $this->getConnection('automation', 'logs');
-    }
-    
-    public function emails() {
-        return $this->getConnection('automation', 'emails');
-    }
-    
-    public function usage() {
-        return $this->getConnection('analytics', 'usage');
-    }
-    
-    public function bandwidth() {
-        return $this->getConnection('analytics', 'bandwidth');
-    }
-    
-    public function events() {
-        return $this->getConnection('analytics', 'events');
-    }
-    
-    /**
-     * Close all database connections
-     */
-    public function closeAll() {
-        $this->connections = [];
     }
     
     /**
      * Get list of all available databases
      */
-    public function getDatabaseList() {
-        return $this->databases;
+    public static function getDatabaseList() {
+        return self::$databases;
     }
     
     /**
      * Check if a database exists
      */
-    public function databaseExists($folder, $name) {
-        $dbPath = "{$this->basePath}/{$folder}/{$name}.db";
+    public static function databaseExists($name) {
+        $dbPath = self::getBasePath() . "/$name.db";
         return file_exists($dbPath);
     }
     
     /**
      * Get database file path
      */
-    public function getDatabasePath($folder, $name) {
-        return "{$this->basePath}/{$folder}/{$name}.db";
+    public static function getDatabasePath($name) {
+        return self::getBasePath() . "/$name.db";
     }
     
     /**
-     * Execute a query on multiple databases (for cross-database operations)
+     * Close a specific connection
      */
-    public function multiQuery($queries) {
-        $results = [];
-        foreach ($queries as $key => $query) {
-            list($folder, $name) = explode('/', $query['database']);
-            $db = $this->getConnection($folder, $name);
-            $stmt = $db->prepare($query['sql']);
-            $stmt->execute($query['params'] ?? []);
-            $results[$key] = $stmt->fetchAll();
+    public static function close($name) {
+        if (isset(self::$connections[$name])) {
+            self::$connections[$name] = null;
+            unset(self::$connections[$name]);
         }
-        return $results;
+    }
+    
+    /**
+     * Close all database connections
+     */
+    public static function closeAll() {
+        self::$connections = [];
+    }
+    
+    /**
+     * Get database status for all databases
+     */
+    public static function getStatus() {
+        $status = [];
+        foreach (self::$databases as $name) {
+            $status[$name] = [
+                'exists' => self::databaseExists($name),
+                'path' => self::getDatabasePath($name)
+            ];
+        }
+        return $status;
     }
 }
 
-// Helper function for quick access
-function db() {
-    return DatabaseManager::getInstance();
+// Alias for convenience
+function db($name) {
+    return Database::getConnection($name);
 }
