@@ -567,18 +567,19 @@ try {
     echo "❌ Admin error: " . $e->getMessage() . "\n";
 }
 
-// Default VPN servers
+// Default VPN servers with public keys
 try {
     $db = new SQLite3("$dbDir/vpn.db");
+    // [id, name, ip_address, location, region, country_code, port, is_vip, vip_user_email, status, provider, public_key]
     $servers = [
-        [1, 'US-East', '66.94.103.91', 'New York', 'US-East', 'US', 51820, 0, NULL, 'online', 'Contabo'],
-        [2, 'US-Central VIP', '144.126.133.253', 'St. Louis', 'US-Central', 'US', 51820, 1, 'seige235@yahoo.com', 'online', 'Contabo'],
-        [3, 'Dallas', '66.241.124.4', 'Dallas', 'US-South', 'US', 51820, 0, NULL, 'online', 'Fly.io'],
-        [4, 'Canada', '66.241.125.247', 'Toronto', 'CA-East', 'CA', 51820, 0, NULL, 'online', 'Fly.io']
+        [1, 'US-East', '66.94.103.91', 'New York', 'US-East', 'US', 51820, 0, NULL, 'online', 'Contabo', 'lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s='],
+        [2, 'US-Central VIP', '144.126.133.253', 'St. Louis', 'US-Central', 'US', 51820, 1, 'seige235@yahoo.com', 'online', 'Contabo', 'qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM='],
+        [3, 'Dallas', '66.241.124.4', 'Dallas', 'US-South', 'US', 51820, 0, NULL, 'online', 'Fly.io', 'dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk='],
+        [4, 'Canada', '66.241.125.247', 'Toronto', 'CA-East', 'CA', 51820, 0, NULL, 'online', 'Fly.io', 'O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=']
     ];
     
     foreach ($servers as $s) {
-        $stmt = $db->prepare("INSERT OR REPLACE INTO vpn_servers (id, name, ip_address, location, region, country_code, port, is_vip, vip_user_email, status, provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT OR REPLACE INTO vpn_servers (id, name, ip_address, location, region, country_code, port, is_vip, vip_user_email, status, provider, public_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bindValue(1, $s[0], SQLITE3_INTEGER);
         $stmt->bindValue(2, $s[1], SQLITE3_TEXT);
         $stmt->bindValue(3, $s[2], SQLITE3_TEXT);
@@ -590,9 +591,10 @@ try {
         $stmt->bindValue(9, $s[8], SQLITE3_TEXT);
         $stmt->bindValue(10, $s[9], SQLITE3_TEXT);
         $stmt->bindValue(11, $s[10], SQLITE3_TEXT);
+        $stmt->bindValue(12, $s[11], SQLITE3_TEXT);
         $stmt->execute();
     }
-    echo "✅ VPN servers inserted (4 servers, 1 VIP)\n";
+    echo "✅ VPN servers inserted (4 servers, 1 VIP) with public keys\n";
     $db->close();
 } catch (Exception $e) {
     echo "❌ Servers error: " . $e->getMessage() . "\n";

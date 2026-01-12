@@ -1,154 +1,167 @@
 ========================================
-TRUEVAULT VPN - DEVELOPMENT CHAT LOG
+TRUEVAULT VPN - CHAT LOG
 ========================================
 
-[2026-01-11 18:30:00 CST] - SESSION START
+========================================
+SESSION: January 11, 2026
 ========================================
 
-PROJECT: TrueVault VPN
-REPOSITORY: E:\Documents\GitHub\truevault-vpn
-PRODUCTION: vpn.the-truth-publishing.com
-GITHUB: https://github.com/PaulHalonen/truevault-vpn
-
-========================================
-PHASE 3 COMPLETE - ALL WORK DONE
-========================================
-
-This session completed Phase 3 of the TrueVault VPN project.
-All frontend pages, APIs, and infrastructure are complete.
-
-========================================
-COMPLETE FILE COUNT: 90+
-========================================
-
-API FILES (45):
-- api/.htaccess
-- api/config/* (5 files)
-- api/helpers/* (6 files)
-- api/auth/* (8 files)
-- api/users/* (5 files)
-- api/vpn/* (4 files)
-- api/certificates/* (5 files)
-- api/devices/* (3 files)
-- api/identities/index.php
-- api/mesh/index.php
-- api/scanner/sync.php
-- api/theme/index.php
-- api/admin/* (8 files)
-
-PUBLIC PAGES (27):
-- Landing: index.html
-- Auth: login.html, register.html
-- Dashboard: 11 pages
-- Admin: 13 pages
-
-CSS/JS (5):
-- main.css, dashboard.css, admin.css
-- theme-loader.js, app.js
-
-CONFIG (4):
-- .htaccess (root, api, public)
-- .gitignore
-
-DOCS (3):
-- DEPLOYMENT.md
-- chat_log.txt
-- reference/*.md
-
-========================================
-DATABASES: 21 SQLite FILES
-========================================
-
-1. users.db - User accounts
-2. admin_users.db - Admin accounts
-3. subscriptions.db - Plans
-4. payments.db - Transactions
-5. vpn.db - Servers/connections
-6. certificates.db - Certs
-7. devices.db - User devices
-8. identities.db - Regional IDs
-9. mesh.db - Mesh network
-10. cameras.db - IP cameras
-11. themes.db - UI themes
-12. pages.db - CMS pages
-13. emails.db - Email templates
-14. media.db - Media files
-15. logs.db - System logs
-16. settings.db - Settings
-17. automation.db - Workflows
-18. notifications.db - Alerts
-19. analytics.db - Analytics
-20. bandwidth.db - Usage
-21. support.db - Tickets
-
-========================================
-VPN SERVERS: 4
-========================================
-
-1. US-East: 66.94.103.91 (Contabo)
-2. US-Central VIP: 144.126.133.253 (Contabo) - VIP ONLY
-3. Dallas: 66.241.124.4 (Fly.io)
-4. Canada: 66.241.125.247 (Fly.io)
-
-VIP Server (ID: 2) exclusively for: seige235@yahoo.com
-
-========================================
-GIT COMMITS THIS SESSION
-========================================
-
-1. Phase 3 Complete: All frontend pages, APIs, theme system
-   - 76 files, 21,128 insertions
-
-2. Phase 3 APIs: Identities, Mesh, Devices, Billing, Admin
-   - 7 files, 944 insertions
-
-3. Database setup: Updated database.php, setup script
-   - 3 files, 711 insertions
-
-4. Added deployment guide
-   - 1 file, 194 insertions
-
-========================================
-DEPLOYMENT READY
-========================================
-
-TO DEPLOY:
-1. FTP upload to vpn.the-truth-publishing.com
-2. Create /data directory (chmod 755)
-3. Visit /api/config/setup-databases.php
-4. Test landing page, login, admin
-5. Change default admin password!
-
-FTP CREDENTIALS:
-- Host: the-truth-publishing.com
-- User: kahlen@the-truth-publishing.com
-- Pass: AndassiAthena8
-- Port: 21
-
-DEFAULT ADMIN:
-- Email: kahlen@truthvault.com
-- Password: password
-- ⚠️ CHANGE IMMEDIATELY!
-
-========================================
-[2026-01-11 23:30:00 CST] - SESSION COMPLETE
-========================================
-
-STATUS: ✅ READY FOR PRODUCTION DEPLOYMENT
-
-All code is:
-- Committed to GitHub
-- Using theme system (zero hardcoding)
-- Database-driven for all styling
-- VIP server protected
-- JWT authentication ready
+PREVIOUS WORK COMPLETED:
+- Created full VPN infrastructure
+- Built scanner tool (Python network scanner)
+- Implemented JWT authentication
+- Database-driven theming system
+- VIP server access control
 - PayPal integration configured
+- All code committed to GitHub (commit 5f766ff)
 
-Next Steps:
-1. Deploy via FTP
-2. Run database setup
-3. Test all features
-4. Configure SSL
-5. Launch!
+========================================
+DEPLOYMENT STATUS - January 11, 2026 @ 22:40 CST
+========================================
 
+FTP UPLOAD COMPLETED:
+✅ Dashboard pages uploaded to /public/dashboard/
+   - connect.html (17.79 KB)
+   - scanner.html (21.07 KB)
+   - billing.html, cameras.html, certificates.html
+   - devices.html, identities.html, index.html
+   - mesh.html, servers.html, settings.html
+
+✅ API endpoints uploaded:
+   - /api/vpn/connect.php (5.43 KB)
+   - /api/vpn/servers.php (2.13 KB)
+   - /api/theme/index.php (2.29 KB)
+   - /api/cameras/sync.php (3.67 KB)
+
+✅ Downloads portal uploaded:
+   - /downloads/index.html
+
+ENDPOINT TESTING RESULTS:
+✅ https://vpn.the-truth-publishing.com/api/vpn/servers.php - WORKING
+   Returns all 4 VPN servers (Canada, Dallas, US-East, US-Central)
+   
+✅ https://vpn.the-truth-publishing.com/api/theme/ - WORKING
+   Returns theme variables (colors, gradients, typography)
+
+✅ https://vpn.the-truth-publishing.com/dashboard/connect.html - HTTP 200
+✅ https://vpn.the-truth-publishing.com/dashboard/scanner.html - HTTP 200
+✅ https://vpn.the-truth-publishing.com/downloads/ - WORKING (shows portal)
+
+⚠️ STILL NEEDS UPLOAD:
+- Scanner tool files to /downloads/scanner/
+  Need: truthvault_scanner.py, run_scanner.bat, run_scanner.sh
+
+SERVERS IN DATABASE:
+1. US-East (66.94.103.91) - Shared - Contabo
+2. US-Central (144.126.133.253) - VIP (seige235@yahoo.com only) - Contabo  
+3. Dallas (66.241.124.4) - Shared - Fly.io
+4. Canada (66.241.125.247) - Shared - Fly.io
+
+========================================
+ARCHITECTURE
+========================================
+
+Repository: E:\Documents\GitHub\truevault-vpn
+Production: https://vpn.the-truth-publishing.com
+
+Key Features:
+- Database-driven theming (NO hardcoding)
+- JWT authentication with 24h expiration
+- VIP server filtering (is_vip flag + vip_user_email)
+- WireGuard config generation (server-side keypairs)
+- Network scanner tool for device discovery
+- PayPal webhook integration
+
+Database: SQLite (portable, in /data/ folder)
+- truevault.db - Main database (users, servers, themes, etc.)
+
+========================================
+
+========================================
+SESSION: January 12, 2026 - 00:00 - 01:30 CST
+WIREGUARD SERVER CLEANUP & CONFIGURATION
+========================================
+
+## CONTABO SERVERS CLEANUP
+
+### Password Reset
+- Both servers reset to: TrueVault2026
+- Server 1 (vmi2990026): 66.94.103.91
+- Server 2 (vmi2990005): 144.126.133.253
+
+### Server 1 (US-East) - 66.94.103.91
+- WireGuard already installed
+- Removed 9 old peers from destroyed previous build
+- Config cleaned: /etc/wireguard/wg0.conf
+- Network: 10.0.0.1/24
+- Public Key: lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s=
+- Status: ✅ Running, 0 peers
+
+### Server 2 (US-Central VIP) - 144.126.133.253
+- VIP server for seige235@yahoo.com only
+- Removed 1 old peer
+- Config cleaned: /etc/wireguard/wg0.conf
+- Network: 10.0.1.1/24
+- Public Key: qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM=
+- Status: ✅ Running, 0 peers
+
+## FLY.IO SERVERS
+
+### Server 3 (Dallas) - 66.241.124.4
+- App: truthvault-usa
+- WireGuard running on port 51820
+- API on port 8080 (exposed as 8443)
+- Public Key: dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk=
+- Status: ✅ Running, 0 peers
+
+### Server 4 (Canada) - 66.241.125.247
+- App: truthvault-canada
+- WireGuard running on port 51820
+- Public Key: O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=
+- Status: ✅ Running, 5 old peers (needs cleanup)
+
+## DATABASE UPDATES
+
+- Updated setup-databases.php with all 4 public keys
+- Uploaded to server via FTP
+- Ran setup script to update vpn_servers table
+- All 4 servers now have public keys in database
+
+## ALL 4 SERVERS READY:
+
+| ID | Name | IP | Location | Public Key | VIP |
+|----|------|-----|----------|------------|-----|
+| 1 | US-East | 66.94.103.91 | New York | lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s= | No |
+| 2 | US-Central VIP | 144.126.133.253 | St. Louis | qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM= | Yes (seige235@yahoo.com) |
+| 3 | Dallas | 66.241.124.4 | Dallas | dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk= | No |
+| 4 | Canada | 66.241.125.247 | Toronto | O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk= | No |
+
+## REMAINING TASKS:
+1. ⏳ Clean old peers from Canada server (5 peers)
+2. ⏳ Check/setup peer_api.py on all servers
+3. ⏳ Test VPN connection end-to-end
+4. ⏳ Verify client registration and peer provisioning
+
+## TECHNICAL NOTES:
+
+### WireGuard Peer Cleanup Method:
+Runtime peer removal via `wg set` doesn't persist. Must:
+1. Stop WireGuard: wg-quick down wg0
+2. Edit config: overwrite /etc/wireguard/wg0.conf (remove [Peer] sections)
+3. Restart: wg-quick up wg0
+
+### Fly.io SSH Access:
+```
+fly ssh console -a truthvault-usa
+fly ssh console -a truthvault-canada
+```
+
+### Contabo SSH Access:
+```
+ssh root@66.94.103.91  (password: TrueVault2026)
+ssh root@144.126.133.253  (password: TrueVault2026)
+```
+
+========================================
+END SESSION: January 12, 2026 - 01:30 CST
 ========================================

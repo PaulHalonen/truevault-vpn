@@ -1,0 +1,19 @@
+# TrueVault VPN - .htaccess
+DirectoryIndex index.html index.php
+
+RewriteEngine On
+
+# Route assets to public folder
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+# Route dashboard
+RewriteRule ^dashboard/?$ public/dashboard/index.html [L]
+RewriteRule ^dashboard/(.*)$ public/dashboard/$1 [L]
+
+# Route admin
+RewriteRule ^admin/?$ public/admin/index.html [L]
+RewriteRule ^admin/(.*)$ public/admin/$1 [L]
+
+# Route login/register
+RewriteRule ^login/?$ public/login.html [L]
+RewriteRule ^register/?$ public/register.html [L]

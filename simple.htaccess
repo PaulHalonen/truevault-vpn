@@ -1,0 +1,28 @@
+# TrueVault VPN
+DirectoryIndex index.html index.php
+
+# Enable rewrite engine
+RewriteEngine On
+
+# If file exists, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Route API requests
+RewriteRule ^api/(.*)$ api/ [L]
+
+# Route to public folder for assets
+RewriteRule ^assets/(.*)$ public/assets/ [L]
+
+# Route dashboard
+RewriteRule ^dashboard/?$ public/dashboard/index.html [L]
+RewriteRule ^dashboard/(.*)$ public/dashboard/ [L]
+
+# Route admin
+RewriteRule ^admin/?$ public/admin/index.html [L]
+RewriteRule ^admin/(.*)$ public/admin/ [L]
+
+# Route login/register
+RewriteRule ^login/?$ public/login.html [L]
+RewriteRule ^register/?$ public/register.html [L]
