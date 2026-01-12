@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devices - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <style>
+        .devices-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;flex-wrap:wrap;gap:15px}
+        .device-limit{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:10px;padding:15px 20px;display:flex;align-items:center;gap:15px}
+        .device-limit-bar{width:120px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden}
+        .device-limit-fill{height:100%;background:var(--gradients-primary);border-radius:4px}
+        .devices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+        .device-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:20px;transition:all 0.2s}
+        .device-card:hover{border-color:var(--colors-primary)}
+        .device-card.current{border-color:var(--colors-success);background:rgba(0,255,136,0.05)}
+        .device-header{display:flex;align-items:center;gap:15px;margin-bottom:15px}
+        .device-icon{font-size:2.5rem}
+        .device-info h3{font-size:1.1rem;margin-bottom:3px}
+        .device-info .type{color:var(--colors-text-muted);font-size:0.9rem}
+        .device-details{padding:15px 0;border-top:1px solid var(--colors-border);border-bottom:1px solid var(--colors-border);margin:15px 0}
+        .device-detail{display:flex;justify-content:space-between;padding:5px 0;font-size:0.9rem}
+        .device-detail-label{color:var(--colors-text-muted)}
+        .device-actions{display:flex;gap:8px}
+        .add-device-card{background:rgba(255,255,255,0.02);border:2px dashed var(--colors-border);border-radius:var(--cards-border-radius);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s}
+        .add-device-card:hover{border-color:var(--colors-primary);background:rgba(255,255,255,0.04)}
+        .add-device-card .icon{font-size:3rem;margin-bottom:15px;opacity:0.5}
+        .setup-section{margin-top:40px}
+        .setup-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:20px}
+        .setup-option{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:12px;padding:25px;text-align:center;cursor:pointer;transition:all 0.2s}
+        .setup-option:hover{border-color:var(--colors-primary);background:rgba(255,255,255,0.05)}
+        .setup-option .icon{font-size:2.5rem;margin-bottom:10px}
+        .setup-option h4{margin-bottom:5px}
+        .setup-option p{font-size:0.8rem;color:var(--colors-text-muted)}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+        .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+        .config-box{background:rgba(0,0,0,0.3);border:1px solid var(--colors-border);border-radius:8px;padding:15px;font-family:monospace;font-size:0.85rem;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto}
+        .qr-placeholder{width:200px;height:200px;background:rgba(255,255,255,0.1);border-radius:8px;margin:20px auto;display:flex;align-items:center;justify-content:center;font-size:4rem}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item active"><span class="nav-icon">📱</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>📱 My Devices</h1>
+                <p class="text-muted">Manage devices connected to your TrueVault account</p>
+            </div>
+        </header>
+        
+        <!-- Device Limit -->
+        <div class="devices-header">
+            <div class="device-limit">
+                <span>Device Limit:</span>
+                <div class="device-limit-bar">
+                    <div class="device-limit-fill" id="limitFill" style="width:60%"></div>
+                </div>
+                <span id="limitText">3 / 5 devices</span>
+            </div>
+            <button class="btn btn-primary" onclick="showSetupModal()">➕ Add Device</button>
+        </div>
+        
+        <!-- Devices Grid -->
+        <div class="devices-grid" id="devicesGrid">
+            <!-- Current Device -->
+            <div class="device-card current">
+                <div class="device-header">
+                    <span class="device-icon">💻</span>
+                    <div class="device-info">
+                        <h3>Windows PC</h3>
+                        <div class="type">Desktop • Windows 11</div>
+                    </div>
+                    <span class="badge badge-success">This Device</span>
+                </div>
+                <div class="device-details">
+                    <div class="device-detail">
+                        <span class="device-detail-label">Last Active</span>
+                        <span>Now</span>
+                    </div>
+                    <div class="device-detail">
+                        <span class="device-detail-label">IP Address</span>
+                        <span>192.168.1.100</span>
+                    </div>
+                    <div class="device-detail">
+                        <span class="device-detail-label">Added</span>
+                        <span>Dec 15, 2025</span>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn btn-secondary btn-small" onclick="viewConfig(1)">📋 Config</button>
+                    <button class="btn btn-secondary btn-small" onclick="renameDevice(1)">✏️ Rename</button>
+                </div>
+            </div>
+            
+            <!-- iPhone -->
+            <div class="device-card">
+                <div class="device-header">
+                    <span class="device-icon">📱</span>
+                    <div class="device-info">
+                        <h3>iPhone 15 Pro</h3>
+                        <div class="type">Mobile • iOS 17</div>
+                    </div>
+                </div>
+                <div class="device-details">
+                    <div class="device-detail">
+                        <span class="device-detail-label">Last Active</span>
+                        <span>2 hours ago</span>
+                    </div>
+                    <div class="device-detail">
+                        <span class="device-detail-label">Location</span>
+                        <span>US East Server</span>
+                    </div>
+                    <div class="device-detail">
+                        <span class="device-detail-label">Added</span>
+                        <span>Dec 18, 2025</span>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn btn-secondary btn-small" onclick="viewConfig(2)">📋 Config</button>
+                    <button class="btn btn-secondary btn-small" onclick="renameDevice(2)">✏️ Rename</button>
+                    <button class="btn btn-danger btn-small" onclick="removeDevice(2)">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- MacBook -->
+            <div class="device-card">
+                <div class="device-header">
+                    <span class="device-icon">💻</span>
+                    <div class="device-info">
+                        <h3>MacBook Air</h3>
+                        <div class="type">Laptop • macOS Sonoma</div>
+                    </div>
+                </div>
+                <div class="device-details">
+                    <div class="device-detail">
+                        <span class="device-detail-label">Last Active</span>
+                        <span>Yesterday</span>
+                    </div>
+                    <div class="device-detail">
+                        <span class="device-detail-label">Location</span>
+                        <span>Canada Server</span>
+                    </div>
+                    <div class="device-detail">
+                        <span class="device-detail-label">Added</span>
+                        <span>Dec 20, 2025</span>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn btn-secondary btn-small" onclick="viewConfig(3)">📋 Config</button>
+                    <button class="btn btn-secondary btn-small" onclick="renameDevice(3)">✏️ Rename</button>
+                    <button class="btn btn-danger btn-small" onclick="removeDevice(3)">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- Add Device Card -->
+            <div class="add-device-card" onclick="showSetupModal()">
+                <div class="icon">➕</div>
+                <h3>Add New Device</h3>
+                <p class="text-muted">Connect another device to TrueVault</p>
+            </div>
+        </div>
+        
+        <!-- Setup Instructions -->
+        <div class="setup-section">
+            <h3>📲 Quick Setup</h3>
+            <div class="setup-options">
+                <div class="setup-option" onclick="showSetupModal('windows')">
+                    <div class="icon">🪟</div>
+                    <h4>Windows</h4>
+                    <p>Download WireGuard app</p>
+                </div>
+                <div class="setup-option" onclick="showSetupModal('mac')">
+                    <div class="icon">🍎</div>
+                    <h4>macOS</h4>
+                    <p>App Store or direct download</p>
+                </div>
+                <div class="setup-option" onclick="showSetupModal('ios')">
+                    <div class="icon">📱</div>
+                    <h4>iOS</h4>
+                    <p>Scan QR code</p>
+                </div>
+                <div class="setup-option" onclick="showSetupModal('android')">
+                    <div class="icon">🤖</div>
+                    <h4>Android</h4>
+                    <p>Scan QR code</p>
+                </div>
+                <div class="setup-option" onclick="showSetupModal('linux')">
+                    <div class="icon">🐧</div>
+                    <h4>Linux</h4>
+                    <p>Command line setup</p>
+                </div>
+                <div class="setup-option" onclick="showSetupModal('router')">
+                    <div class="icon">📡</div>
+                    <h4>Router</h4>
+                    <p>Whole-network VPN</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Setup Modal -->
+    <div class="modal" id="setupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="setupTitle">➕ Add Device</h2>
+                <button class="modal-close" onclick="hideModal()">&times;</button>
+            </div>
+            
+            <div id="setupContent">
+                <div class="form-group">
+                    <label>Device Name</label>
+                    <input type="text" id="deviceName" placeholder="e.g., My iPhone, Work Laptop">
+                </div>
+                
+                <h4 style="margin:20px 0 10px">📱 For Mobile (iOS/Android)</h4>
+                <p class="text-muted" style="margin-bottom:15px">Scan this QR code with the WireGuard app:</p>
+                <div class="qr-placeholder">📱</div>
+                
+                <h4 style="margin:20px 0 10px">💻 For Desktop</h4>
+                <p class="text-muted" style="margin-bottom:15px">Copy this configuration to WireGuard:</p>
+                <div class="config-box" id="configBox">[Interface]
+PrivateKey = YOUR_PRIVATE_KEY
+Address = 10.0.0.2/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = SERVER_PUBLIC_KEY
+AllowedIPs = 0.0.0.0/0
+Endpoint = 66.94.103.91:51820
+PersistentKeepalive = 25</div>
+                
+                <div style="display:flex;gap:10px;margin-top:20px">
+                    <button class="btn btn-secondary" onclick="copyConfig()">📋 Copy Config</button>
+                    <button class="btn btn-secondary" onclick="downloadConfig()">📥 Download .conf</button>
+                </div>
+            </div>
+            
+            <div style="margin-top:25px">
+                <button class="btn btn-primary btn-block" onclick="confirmAddDevice()">✅ Device Added</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        if (!TrueVault.Auth.requireAuth()) {}
+        
+        const user = TrueVault.Auth.getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+        }
+        
+        function showSetupModal(platform) {
+            const titles = {
+                'windows': '🪟 Windows Setup',
+                'mac': '🍎 macOS Setup',
+                'ios': '📱 iOS Setup',
+                'android': '🤖 Android Setup',
+                'linux': '🐧 Linux Setup',
+                'router': '📡 Router Setup'
+            };
+            document.getElementById('setupTitle').textContent = titles[platform] || '➕ Add Device';
+            document.getElementById('setupModal').classList.add('active');
+        }
+        
+        function hideModal() {
+            document.getElementById('setupModal').classList.remove('active');
+        }
+        
+        function copyConfig() {
+            const config = document.getElementById('configBox').textContent;
+            navigator.clipboard.writeText(config);
+            TrueVault.Toast.success('Configuration copied!');
+        }
+        
+        function downloadConfig() {
+            const config = document.getElementById('configBox').textContent;
+            const blob = new Blob([config], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'truevault.conf';
+            a.click();
+            TrueVault.Toast.success('Configuration downloaded!');
+        }
+        
+        function confirmAddDevice() {
+            const name = document.getElementById('deviceName').value || 'New Device';
+            TrueVault.Toast.success(`${name} added successfully!`);
+            hideModal();
+        }
+        
+        function viewConfig(id) {
+            showSetupModal();
+        }
+        
+        function renameDevice(id) {
+            const name = prompt('Enter new device name:');
+            if (name) {
+                TrueVault.Toast.success('Device renamed!');
+            }
+        }
+        
+        function removeDevice(id) {
+            if (!confirm('Remove this device? It will need to be set up again.')) return;
+            TrueVault.Toast.success('Device removed');
+        }
+        
+        document.getElementById('setupModal').addEventListener('click', function(e) {
+            if (e.target === this) hideModal();
+        });
+    </script>
+</body>
+</html>

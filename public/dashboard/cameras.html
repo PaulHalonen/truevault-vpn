@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cameras - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <style>
+        .cameras-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+        .camera-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);overflow:hidden;transition:all 0.2s}
+        .camera-card:hover{border-color:var(--colors-primary)}
+        .camera-preview{position:relative;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center}
+        .camera-preview img{width:100%;height:100%;object-fit:cover}
+        .camera-preview .placeholder{font-size:3rem;opacity:0.3}
+        .camera-status{position:absolute;top:10px;right:10px;padding:4px 10px;border-radius:15px;font-size:0.75rem;font-weight:600}
+        .camera-status.online{background:var(--colors-success);color:#000}
+        .camera-status.offline{background:var(--colors-error);color:#fff}
+        .camera-info{padding:15px}
+        .camera-info h3{font-size:1.1rem;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+        .camera-info .ip{font-family:monospace;font-size:0.9rem;color:var(--colors-primary)}
+        .camera-info .vendor{font-size:0.85rem;color:var(--colors-text-muted);margin-top:5px}
+        .camera-features{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+        .camera-feature{padding:3px 8px;background:rgba(255,255,255,0.05);border-radius:4px;font-size:0.75rem;color:var(--colors-text-muted)}
+        .camera-actions{display:flex;gap:8px;margin-top:15px;padding-top:15px;border-top:1px solid var(--colors-border)}
+        .empty-state{text-align:center;padding:60px 20px;background:rgba(255,255,255,0.02);border-radius:var(--cards-border-radius);border:1px dashed var(--colors-border)}
+        .empty-state .icon{font-size:4rem;margin-bottom:20px;opacity:0.5}
+        .empty-state h3{margin-bottom:10px}
+        .empty-state p{color:var(--colors-text-muted);margin-bottom:20px}
+        .add-camera-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
+        .add-camera-modal.active{opacity:1;visibility:visible}
+        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+        .modal-header h2{font-size:1.4rem}
+        .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo-icon">🛡️</span>
+            <h1>TrueVault</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item active"><span class="nav-icon">📷</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar">👤</div>
+                <div class="user-details">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="user-plan" id="userPlan">-</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>📷 IP Cameras</h1>
+                <p class="text-muted">Monitor and manage your IP cameras remotely via VPN</p>
+            </div>
+            <div class="header-actions">
+                <a href="/dashboard/scanner.html" class="btn btn-secondary">🔍 Scan Network</a>
+                <button class="btn btn-primary" onclick="showAddModal()">➕ Add Camera</button>
+            </div>
+        </header>
+        
+        <!-- Camera Stats -->
+        <section class="stats-grid" style="margin-bottom:30px">
+            <div class="stat-card">
+                <div class="stat-icon">📷</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="totalCameras">0</span>
+                    <span class="stat-label">Total Cameras</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="onlineCameras">0</span>
+                    <span class="stat-label">Online</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="offlineCameras">0</span>
+                    <span class="stat-label">Offline</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔔</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="unviewedEvents">0</span>
+                    <span class="stat-label">Unviewed Events</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Cameras Grid -->
+        <section id="camerasContainer">
+            <div class="loading">Loading cameras...</div>
+        </section>
+    </main>
+    
+    <!-- Add Camera Modal -->
+    <div class="add-camera-modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Add Camera</h2>
+                <button class="modal-close" onclick="hideAddModal()">&times;</button>
+            </div>
+            <form id="addCameraForm">
+                <div class="form-group">
+                    <label for="camera_name">Camera Name *</label>
+                    <input type="text" id="camera_name" name="camera_name" placeholder="Living Room Camera" required>
+                </div>
+                <div class="form-group">
+                    <label for="ip_address">IP Address *</label>
+                    <input type="text" id="ip_address" name="ip_address" placeholder="192.168.1.100" required>
+                </div>
+                <div class="form-group">
+                    <label for="vendor">Vendor</label>
+                    <select id="vendor" name="vendor">
+                        <option value="">Auto-detect</option>
+                        <option value="Geeni">Geeni</option>
+                        <option value="Wyze">Wyze</option>
+                        <option value="Hikvision">Hikvision</option>
+                        <option value="Dahua">Dahua</option>
+                        <option value="Amcrest">Amcrest</option>
+                        <option value="Reolink">Reolink</option>
+                        <option value="Ring">Ring</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Camera password">
+                </div>
+                <div class="form-group">
+                    <label for="rtsp_port">RTSP Port</label>
+                    <input type="number" id="rtsp_port" name="rtsp_port" value="554" placeholder="554">
+                </div>
+                <div style="display:flex;gap:10px;margin-top:25px">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1">Add Camera</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        if (!TrueVault.Auth.requireAuth()) {}
+        
+        let cameras = [];
+        
+        async function loadCameras() {
+            const user = TrueVault.Auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+                document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+            }
+            
+            const result = await TrueVault.API.get('/devices/cameras.php');
+            const container = document.getElementById('camerasContainer');
+            
+            if (result.success) {
+                cameras = result.data.cameras;
+                
+                // Update stats
+                const online = cameras.filter(c => c.is_online).length;
+                const events = cameras.reduce((sum, c) => sum + (c.unviewed_events || 0), 0);
+                
+                document.getElementById('totalCameras').textContent = cameras.length;
+                document.getElementById('onlineCameras').textContent = online;
+                document.getElementById('offlineCameras').textContent = cameras.length - online;
+                document.getElementById('unviewedEvents').textContent = events;
+                
+                if (cameras.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📷</div>
+                            <h3>No Cameras Found</h3>
+                            <p>Add your first IP camera or use the network scanner to discover cameras on your network.</p>
+                            <div style="display:flex;gap:10px;justify-content:center">
+                                <a href="/dashboard/scanner.html" class="btn btn-secondary">🔍 Scan Network</a>
+                                <button class="btn btn-primary" onclick="showAddModal()">➕ Add Camera</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `<div class="cameras-grid">${cameras.map(renderCamera).join('')}</div>`;
+                }
+            } else {
+                container.innerHTML = '<p class="text-error">Failed to load cameras</p>';
+            }
+        }
+        
+        function renderCamera(camera) {
+            const features = [];
+            if (camera.is_ptz) features.push('PTZ');
+            if (camera.has_audio) features.push('Audio');
+            if (camera.has_night_vision) features.push('Night Vision');
+            if (camera.has_motion_detection) features.push('Motion');
+            
+            return `
+                <div class="camera-card">
+                    <div class="camera-preview">
+                        ${camera.thumbnail_path 
+                            ? `<img src="${camera.thumbnail_path}" alt="${camera.camera_name}">`
+                            : `<span class="placeholder">📷</span>`
+                        }
+                        <span class="camera-status ${camera.is_online ? 'online' : 'offline'}">
+                            ${camera.is_online ? '● Online' : '● Offline'}
+                        </span>
+                    </div>
+                    <div class="camera-info">
+                        <h3>
+                            ${camera.camera_name}
+                            ${camera.unviewed_events > 0 ? `<span class="badge badge-warning">${camera.unviewed_events}</span>` : ''}
+                        </h3>
+                        <div class="ip">${camera.ip_address}</div>
+                        <div class="vendor">${camera.vendor || 'Unknown Vendor'}${camera.model ? ' - ' + camera.model : ''}</div>
+                        ${features.length > 0 ? `
+                            <div class="camera-features">
+                                ${features.map(f => `<span class="camera-feature">${f}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="camera-actions">
+                            <button class="btn btn-primary btn-small" onclick="viewCamera(${camera.id})">👁️ View</button>
+                            <button class="btn btn-secondary btn-small" onclick="editCamera(${camera.id})">⚙️ Settings</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteCamera(${camera.id})">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showAddModal() {
+            document.getElementById('addModal').classList.add('active');
+        }
+        
+        function hideAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            document.getElementById('addCameraForm').reset();
+        }
+        
+        document.getElementById('addCameraForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = TrueVault.Form.serialize(this);
+            const result = await TrueVault.API.post('/devices/cameras.php', data);
+            
+            if (result.success) {
+                TrueVault.Toast.success('Camera added successfully!');
+                hideAddModal();
+                loadCameras();
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to add camera');
+            }
+        });
+        
+        function viewCamera(id) {
+            const camera = cameras.find(c => c.id === id);
+            if (camera) {
+                // Open camera viewer - for now just show info
+                TrueVault.Toast.info(`Opening ${camera.camera_name}...`);
+                // In production: open stream viewer modal or new page
+            }
+        }
+        
+        function editCamera(id) {
+            TrueVault.Toast.info('Camera settings coming soon');
+        }
+        
+        async function deleteCamera(id) {
+            if (!confirm('Are you sure you want to remove this camera?')) return;
+            
+            const result = await TrueVault.API.delete(`/devices/cameras.php?id=${id}`);
+            
+            if (result.success) {
+                TrueVault.Toast.success('Camera removed');
+                loadCameras();
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to remove camera');
+            }
+        }
+        
+        // Close modal on outside click
+        document.getElementById('addModal').addEventListener('click', function(e) {
+            if (e.target === this) hideAddModal();
+        });
+        
+        loadCameras();
+    </script>
+</body>
+</html>

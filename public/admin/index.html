@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <style>
+        .auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+        .auth-box{width:100%;max-width:420px;background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:40px}
+        .auth-logo{text-align:center;margin-bottom:30px}
+        .auth-logo .logo-icon{font-size:3rem;display:block;margin-bottom:10px}
+        .auth-logo h1{font-size:1.6rem;background:var(--gradients-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .auth-box h2{text-align:center;margin-bottom:30px;font-size:1.5rem}
+        .admin-badge{display:inline-block;background:rgba(255,107,107,0.15);color:var(--colors-accent);padding:4px 12px;border-radius:15px;font-size:0.85rem;font-weight:600;margin-bottom:20px}
+        .auth-footer{text-align:center;margin-top:25px;color:var(--colors-text-muted)}
+        .auth-footer a{color:var(--colors-primary)}
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <span class="logo-icon">🛡️</span>
+                <h1>TrueVault VPN</h1>
+            </div>
+            
+            <div style="text-align:center">
+                <span class="admin-badge">🔐 Admin Portal</span>
+            </div>
+            
+            <h2>Administrator Login</h2>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="email">Admin Email</label>
+                    <input type="email" id="email" name="email" placeholder="admin@truevault.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block btn-large" id="submitBtn">
+                    <span class="btn-text">Login to Admin</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <a href="/">← Back to Main Site</a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const btnText = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.spinner');
+            
+            btn.disabled = true;
+            btnText.textContent = 'Logging in...';
+            spinner.classList.remove('hidden');
+            
+            const data = TrueVault.Form.serialize(this);
+            
+            try {
+                const response = await fetch('/api/admin/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    localStorage.setItem('truevault_admin_token', result.data.token);
+                    localStorage.setItem('truevault_admin', JSON.stringify(result.data.admin));
+                    TrueVault.Toast.success('Welcome, Administrator!');
+                    setTimeout(() => window.location.href = '/admin/dashboard.html', 500);
+                } else {
+                    TrueVault.Toast.error(result.error || 'Login failed');
+                    btn.disabled = false;
+                    btnText.textContent = 'Login to Admin';
+                    spinner.classList.add('hidden');
+                }
+            } catch (error) {
+                TrueVault.Toast.error('Connection error');
+                btn.disabled = false;
+                btnText.textContent = 'Login to Admin';
+                spinner.classList.add('hidden');
+            }
+        });
+        
+        // Check if already logged in as admin
+        if (localStorage.getItem('truevault_admin_token')) {
+            window.location.href = '/admin/dashboard.html';
+        }
+    </script>
+</body>
+</html>

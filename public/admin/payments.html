@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - Admin - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        .revenue-chart{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:25px;margin-bottom:30px;height:200px;display:flex;align-items:flex-end;justify-content:space-around;gap:10px}
+        .chart-bar{background:var(--gradients-primary);border-radius:4px 4px 0 0;width:40px;transition:height 0.3s}
+        .chart-bar:hover{opacity:0.8}
+        .chart-label{text-align:center;margin-top:10px;font-size:0.75rem;color:var(--colors-text-muted)}
+        .payments-table{width:100%;border-collapse:collapse}
+        .payments-table th,.payments-table td{padding:15px;text-align:left;border-bottom:1px solid var(--colors-border)}
+        .payments-table th{background:rgba(255,255,255,0.02);font-size:0.8rem;text-transform:uppercase}
+        .payments-table tr:hover{background:rgba(255,255,255,0.02)}
+        .payment-amount{font-weight:600;font-size:1.1rem}
+        .payment-amount.positive{color:var(--colors-success)}
+        .payment-amount.negative{color:var(--colors-error)}
+        .filter-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+        .filter-select{padding:8px 15px;background:rgba(255,255,255,0.05);border:1px solid var(--colors-border);border-radius:6px;color:var(--colors-text)}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar admin-sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1><span class="admin-label">ADMIN</span></div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+            <a href="/admin/users.html" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+            <a href="/admin/servers.html" class="nav-item"><span class="nav-icon">🖥️</span><span>Servers</span></a>
+            <a href="/admin/subscriptions.html" class="nav-item"><span class="nav-icon">💳</span><span>Subscriptions</span></a>
+            <a href="/admin/payments.html" class="nav-item active"><span class="nav-icon">💰</span><span>Payments</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">CMS</div>
+            <a href="/admin/pages.html" class="nav-item"><span class="nav-icon">📄</span><span>Pages</span></a>
+            <a href="/admin/themes.html" class="nav-item"><span class="nav-icon">🎨</span><span>Theme Editor</span></a>
+            <a href="/admin/emails.html" class="nav-item"><span class="nav-icon">📧</span><span>Email Templates</span></a>
+            <a href="/admin/media.html" class="nav-item"><span class="nav-icon">🖼️</span><span>Media Library</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">System</div>
+            <a href="/admin/automation.html" class="nav-item"><span class="nav-icon">⚡</span><span>Automation</span></a>
+            <a href="/admin/logs.html" class="nav-item"><span class="nav-icon">📋</span><span>System Logs</span></a>
+            <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar admin-avatar">👤</div><div class="user-details"><span class="user-name" id="adminName">Administrator</span><span class="user-plan">Super Admin</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="adminLogout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>💰 Payments</h1>
+                <p class="text-muted">View and manage payment transactions</p>
+            </div>
+            <div style="display:flex;gap:10px">
+                <a href="https://www.paypal.com/businessmanage/account" target="_blank" class="btn btn-secondary">💳 PayPal Dashboard</a>
+                <button class="btn btn-primary" onclick="exportPayments()">📥 Export</button>
+            </div>
+        </header>
+        
+        <!-- Revenue Stats -->
+        <div class="admin-stats-grid" style="margin-bottom:30px">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon revenue">💵</div>
+                <div class="admin-stat-content">
+                    <span class="admin-stat-value">$2,347.85</span>
+                    <span class="admin-stat-label">Revenue This Month</span>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon active">✅</div>
+                <div class="admin-stat-content">
+                    <span class="admin-stat-value">156</span>
+                    <span class="admin-stat-label">Successful</span>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon">❌</div>
+                <div class="admin-stat-content">
+                    <span class="admin-stat-value">7</span>
+                    <span class="admin-stat-label">Failed</span>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon">↩️</div>
+                <div class="admin-stat-content">
+                    <span class="admin-stat-value">2</span>
+                    <span class="admin-stat-label">Refunds</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Revenue Chart -->
+        <div class="card" style="margin-bottom:30px">
+            <h3 style="margin-bottom:20px">📊 Monthly Revenue</h3>
+            <div class="revenue-chart">
+                <div style="text-align:center"><div class="chart-bar" style="height:60px"></div><div class="chart-label">Aug</div></div>
+                <div style="text-align:center"><div class="chart-bar" style="height:80px"></div><div class="chart-label">Sep</div></div>
+                <div style="text-align:center"><div class="chart-bar" style="height:95px"></div><div class="chart-label">Oct</div></div>
+                <div style="text-align:center"><div class="chart-bar" style="height:120px"></div><div class="chart-label">Nov</div></div>
+                <div style="text-align:center"><div class="chart-bar" style="height:145px"></div><div class="chart-label">Dec</div></div>
+                <div style="text-align:center"><div class="chart-bar" style="height:160px"></div><div class="chart-label">Jan</div></div>
+            </div>
+        </div>
+        
+        <!-- Payments Table -->
+        <div class="card">
+            <div class="filter-row">
+                <select class="filter-select" onchange="filterPayments()">
+                    <option value="">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                    <option value="refunded">Refunded</option>
+                </select>
+                <select class="filter-select" onchange="filterPayments()">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                </select>
+                <input type="text" class="filter-select" placeholder="Search..." style="flex:1">
+            </div>
+            
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Transaction</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Method</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div><strong>TXN-20260111-001</strong></div>
+                            <div class="text-muted" style="font-size:0.8rem">INV-2026-0156</div>
+                        </td>
+                        <td>john@example.com</td>
+                        <td><span class="payment-amount positive">+$14.99</span></td>
+                        <td><span class="badge badge-success">Completed</span></td>
+                        <td>💳 PayPal</td>
+                        <td>Jan 11, 2026 • 2:45 PM</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="viewTxn(1)">👁️</button>
+                            <button class="btn btn-secondary btn-small" onclick="refundTxn(1)">↩️</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div><strong>TXN-20260111-002</strong></div>
+                            <div class="text-muted" style="font-size:0.8rem">INV-2026-0157</div>
+                        </td>
+                        <td>seige235@yahoo.com</td>
+                        <td><span class="payment-amount positive">+$29.99</span></td>
+                        <td><span class="badge badge-success">Completed</span></td>
+                        <td>💳 PayPal</td>
+                        <td>Jan 11, 2026 • 1:30 PM</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="viewTxn(2)">👁️</button>
+                            <button class="btn btn-secondary btn-small" onclick="refundTxn(2)">↩️</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div><strong>TXN-20260110-015</strong></div>
+                            <div class="text-muted" style="font-size:0.8rem">INV-2026-0155</div>
+                        </td>
+                        <td>sarah@example.com</td>
+                        <td><span class="payment-amount positive">+$9.99</span></td>
+                        <td><span class="badge badge-success">Completed</span></td>
+                        <td>💳 PayPal</td>
+                        <td>Jan 10, 2026 • 9:15 AM</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="viewTxn(3)">👁️</button>
+                            <button class="btn btn-secondary btn-small" onclick="refundTxn(3)">↩️</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div><strong>TXN-20260110-014</strong></div>
+                            <div class="text-muted" style="font-size:0.8rem">INV-2026-0154</div>
+                        </td>
+                        <td>bob@example.com</td>
+                        <td><span class="payment-amount">$14.99</span></td>
+                        <td><span class="badge badge-error">Failed</span></td>
+                        <td>💳 PayPal</td>
+                        <td>Jan 10, 2026 • 8:00 AM</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="viewTxn(4)">👁️</button>
+                            <button class="btn btn-primary btn-small" onclick="retryTxn(4)">🔄</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div><strong>TXN-20260109-012</strong></div>
+                            <div class="text-muted" style="font-size:0.8rem">INV-2026-0150</div>
+                        </td>
+                        <td>mike@example.com</td>
+                        <td><span class="payment-amount negative">-$9.99</span></td>
+                        <td><span class="badge badge-warning">Refunded</span></td>
+                        <td>💳 PayPal</td>
+                        <td>Jan 9, 2026 • 4:20 PM</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="viewTxn(5)">👁️</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+                <span class="text-muted">Showing 1-5 of 163 transactions</span>
+                <div class="pagination" style="margin:0">
+                    <button class="active">1</button>
+                    <button>2</button>
+                    <button>3</button>
+                    <button>...</button>
+                    <button>33</button>
+                    <button>→</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        function checkAdminAuth() {
+            const token = localStorage.getItem('truevault_admin_token');
+            if (!token) { window.location.href = '/admin/'; return false; }
+            return true;
+        }
+        
+        function adminLogout() {
+            localStorage.removeItem('truevault_admin_token');
+            localStorage.removeItem('truevault_admin');
+            window.location.href = '/admin/';
+        }
+        
+        function filterPayments() { TrueVault.Toast.info('Filtering...'); }
+        function exportPayments() { TrueVault.Toast.success('Exporting payments...'); }
+        function viewTxn(id) { TrueVault.Toast.info('View transaction details'); }
+        function refundTxn(id) { 
+            if (confirm('Process refund for this transaction?')) {
+                TrueVault.Toast.success('Refund initiated'); 
+            }
+        }
+        function retryTxn(id) { TrueVault.Toast.info('Retrying payment...'); }
+        
+        if (checkAdminAuth()) {
+            const admin = JSON.parse(localStorage.getItem('truevault_admin') || '{}');
+            document.getElementById('adminName').textContent = admin.first_name || 'Administrator';
+        }
+    </script>
+</body>
+</html>

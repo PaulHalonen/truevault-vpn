@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Templates - Admin - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        .email-categories{display:flex;gap:10px;margin-bottom:25px;flex-wrap:wrap}
+        .category-btn{padding:10px 20px;background:rgba(255,255,255,0.05);border:1px solid var(--colors-border);border-radius:8px;color:var(--colors-text);cursor:pointer;transition:all 0.2s}
+        .category-btn:hover,.category-btn.active{background:var(--colors-primary);color:var(--colors-background);border-color:var(--colors-primary)}
+        .templates-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:20px}
+        .template-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);overflow:hidden}
+        .template-preview{padding:20px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--colors-border);min-height:120px}
+        .template-preview .subject{font-weight:600;margin-bottom:10px;color:var(--colors-primary)}
+        .template-preview .body{font-size:0.85rem;color:var(--colors-text-muted);line-height:1.5}
+        .template-info{padding:20px}
+        .template-info h4{margin-bottom:5px}
+        .template-meta{display:flex;gap:15px;font-size:0.8rem;color:var(--colors-text-muted);margin:10px 0}
+        .template-actions{display:flex;gap:8px}
+        .variable-tag{display:inline-block;background:rgba(0,217,255,0.2);color:var(--colors-primary);padding:2px 8px;border-radius:4px;font-family:monospace;font-size:0.8rem}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+        .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+        .variables-list{background:rgba(0,0,0,0.2);border-radius:8px;padding:15px;margin-top:15px}
+        .variables-list h5{margin-bottom:10px;font-size:0.9rem}
+        .variables-grid{display:flex;flex-wrap:wrap;gap:8px}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar admin-sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1><span class="admin-label">ADMIN</span></div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+            <a href="/admin/users.html" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+            <a href="/admin/servers.html" class="nav-item"><span class="nav-icon">🖥️</span><span>Servers</span></a>
+            <a href="/admin/subscriptions.html" class="nav-item"><span class="nav-icon">💳</span><span>Subscriptions</span></a>
+            <a href="/admin/payments.html" class="nav-item"><span class="nav-icon">💰</span><span>Payments</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">CMS</div>
+            <a href="/admin/pages.html" class="nav-item"><span class="nav-icon">📄</span><span>Pages</span></a>
+            <a href="/admin/themes.html" class="nav-item"><span class="nav-icon">🎨</span><span>Theme Editor</span></a>
+            <a href="/admin/emails.html" class="nav-item active"><span class="nav-icon">📧</span><span>Email Templates</span></a>
+            <a href="/admin/media.html" class="nav-item"><span class="nav-icon">🖼️</span><span>Media Library</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">System</div>
+            <a href="/admin/automation.html" class="nav-item"><span class="nav-icon">⚡</span><span>Automation</span></a>
+            <a href="/admin/logs.html" class="nav-item"><span class="nav-icon">📋</span><span>System Logs</span></a>
+            <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar admin-avatar">👤</div><div class="user-details"><span class="user-name" id="adminName">Administrator</span><span class="user-plan">Super Admin</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="adminLogout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>📧 Email Templates</h1>
+                <p class="text-muted">Manage automated email templates</p>
+            </div>
+            <button class="btn btn-primary" onclick="showNewTemplateModal()">➕ New Template</button>
+        </header>
+        
+        <!-- Categories -->
+        <div class="email-categories">
+            <button class="category-btn active" onclick="filterCategory('all')">All (12)</button>
+            <button class="category-btn" onclick="filterCategory('welcome')">👋 Welcome (3)</button>
+            <button class="category-btn" onclick="filterCategory('billing')">💳 Billing (3)</button>
+            <button class="category-btn" onclick="filterCategory('support')">🎫 Support (2)</button>
+            <button class="category-btn" onclick="filterCategory('security')">🔒 Security (2)</button>
+            <button class="category-btn" onclick="filterCategory('marketing')">📢 Marketing (2)</button>
+        </div>
+        
+        <!-- Templates Grid -->
+        <div class="templates-grid">
+            <!-- Welcome Email -->
+            <div class="template-card" data-category="welcome">
+                <div class="template-preview">
+                    <div class="subject">Welcome to TrueVault VPN! 🛡️</div>
+                    <div class="body">Hi <span class="variable-tag">{first_name}</span>,<br><br>Welcome to TrueVault VPN! Your account is ready. Get started by downloading our app...</div>
+                </div>
+                <div class="template-info">
+                    <h4>Welcome Email</h4>
+                    <div class="template-meta">
+                        <span>📧 Sent: 245 times</span>
+                        <span>📈 Open rate: 68%</span>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn btn-primary btn-small" onclick="editTemplate(1)">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="previewTemplate(1)">👁️</button>
+                        <button class="btn btn-secondary btn-small" onclick="testTemplate(1)">📤</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Trial Ending -->
+            <div class="template-card" data-category="welcome">
+                <div class="template-preview">
+                    <div class="subject">Your trial ends in 3 days ⏰</div>
+                    <div class="body">Hi <span class="variable-tag">{first_name}</span>,<br><br>Your free trial is ending soon! Upgrade now to keep your privacy protected...</div>
+                </div>
+                <div class="template-info">
+                    <h4>Trial Ending Reminder</h4>
+                    <div class="template-meta">
+                        <span>📧 Sent: 89 times</span>
+                        <span>📈 Open rate: 52%</span>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn btn-primary btn-small" onclick="editTemplate(2)">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="previewTemplate(2)">👁️</button>
+                        <button class="btn btn-secondary btn-small" onclick="testTemplate(2)">📤</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Success -->
+            <div class="template-card" data-category="billing">
+                <div class="template-preview">
+                    <div class="subject">Payment Received ✅</div>
+                    <div class="body">Hi <span class="variable-tag">{first_name}</span>,<br><br>We've received your payment of <span class="variable-tag">{amount}</span>. Invoice #<span class="variable-tag">{invoice_number}</span>...</div>
+                </div>
+                <div class="template-info">
+                    <h4>Payment Confirmation</h4>
+                    <div class="template-meta">
+                        <span>📧 Sent: 412 times</span>
+                        <span>📈 Open rate: 75%</span>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn btn-primary btn-small" onclick="editTemplate(3)">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="previewTemplate(3)">👁️</button>
+                        <button class="btn btn-secondary btn-small" onclick="testTemplate(3)">📤</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Failed -->
+            <div class="template-card" data-category="billing">
+                <div class="template-preview">
+                    <div class="subject">Payment Failed - Action Required ⚠️</div>
+                    <div class="body">Hi <span class="variable-tag">{first_name}</span>,<br><br>We couldn't process your payment. Please update your payment method to avoid service interruption...</div>
+                </div>
+                <div class="template-info">
+                    <h4>Payment Failed</h4>
+                    <div class="template-meta">
+                        <span>📧 Sent: 34 times</span>
+                        <span>📈 Open rate: 82%</span>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn btn-primary btn-small" onclick="editTemplate(4)">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="previewTemplate(4)">👁️</button>
+                        <button class="btn btn-secondary btn-small" onclick="testTemplate(4)">📤</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Support Ticket -->
+            <div class="template-card" data-category="support">
+                <div class="template-preview">
+                    <div class="subject">Ticket #<span class="variable-tag">{ticket_id}</span> Received 🎫</div>
+                    <div class="body">Hi <span class="variable-tag">{first_name}</span>,<br><br>We've received your support request. Our team will respond within 24 hours...</div>
+                </div>
+                <div class="template-info">
+                    <h4>Support Ticket Created</h4>
+                    <div class="template-meta">
+                        <span>📧 Sent: 156 times</span>
+                        <span>📈 Open rate: 71%</span>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn btn-primary btn-small" onclick="editTemplate(5)">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="previewTemplate(5)">👁️</button>
+                        <button class="btn btn-secondary btn-small" onclick="testTemplate(5)">📤</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Password Reset -->
+            <div class="template-card" data-category="security">
+                <div class="template-preview">
+                    <div class="subject">Password Reset Request 🔐</div>
+                    <div class="body">Hi <span class="variable-tag">{first_name}</span>,<br><br>Click the link below to reset your password. This link expires in 1 hour...</div>
+                </div>
+                <div class="template-info">
+                    <h4>Password Reset</h4>
+                    <div class="template-meta">
+                        <span>📧 Sent: 78 times</span>
+                        <span>📈 Open rate: 89%</span>
+                    </div>
+                    <div class="template-actions">
+                        <button class="btn btn-primary btn-small" onclick="editTemplate(6)">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="previewTemplate(6)">👁️</button>
+                        <button class="btn btn-secondary btn-small" onclick="testTemplate(6)">📤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Edit Template Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Template</h2>
+                <button class="modal-close" onclick="hideModal()">&times;</button>
+            </div>
+            <form id="templateForm">
+                <div class="form-group">
+                    <label>Template Name *</label>
+                    <input type="text" name="name" value="Welcome Email" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject Line *</label>
+                    <input type="text" name="subject" value="Welcome to TrueVault VPN! 🛡️" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Body *</label>
+                    <textarea name="body" rows="10" required>Hi {first_name},
+
+Welcome to TrueVault VPN! Your account is now active.
+
+Get started:
+1. Download our app
+2. Sign in with your credentials
+3. Connect with one click
+
+If you have any questions, our support team is here to help.
+
+Best regards,
+The TrueVault Team</textarea>
+                </div>
+                <div class="variables-list">
+                    <h5>Available Variables (click to insert)</h5>
+                    <div class="variables-grid">
+                        <span class="variable-tag" onclick="insertVar('{first_name}')">{first_name}</span>
+                        <span class="variable-tag" onclick="insertVar('{last_name}')">{last_name}</span>
+                        <span class="variable-tag" onclick="insertVar('{email}')">{email}</span>
+                        <span class="variable-tag" onclick="insertVar('{plan_name}')">{plan_name}</span>
+                        <span class="variable-tag" onclick="insertVar('{amount}')">{amount}</span>
+                        <span class="variable-tag" onclick="insertVar('{invoice_number}')">{invoice_number}</span>
+                        <span class="variable-tag" onclick="insertVar('{ticket_id}')">{ticket_id}</span>
+                        <span class="variable-tag" onclick="insertVar('{reset_link}')">{reset_link}</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:25px">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1">💾 Save Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        function checkAdminAuth() {
+            const token = localStorage.getItem('truevault_admin_token');
+            if (!token) { window.location.href = '/admin/'; return false; }
+            return true;
+        }
+        
+        function adminLogout() {
+            localStorage.removeItem('truevault_admin_token');
+            localStorage.removeItem('truevault_admin');
+            window.location.href = '/admin/';
+        }
+        
+        function filterCategory(category) {
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.template-card').forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        function editTemplate(id) {
+            document.getElementById('editModal').classList.add('active');
+        }
+        
+        function previewTemplate(id) {
+            TrueVault.Toast.info('Opening preview...');
+        }
+        
+        function testTemplate(id) {
+            if (confirm('Send test email to your admin email?')) {
+                TrueVault.Toast.success('Test email sent!');
+            }
+        }
+        
+        function showNewTemplateModal() {
+            document.getElementById('editModal').classList.add('active');
+        }
+        
+        function hideModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+        
+        function insertVar(varName) {
+            const textarea = document.querySelector('textarea[name="body"]');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + varName + text.substring(end);
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + varName.length;
+        }
+        
+        document.getElementById('templateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            TrueVault.Toast.success('Template saved!');
+            hideModal();
+        });
+        
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) hideModal();
+        });
+        
+        if (checkAdminAuth()) {
+            const admin = JSON.parse(localStorage.getItem('truevault_admin') || '{}');
+            document.getElementById('adminName').textContent = admin.first_name || 'Administrator';
+        }
+    </script>
+</body>
+</html>

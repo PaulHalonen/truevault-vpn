@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo-icon">🛡️</span>
+            <h1>TrueVault</h1>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item active">
+                <span class="nav-icon">📊</span>
+                <span>Overview</span>
+            </a>
+            <a href="/dashboard/connect.html" class="nav-item">
+                <span class="nav-icon">🔌</span>
+                <span>Connect</span>
+            </a>
+            <a href="/dashboard/servers.html" class="nav-item">
+                <span class="nav-icon">🌐</span>
+                <span>Servers</span>
+            </a>
+            <a href="/dashboard/identities.html" class="nav-item">
+                <span class="nav-icon">🎭</span>
+                <span>Identities</span>
+            </a>
+            <a href="/dashboard/certificates.html" class="nav-item">
+                <span class="nav-icon">📜</span>
+                <span>Certificates</span>
+            </a>
+            <a href="/dashboard/devices.html" class="nav-item">
+                <span class="nav-icon">📱</span>
+                <span>Devices</span>
+            </a>
+            <a href="/dashboard/cameras.html" class="nav-item">
+                <span class="nav-icon">📷</span>
+                <span>Cameras</span>
+            </a>
+            <a href="/dashboard/mesh.html" class="nav-item">
+                <span class="nav-icon">👨‍👩‍👧‍👦</span>
+                <span>Mesh Network</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <a href="/dashboard/scanner.html" class="nav-item">
+                <span class="nav-icon">🔍</span>
+                <span>Network Scanner</span>
+            </a>
+            <a href="/dashboard/settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span>Settings</span>
+            </a>
+            <a href="/dashboard/billing.html" class="nav-item">
+                <span class="nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar">👤</div>
+                <div class="user-details">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="user-plan" id="userPlan">-</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>Dashboard</h1>
+                <p class="text-muted">Welcome back! Here's your VPN overview.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="quickConnectBtn">
+                    <span>🔌</span> Quick Connect
+                </button>
+            </div>
+        </header>
+        
+        <!-- Connection Status -->
+        <section class="connection-status" id="connectionStatus">
+            <div class="status-card disconnected" id="statusCard">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span class="status-text" id="statusText">Disconnected</span>
+                </div>
+                <div class="status-details" id="statusDetails">
+                    <p>You are not connected to VPN</p>
+                </div>
+                <button class="btn btn-primary" id="connectBtn" onclick="quickConnect()">Connect Now</button>
+            </div>
+        </section>
+        
+        <!-- Stats Grid -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="todayData">0 MB</span>
+                    <span class="stat-label">Data Today</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="todayTime">0h 0m</span>
+                    <span class="stat-label">Connected Today</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📱</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="deviceCount">0/3</span>
+                    <span class="stat-label">Devices</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📷</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="cameraCount">0</span>
+                    <span class="stat-label">Cameras</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quick Actions -->
+        <section class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🌐 Server Locations</h3>
+                    <a href="/dashboard/servers.html" class="text-primary">View All →</a>
+                </div>
+                <div class="server-list" id="serverList">
+                    <div class="loading">Loading servers...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🎭 Your Identities</h3>
+                    <a href="/dashboard/identities.html" class="text-primary">Manage →</a>
+                </div>
+                <div class="identity-list" id="identityList">
+                    <div class="loading">Loading identities...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📜 Certificates</h3>
+                    <a href="/dashboard/certificates.html" class="text-primary">View All →</a>
+                </div>
+                <div class="cert-summary" id="certSummary">
+                    <div class="loading">Loading certificates...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📷 Cameras</h3>
+                    <a href="/dashboard/cameras.html" class="text-primary">View All →</a>
+                </div>
+                <div class="camera-list" id="cameraList">
+                    <div class="loading">Loading cameras...</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Network Scanner CTA -->
+        <section class="scanner-cta" id="scannerCta">
+            <div class="scanner-content">
+                <h3>🔍 Discover Devices on Your Network</h3>
+                <p>Find IP cameras, smart devices, and more with our network scanner tool.</p>
+                <a href="/dashboard/scanner.html" class="btn btn-primary">Launch Scanner</a>
+            </div>
+        </section>
+    </main>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        // Require auth
+        if (!TrueVault.Auth.requireAuth()) {
+            // Will redirect to login
+        }
+        
+        // Load dashboard data
+        async function loadDashboard() {
+            // Load user info
+            const user = TrueVault.Auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+                document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+            }
+            
+            // Load profile with stats
+            const profile = await TrueVault.API.get('/users/profile.php');
+            if (profile.success) {
+                const stats = profile.data.stats;
+                document.getElementById('deviceCount').textContent = `${stats.device_count}/${stats.device_limit}`;
+                document.getElementById('cameraCount').textContent = stats.camera_count;
+            }
+            
+            // Load VPN status
+            const status = await TrueVault.API.get('/vpn/status.php');
+            if (status.success) {
+                updateConnectionStatus(status.data);
+                updateUsageStats(status.data.usage);
+            }
+            
+            // Load servers
+            loadServers();
+            
+            // Load cameras
+            loadCameras();
+            
+            // Load certificates summary
+            loadCertificates();
+        }
+        
+        function updateConnectionStatus(data) {
+            const card = document.getElementById('statusCard');
+            const text = document.getElementById('statusText');
+            const details = document.getElementById('statusDetails');
+            const btn = document.getElementById('connectBtn');
+            
+            if (data.is_connected && data.connections.length > 0) {
+                const conn = data.connections[0];
+                card.className = 'status-card connected';
+                text.textContent = 'Connected';
+                details.innerHTML = `
+                    <p><strong>${conn.server.name}</strong> (${conn.server.region})</p>
+                    <p class="text-muted">IP: ${conn.assigned_ip} • ${conn.duration_formatted}</p>
+                `;
+                btn.textContent = 'Disconnect';
+                btn.onclick = disconnect;
+                btn.className = 'btn btn-danger';
+            } else {
+                card.className = 'status-card disconnected';
+                text.textContent = 'Disconnected';
+                details.innerHTML = '<p>You are not connected to VPN</p>';
+                btn.textContent = 'Connect Now';
+                btn.onclick = quickConnect;
+                btn.className = 'btn btn-primary';
+            }
+        }
+        
+        function updateUsageStats(usage) {
+            if (usage.today) {
+                const totalBytes = usage.today.bytes_sent + usage.today.bytes_received;
+                document.getElementById('todayData').textContent = TrueVault.Utils.formatBytes(totalBytes);
+                document.getElementById('todayTime').textContent = TrueVault.Utils.formatDuration(usage.today.duration_seconds);
+            }
+        }
+        
+        async function loadServers() {
+            const result = await TrueVault.API.get('/vpn/servers.php');
+            const container = document.getElementById('serverList');
+            
+            if (result.success && result.data.servers.length > 0) {
+                const servers = result.data.servers.slice(0, 4);
+                container.innerHTML = servers.map(s => `
+                    <div class="server-item" onclick="connectToServer(${s.id})">
+                        <span class="server-flag">${getFlag(s.country)}</span>
+                        <div class="server-info">
+                            <span class="server-name">${s.server_name}</span>
+                            <span class="server-load ${s.load_color}">${s.load_percent}% load</span>
+                        </div>
+                        <span class="status-dot ${s.status === 'active' ? 'online' : ''}"></span>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-muted">No servers available</p>';
+            }
+        }
+        
+        async function loadCameras() {
+            const result = await TrueVault.API.get('/devices/cameras.php');
+            const container = document.getElementById('cameraList');
+            
+            if (result.success && result.data.cameras.length > 0) {
+                const cameras = result.data.cameras.slice(0, 3);
+                container.innerHTML = cameras.map(c => `
+                    <div class="camera-item">
+                        <span class="camera-icon">📷</span>
+                        <div class="camera-info">
+                            <span class="camera-name">${c.camera_name}</span>
+                            <span class="camera-ip text-muted">${c.ip_address}</span>
+                        </div>
+                        <span class="status-dot ${c.is_online ? 'online' : ''}"></span>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <p class="text-muted">No cameras found</p>
+                    <a href="/dashboard/scanner.html" class="btn btn-secondary btn-small mt-2">Scan Network</a>
+                `;
+            }
+        }
+        
+        async function loadCertificates() {
+            const result = await TrueVault.API.get('/certificates/index.php');
+            const container = document.getElementById('certSummary');
+            
+            if (result.success) {
+                if (result.data.has_ca) {
+                    const certs = result.data.certificates;
+                    const valid = certs.filter(c => c.status === 'valid').length;
+                    const expiring = certs.filter(c => c.status === 'expiring_soon').length;
+                    
+                    container.innerHTML = `
+                        <div class="cert-stat"><span class="cert-count">${certs.length}</span><span class="text-muted">Total Certs</span></div>
+                        <div class="cert-stat"><span class="cert-count text-success">${valid}</span><span class="text-muted">Valid</span></div>
+                        ${expiring > 0 ? `<div class="cert-stat"><span class="cert-count text-warning">${expiring}</span><span class="text-muted">Expiring Soon</span></div>` : ''}
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <p class="text-muted">No Certificate Authority</p>
+                        <a href="/dashboard/certificates.html" class="btn btn-secondary btn-small mt-2">Generate CA</a>
+                    `;
+                }
+            }
+        }
+        
+        async function quickConnect() {
+            const btn = document.getElementById('connectBtn');
+            btn.disabled = true;
+            btn.textContent = 'Connecting...';
+            
+            // Get first available server
+            const servers = await TrueVault.API.get('/vpn/servers.php');
+            if (servers.success && servers.data.servers.length > 0) {
+                const server = servers.data.servers[0];
+                const result = await TrueVault.API.post('/vpn/connect.php', { server_id: server.id });
+                
+                if (result.success) {
+                    TrueVault.Toast.success(`Connected to ${server.server_name}`);
+                    loadDashboard();
+                } else {
+                    TrueVault.Toast.error(result.error || 'Connection failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Connect Now';
+                }
+            }
+        }
+        
+        async function connectToServer(serverId) {
+            const result = await TrueVault.API.post('/vpn/connect.php', { server_id: serverId });
+            if (result.success) {
+                TrueVault.Toast.success('Connected!');
+                loadDashboard();
+            } else {
+                TrueVault.Toast.error(result.error || 'Connection failed');
+            }
+        }
+        
+        async function disconnect() {
+            const result = await TrueVault.API.post('/vpn/disconnect.php', {});
+            if (result.success) {
+                TrueVault.Toast.success('Disconnected');
+                loadDashboard();
+            }
+        }
+        
+        function getFlag(country) {
+            const flags = {
+                'US': '🇺🇸', 'CA': '🇨🇦', 'UK': '🇬🇧', 'GB': '🇬🇧',
+                'DE': '🇩🇪', 'FR': '🇫🇷', 'AU': '🇦🇺', 'JP': '🇯🇵', 'SG': '🇸🇬'
+            };
+            return flags[country] || '🌐';
+        }
+        
+        // Initialize
+        loadDashboard();
+        
+        // Refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

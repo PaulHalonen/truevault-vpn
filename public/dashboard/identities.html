@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regional Identities - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <style>
+        .identities-intro{background:linear-gradient(135deg,rgba(0,217,255,0.1),rgba(0,255,136,0.05));border:1px solid rgba(0,217,255,0.2);border-radius:var(--cards-border-radius);padding:30px;margin-bottom:30px}
+        .identities-intro h2{margin-bottom:10px}
+        .identities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+        .identity-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);overflow:hidden;transition:all 0.2s}
+        .identity-card:hover{border-color:var(--colors-primary)}
+        .identity-card.active{border-color:var(--colors-success);background:rgba(0,255,136,0.05)}
+        .identity-card.locked{opacity:0.6}
+        .identity-header{display:flex;align-items:center;gap:15px;padding:20px;border-bottom:1px solid var(--colors-border)}
+        .identity-flag{font-size:3rem}
+        .identity-info h3{font-size:1.2rem;margin-bottom:3px}
+        .identity-info .region{color:var(--colors-text-muted);font-size:0.9rem}
+        .identity-details{padding:20px}
+        .identity-detail{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .identity-detail:last-child{border-bottom:none}
+        .identity-detail-label{color:var(--colors-text-muted);font-size:0.9rem}
+        .identity-detail-value{font-family:monospace;font-size:0.9rem}
+        .identity-actions{padding:15px 20px;background:rgba(0,0,0,0.2);display:flex;gap:10px}
+        .usage-info{margin-top:15px;padding:15px;background:rgba(0,0,0,0.2);border-radius:8px}
+        .usage-bar{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:10px;overflow:hidden}
+        .usage-fill{height:100%;background:var(--colors-primary);border-radius:3px}
+        .create-identity{background:rgba(255,255,255,0.02);border:2px dashed var(--colors-border);border-radius:var(--cards-border-radius);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s}
+        .create-identity:hover{border-color:var(--colors-primary);background:rgba(255,255,255,0.04)}
+        .create-identity .icon{font-size:3rem;margin-bottom:15px;opacity:0.5}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:500px}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+        .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+        .region-selector{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:20px 0}
+        .region-option{padding:15px;background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:8px;cursor:pointer;text-align:center;transition:all 0.2s}
+        .region-option:hover{border-color:var(--colors-primary)}
+        .region-option.selected{border-color:var(--colors-secondary);background:rgba(0,255,136,0.1)}
+        .region-option .flag{font-size:1.5rem;margin-bottom:5px}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item active"><span class="nav-icon">🎭</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>🎭 Regional Identities</h1>
+                <p class="text-muted">Persistent digital personas for different regions</p>
+            </div>
+        </header>
+        
+        <!-- Intro -->
+        <div class="identities-intro">
+            <h2>🔐 Smart Identity Router</h2>
+            <p class="text-muted">Create persistent digital identities for different regions. When you connect to your Canadian bank, it's not just a Canadian IP — it's the <strong>same</strong> Canadian IP every time, with consistent browser fingerprints and timezone settings. Banks never flag you again.</p>
+        </div>
+        
+        <!-- Identities Grid -->
+        <div class="identities-grid" id="identitiesGrid">
+            <!-- Active Identity -->
+            <div class="identity-card active">
+                <div class="identity-header">
+                    <span class="identity-flag">🇺🇸</span>
+                    <div class="identity-info">
+                        <h3>US Banking</h3>
+                        <div class="region">United States • Primary</div>
+                    </div>
+                    <span class="badge badge-success">Active</span>
+                </div>
+                <div class="identity-details">
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Persistent IP</span>
+                        <span class="identity-detail-value">66.94.103.42</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Timezone</span>
+                        <span class="identity-detail-value">America/New_York</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Browser Fingerprint</span>
+                        <span class="identity-detail-value">Consistent ✓</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Created</span>
+                        <span class="identity-detail-value">Dec 15, 2025</span>
+                    </div>
+                    <div class="usage-info">
+                        <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+                            <span>Usage this month</span>
+                            <span>12.4 GB / 50 GB</span>
+                        </div>
+                        <div class="usage-bar"><div class="usage-fill" style="width:25%"></div></div>
+                    </div>
+                </div>
+                <div class="identity-actions">
+                    <button class="btn btn-secondary btn-small" onclick="editIdentity(1)">⚙️ Edit</button>
+                    <button class="btn btn-secondary btn-small" onclick="viewHistory(1)">📊 History</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteIdentity(1)">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- Canada Identity -->
+            <div class="identity-card">
+                <div class="identity-header">
+                    <span class="identity-flag">🇨🇦</span>
+                    <div class="identity-info">
+                        <h3>Canada Streaming</h3>
+                        <div class="region">Canada</div>
+                    </div>
+                </div>
+                <div class="identity-details">
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Persistent IP</span>
+                        <span class="identity-detail-value">66.241.125.89</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Timezone</span>
+                        <span class="identity-detail-value">America/Toronto</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Browser Fingerprint</span>
+                        <span class="identity-detail-value">Consistent ✓</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Last Used</span>
+                        <span class="identity-detail-value">2 days ago</span>
+                    </div>
+                </div>
+                <div class="identity-actions">
+                    <button class="btn btn-primary btn-small" onclick="activateIdentity(2)">🔗 Use This</button>
+                    <button class="btn btn-secondary btn-small" onclick="editIdentity(2)">⚙️</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteIdentity(2)">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- UK Identity -->
+            <div class="identity-card">
+                <div class="identity-header">
+                    <span class="identity-flag">🇬🇧</span>
+                    <div class="identity-info">
+                        <h3>UK Services</h3>
+                        <div class="region">United Kingdom</div>
+                    </div>
+                </div>
+                <div class="identity-details">
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Persistent IP</span>
+                        <span class="identity-detail-value">Not assigned</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Timezone</span>
+                        <span class="identity-detail-value">Europe/London</span>
+                    </div>
+                    <div class="identity-detail">
+                        <span class="identity-detail-label">Status</span>
+                        <span class="identity-detail-value">Ready</span>
+                    </div>
+                </div>
+                <div class="identity-actions">
+                    <button class="btn btn-primary btn-small" onclick="activateIdentity(3)">🔗 Use This</button>
+                    <button class="btn btn-secondary btn-small" onclick="editIdentity(3)">⚙️</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteIdentity(3)">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- Create New -->
+            <div class="create-identity" onclick="showCreateModal()">
+                <div class="icon">➕</div>
+                <h3>Create New Identity</h3>
+                <p class="text-muted">Add a new regional persona</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Create Identity Modal -->
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎭 Create Regional Identity</h2>
+                <button class="modal-close" onclick="hideModal()">&times;</button>
+            </div>
+            <form id="createForm">
+                <div class="form-group">
+                    <label>Identity Name *</label>
+                    <input type="text" name="name" placeholder="e.g., US Banking, UK Shopping" required>
+                </div>
+                
+                <label style="display:block;margin-bottom:10px">Select Region *</label>
+                <div class="region-selector" id="regionSelector">
+                    <div class="region-option" data-region="US" onclick="selectRegion(this)">
+                        <div class="flag">🇺🇸</div>
+                        <div>United States</div>
+                    </div>
+                    <div class="region-option" data-region="CA" onclick="selectRegion(this)">
+                        <div class="flag">🇨🇦</div>
+                        <div>Canada</div>
+                    </div>
+                    <div class="region-option" data-region="UK" onclick="selectRegion(this)">
+                        <div class="flag">🇬🇧</div>
+                        <div>United Kingdom</div>
+                    </div>
+                    <div class="region-option" data-region="DE" onclick="selectRegion(this)">
+                        <div class="flag">🇩🇪</div>
+                        <div>Germany</div>
+                    </div>
+                    <div class="region-option" data-region="FR" onclick="selectRegion(this)">
+                        <div class="flag">🇫🇷</div>
+                        <div>France</div>
+                    </div>
+                    <div class="region-option" data-region="AU" onclick="selectRegion(this)">
+                        <div class="flag">🇦🇺</div>
+                        <div>Australia</div>
+                    </div>
+                </div>
+                <input type="hidden" name="region" id="selectedRegion" required>
+                
+                <div style="display:flex;gap:10px;margin-top:25px">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1">🎭 Create Identity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        if (!TrueVault.Auth.requireAuth()) {}
+        
+        const user = TrueVault.Auth.getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+        }
+        
+        function showCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+        }
+        
+        function hideModal() {
+            document.getElementById('createModal').classList.remove('active');
+        }
+        
+        function selectRegion(el) {
+            document.querySelectorAll('.region-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('selectedRegion').value = el.dataset.region;
+        }
+        
+        document.getElementById('createForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!document.getElementById('selectedRegion').value) {
+                TrueVault.Toast.error('Please select a region');
+                return;
+            }
+            TrueVault.Toast.success('Identity created!');
+            hideModal();
+        });
+        
+        function activateIdentity(id) {
+            TrueVault.Toast.success('Identity activated');
+        }
+        
+        function editIdentity(id) {
+            TrueVault.Toast.info('Edit coming soon');
+        }
+        
+        function viewHistory(id) {
+            TrueVault.Toast.info('History coming soon');
+        }
+        
+        function deleteIdentity(id) {
+            if (!confirm('Delete this identity?')) return;
+            TrueVault.Toast.success('Identity deleted');
+        }
+        
+        document.getElementById('createModal').addEventListener('click', function(e) {
+            if (e.target === this) hideModal();
+        });
+    </script>
+</body>
+</html>

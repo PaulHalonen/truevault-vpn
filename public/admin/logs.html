@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Logs - Admin - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        .logs-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:15px}
+        .filter-row{display:flex;gap:10px;flex-wrap:wrap}
+        .filter-select{padding:8px 15px;background:rgba(255,255,255,0.05);border:1px solid var(--colors-border);border-radius:6px;color:var(--colors-text)}
+        .log-entry{display:flex;align-items:flex-start;gap:15px;padding:15px;background:rgba(255,255,255,0.02);border-left:3px solid var(--colors-border);margin-bottom:10px;border-radius:0 8px 8px 0}
+        .log-entry.info{border-left-color:var(--colors-primary)}
+        .log-entry.success{border-left-color:var(--colors-success)}
+        .log-entry.warning{border-left-color:var(--colors-warning)}
+        .log-entry.error{border-left-color:var(--colors-error)}
+        .log-icon{font-size:1.2rem}
+        .log-content{flex:1}
+        .log-message{margin-bottom:5px}
+        .log-meta{display:flex;gap:15px;font-size:0.8rem;color:var(--colors-text-muted)}
+        .log-time{font-family:monospace}
+        .real-time-indicator{display:flex;align-items:center;gap:8px;padding:8px 15px;background:rgba(0,255,136,0.1);border:1px solid var(--colors-success);border-radius:20px;font-size:0.85rem}
+        .real-time-dot{width:8px;height:8px;background:var(--colors-success);border-radius:50%;animation:pulse 1.5s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        .log-viewer{background:rgba(0,0,0,0.3);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:20px;max-height:600px;overflow-y:auto}
+        .stats-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
+        .stat-mini{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:10px;padding:15px;text-align:center}
+        .stat-mini .value{font-size:1.5rem;font-weight:600}
+        .stat-mini .label{font-size:0.75rem;color:var(--colors-text-muted)}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar admin-sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1><span class="admin-label">ADMIN</span></div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+            <a href="/admin/users.html" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+            <a href="/admin/servers.html" class="nav-item"><span class="nav-icon">🖥️</span><span>Servers</span></a>
+            <a href="/admin/subscriptions.html" class="nav-item"><span class="nav-icon">💳</span><span>Subscriptions</span></a>
+            <a href="/admin/payments.html" class="nav-item"><span class="nav-icon">💰</span><span>Payments</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">CMS</div>
+            <a href="/admin/pages.html" class="nav-item"><span class="nav-icon">📄</span><span>Pages</span></a>
+            <a href="/admin/themes.html" class="nav-item"><span class="nav-icon">🎨</span><span>Theme Editor</span></a>
+            <a href="/admin/emails.html" class="nav-item"><span class="nav-icon">📧</span><span>Email Templates</span></a>
+            <a href="/admin/media.html" class="nav-item"><span class="nav-icon">🖼️</span><span>Media Library</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">System</div>
+            <a href="/admin/automation.html" class="nav-item"><span class="nav-icon">⚡</span><span>Automation</span></a>
+            <a href="/admin/logs.html" class="nav-item active"><span class="nav-icon">📋</span><span>System Logs</span></a>
+            <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar admin-avatar">👤</div><div class="user-details"><span class="user-name" id="adminName">Administrator</span><span class="user-plan">Super Admin</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="adminLogout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>📋 System Logs</h1>
+                <p class="text-muted">Monitor system events and debug issues</p>
+            </div>
+            <div class="real-time-indicator">
+                <span class="real-time-dot"></span>
+                <span>Real-time</span>
+            </div>
+        </header>
+        
+        <!-- Mini Stats -->
+        <div class="stats-mini">
+            <div class="stat-mini">
+                <div class="value" style="color:var(--colors-primary)">1,247</div>
+                <div class="label">Info Logs Today</div>
+            </div>
+            <div class="stat-mini">
+                <div class="value" style="color:var(--colors-success)">892</div>
+                <div class="label">Success Events</div>
+            </div>
+            <div class="stat-mini">
+                <div class="value" style="color:var(--colors-warning)">23</div>
+                <div class="label">Warnings</div>
+            </div>
+            <div class="stat-mini">
+                <div class="value" style="color:var(--colors-error)">3</div>
+                <div class="label">Errors</div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="card">
+            <div class="logs-header">
+                <div class="filter-row">
+                    <select class="filter-select" id="levelFilter" onchange="filterLogs()">
+                        <option value="">All Levels</option>
+                        <option value="info">Info</option>
+                        <option value="success">Success</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                    </select>
+                    <select class="filter-select" id="categoryFilter" onchange="filterLogs()">
+                        <option value="">All Categories</option>
+                        <option value="auth">Authentication</option>
+                        <option value="vpn">VPN Connections</option>
+                        <option value="payment">Payments</option>
+                        <option value="system">System</option>
+                        <option value="admin">Admin Actions</option>
+                    </select>
+                    <input type="text" class="filter-select" placeholder="Search logs..." id="searchLogs" onkeyup="filterLogs()">
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button class="btn btn-secondary btn-small" onclick="exportLogs()">📥 Export</button>
+                    <button class="btn btn-secondary btn-small" onclick="clearLogs()">🗑️ Clear</button>
+                    <button class="btn btn-primary btn-small" onclick="refreshLogs()">🔄 Refresh</button>
+                </div>
+            </div>
+            
+            <!-- Log Viewer -->
+            <div class="log-viewer" id="logViewer">
+                <div class="log-entry error">
+                    <span class="log-icon">❌</span>
+                    <div class="log-content">
+                        <div class="log-message">Payment failed for user john@example.com - Card declined</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:45:32</span>
+                            <span>Payment</span>
+                            <span>user_id: 42</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry success">
+                    <span class="log-icon">✅</span>
+                    <div class="log-content">
+                        <div class="log-message">User sarah@example.com connected to US-East server</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:44:15</span>
+                            <span>VPN</span>
+                            <span>server_id: 1</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry info">
+                    <span class="log-icon">ℹ️</span>
+                    <div class="log-content">
+                        <div class="log-message">New user registration: mike@example.com</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:42:08</span>
+                            <span>Auth</span>
+                            <span>plan: personal</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry warning">
+                    <span class="log-icon">⚠️</span>
+                    <div class="log-content">
+                        <div class="log-message">Server US-South load at 85% - Consider scaling</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:40:00</span>
+                            <span>System</span>
+                            <span>server_id: 3</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry success">
+                    <span class="log-icon">✅</span>
+                    <div class="log-content">
+                        <div class="log-message">Certificate issued for device: iPhone 15 Pro</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:38:22</span>
+                            <span>System</span>
+                            <span>user_id: 15</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry info">
+                    <span class="log-icon">ℹ️</span>
+                    <div class="log-content">
+                        <div class="log-message">Admin theme settings updated</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:35:10</span>
+                            <span>Admin</span>
+                            <span>admin_id: 1</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry success">
+                    <span class="log-icon">✅</span>
+                    <div class="log-content">
+                        <div class="log-message">Payment successful: $14.99 from john@example.com</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:30:45</span>
+                            <span>Payment</span>
+                            <span>invoice: INV-2026-0142</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry info">
+                    <span class="log-icon">ℹ️</span>
+                    <div class="log-content">
+                        <div class="log-message">VIP user seige235@yahoo.com connected to dedicated server</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:28:33</span>
+                            <span>VPN</span>
+                            <span>server_id: 2 (VIP)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry error">
+                    <span class="log-icon">❌</span>
+                    <div class="log-content">
+                        <div class="log-message">Failed login attempt for admin@example.com (wrong password)</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:25:18</span>
+                            <span>Auth</span>
+                            <span>IP: 192.168.1.55</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-entry success">
+                    <span class="log-icon">✅</span>
+                    <div class="log-content">
+                        <div class="log-message">Network scan completed: 12 devices found</div>
+                        <div class="log-meta">
+                            <span class="log-time">2026-01-11 18:20:00</span>
+                            <span>System</span>
+                            <span>user_id: 8</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Load More -->
+            <div style="text-align:center;margin-top:20px">
+                <button class="btn btn-secondary" onclick="loadMoreLogs()">Load More Logs</button>
+            </div>
+        </div>
+    </main>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        function checkAdminAuth() {
+            const token = localStorage.getItem('truevault_admin_token');
+            if (!token) { window.location.href = '/admin/'; return false; }
+            return true;
+        }
+        
+        function adminLogout() {
+            localStorage.removeItem('truevault_admin_token');
+            localStorage.removeItem('truevault_admin');
+            window.location.href = '/admin/';
+        }
+        
+        function filterLogs() {
+            const level = document.getElementById('levelFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+            const search = document.getElementById('searchLogs').value.toLowerCase();
+            
+            document.querySelectorAll('.log-entry').forEach(entry => {
+                let show = true;
+                
+                if (level && !entry.classList.contains(level)) show = false;
+                if (search && !entry.textContent.toLowerCase().includes(search)) show = false;
+                
+                entry.style.display = show ? 'flex' : 'none';
+            });
+        }
+        
+        function refreshLogs() {
+            TrueVault.Toast.success('Logs refreshed');
+        }
+        
+        function exportLogs() {
+            TrueVault.Toast.success('Logs exported');
+        }
+        
+        function clearLogs() {
+            if (confirm('Clear all logs?')) {
+                TrueVault.Toast.success('Logs cleared');
+            }
+        }
+        
+        function loadMoreLogs() {
+            TrueVault.Toast.info('Loading more logs...');
+        }
+        
+        // Simulate real-time logs
+        setInterval(() => {
+            // In production: fetch new logs from API
+        }, 5000);
+        
+        if (checkAdminAuth()) {
+            const admin = JSON.parse(localStorage.getItem('truevault_admin') || '{}');
+            document.getElementById('adminName').textContent = admin.first_name || 'Administrator';
+        }
+    </script>
+</body>
+</html>

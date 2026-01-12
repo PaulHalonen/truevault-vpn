@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Library - Admin - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        .upload-zone{border:2px dashed var(--colors-border);border-radius:var(--cards-border-radius);padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:30px}
+        .upload-zone:hover{border-color:var(--colors-primary);background:rgba(0,217,255,0.05)}
+        .upload-zone.dragover{border-color:var(--colors-success);background:rgba(0,255,136,0.1)}
+        .upload-zone .icon{font-size:3rem;margin-bottom:15px;opacity:0.5}
+        .filter-bar{display:flex;gap:15px;margin-bottom:25px;flex-wrap:wrap}
+        .filter-btn{padding:8px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--colors-border);border-radius:6px;color:var(--colors-text);cursor:pointer}
+        .filter-btn:hover,.filter-btn.active{background:var(--colors-primary);color:var(--colors-background)}
+        .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px}
+        .media-item{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s}
+        .media-item:hover{border-color:var(--colors-primary);transform:translateY(-2px)}
+        .media-item.selected{border-color:var(--colors-success);background:rgba(0,255,136,0.1)}
+        .media-preview{height:140px;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:3rem;overflow:hidden}
+        .media-preview img{width:100%;height:100%;object-fit:cover}
+        .media-info{padding:12px}
+        .media-info .name{font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .media-info .meta{font-size:0.75rem;color:var(--colors-text-muted);margin-top:5px}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:600px}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+        .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+        .detail-preview{text-align:center;margin-bottom:20px}
+        .detail-preview img{max-width:100%;max-height:300px;border-radius:8px}
+        .detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+        .copy-url{display:flex;gap:10px;margin-top:20px}
+        .copy-url input{flex:1;font-family:monospace}
+        .bulk-actions{background:rgba(0,217,255,0.1);border:1px solid var(--colors-primary);border-radius:10px;padding:15px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between}
+        .bulk-actions.visible{display:flex}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar admin-sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1><span class="admin-label">ADMIN</span></div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+            <a href="/admin/users.html" class="nav-item"><span class="nav-icon">👥</span><span>Users</span></a>
+            <a href="/admin/servers.html" class="nav-item"><span class="nav-icon">🖥️</span><span>Servers</span></a>
+            <a href="/admin/subscriptions.html" class="nav-item"><span class="nav-icon">💳</span><span>Subscriptions</span></a>
+            <a href="/admin/payments.html" class="nav-item"><span class="nav-icon">💰</span><span>Payments</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">CMS</div>
+            <a href="/admin/pages.html" class="nav-item"><span class="nav-icon">📄</span><span>Pages</span></a>
+            <a href="/admin/themes.html" class="nav-item"><span class="nav-icon">🎨</span><span>Theme Editor</span></a>
+            <a href="/admin/emails.html" class="nav-item"><span class="nav-icon">📧</span><span>Email Templates</span></a>
+            <a href="/admin/media.html" class="nav-item active"><span class="nav-icon">🖼️</span><span>Media Library</span></a>
+            <div class="nav-divider"></div>
+            <div class="nav-label">System</div>
+            <a href="/admin/automation.html" class="nav-item"><span class="nav-icon">⚡</span><span>Automation</span></a>
+            <a href="/admin/logs.html" class="nav-item"><span class="nav-icon">📋</span><span>System Logs</span></a>
+            <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar admin-avatar">👤</div><div class="user-details"><span class="user-name" id="adminName">Administrator</span><span class="user-plan">Super Admin</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="adminLogout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>🖼️ Media Library</h1>
+                <p class="text-muted">Manage images, documents, and other media files</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:15px">
+                <span class="text-muted">Storage: 45 MB / 500 MB</span>
+            </div>
+        </header>
+        
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone">
+            <div class="icon">📤</div>
+            <h3>Drag & drop files here</h3>
+            <p class="text-muted">or click to browse</p>
+            <input type="file" id="fileInput" multiple hidden>
+        </div>
+        
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions">
+            <span><strong id="selectedCount">0</strong> items selected</span>
+            <div>
+                <button class="btn btn-secondary btn-small" onclick="downloadSelected()">📥 Download</button>
+                <button class="btn btn-danger btn-small" onclick="deleteSelected()">🗑️ Delete</button>
+                <button class="btn btn-secondary btn-small" onclick="clearSelection()">✖️ Clear</button>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterMedia('all')">All</button>
+            <button class="filter-btn" onclick="filterMedia('images')">🖼️ Images</button>
+            <button class="filter-btn" onclick="filterMedia('documents')">📄 Documents</button>
+            <button class="filter-btn" onclick="filterMedia('videos')">🎬 Videos</button>
+            <input type="text" class="filter-btn" placeholder="🔍 Search..." style="flex:1;max-width:300px" oninput="searchMedia(this.value)">
+        </div>
+        
+        <!-- Media Grid -->
+        <div class="media-grid" id="mediaGrid">
+            <!-- Image 1 -->
+            <div class="media-item" data-type="images" onclick="toggleSelect(this)">
+                <div class="media-preview">🖼️</div>
+                <div class="media-info">
+                    <div class="name">logo.png</div>
+                    <div class="meta">245 KB • Jan 10, 2026</div>
+                </div>
+            </div>
+            
+            <!-- Image 2 -->
+            <div class="media-item" data-type="images" onclick="toggleSelect(this)">
+                <div class="media-preview">🖼️</div>
+                <div class="media-info">
+                    <div class="name">hero-background.jpg</div>
+                    <div class="meta">1.2 MB • Jan 8, 2026</div>
+                </div>
+            </div>
+            
+            <!-- Image 3 -->
+            <div class="media-item" data-type="images" onclick="toggleSelect(this)">
+                <div class="media-preview">🖼️</div>
+                <div class="media-info">
+                    <div class="name">feature-vpn.png</div>
+                    <div class="meta">456 KB • Jan 5, 2026</div>
+                </div>
+            </div>
+            
+            <!-- Document -->
+            <div class="media-item" data-type="documents" onclick="toggleSelect(this)">
+                <div class="media-preview">📄</div>
+                <div class="media-info">
+                    <div class="name">privacy-policy.pdf</div>
+                    <div class="meta">89 KB • Dec 20, 2025</div>
+                </div>
+            </div>
+            
+            <!-- Document 2 -->
+            <div class="media-item" data-type="documents" onclick="toggleSelect(this)">
+                <div class="media-preview">📄</div>
+                <div class="media-info">
+                    <div class="name">terms-of-service.pdf</div>
+                    <div class="meta">76 KB • Dec 20, 2025</div>
+                </div>
+            </div>
+            
+            <!-- Icon -->
+            <div class="media-item" data-type="images" onclick="toggleSelect(this)">
+                <div class="media-preview">🛡️</div>
+                <div class="media-info">
+                    <div class="name">favicon.svg</div>
+                    <div class="meta">4 KB • Dec 15, 2025</div>
+                </div>
+            </div>
+            
+            <!-- Screenshot -->
+            <div class="media-item" data-type="images" onclick="toggleSelect(this)">
+                <div class="media-preview">🖼️</div>
+                <div class="media-info">
+                    <div class="name">dashboard-screenshot.png</div>
+                    <div class="meta">890 KB • Dec 10, 2025</div>
+                </div>
+            </div>
+            
+            <!-- Video -->
+            <div class="media-item" data-type="videos" onclick="toggleSelect(this)">
+                <div class="media-preview">🎬</div>
+                <div class="media-info">
+                    <div class="name">intro-video.mp4</div>
+                    <div class="meta">15 MB • Dec 5, 2025</div>
+                </div>
+            </div>
+            
+            <!-- Image -->
+            <div class="media-item" data-type="images" onclick="toggleSelect(this)">
+                <div class="media-preview">🖼️</div>
+                <div class="media-info">
+                    <div class="name">app-icon.png</div>
+                    <div class="meta">128 KB • Dec 1, 2025</div>
+                </div>
+            </div>
+            
+            <!-- Document -->
+            <div class="media-item" data-type="documents" onclick="toggleSelect(this)">
+                <div class="media-preview">📄</div>
+                <div class="media-info">
+                    <div class="name">user-guide.pdf</div>
+                    <div class="meta">2.1 MB • Nov 25, 2025</div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 File Details</h2>
+                <button class="modal-close" onclick="hideModal()">&times;</button>
+            </div>
+            <div class="detail-preview">
+                <div style="font-size:5rem">🖼️</div>
+            </div>
+            <div class="detail-row">
+                <span>File Name</span>
+                <span id="fileName">logo.png</span>
+            </div>
+            <div class="detail-row">
+                <span>File Size</span>
+                <span id="fileSize">245 KB</span>
+            </div>
+            <div class="detail-row">
+                <span>Dimensions</span>
+                <span id="fileDimensions">512 x 512</span>
+            </div>
+            <div class="detail-row">
+                <span>Uploaded</span>
+                <span id="fileDate">Jan 10, 2026</span>
+            </div>
+            <div class="copy-url">
+                <input type="text" value="/assets/images/logo.png" id="fileUrl" readonly>
+                <button class="btn btn-secondary" onclick="copyUrl()">📋 Copy</button>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+                <button class="btn btn-secondary" style="flex:1" onclick="downloadFile()">📥 Download</button>
+                <button class="btn btn-danger" onclick="deleteFile()">🗑️ Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        function checkAdminAuth() {
+            const token = localStorage.getItem('truevault_admin_token');
+            if (!token) { window.location.href = '/admin/'; return false; }
+            return true;
+        }
+        
+        function adminLogout() {
+            localStorage.removeItem('truevault_admin_token');
+            localStorage.removeItem('truevault_admin');
+            window.location.href = '/admin/';
+        }
+        
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        
+        function handleFiles(files) {
+            TrueVault.Toast.success(`Uploading ${files.length} file(s)...`);
+        }
+        
+        function filterMedia(type) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.media-item').forEach(item => {
+                if (type === 'all' || item.dataset.type === type) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function searchMedia(query) {
+            query = query.toLowerCase();
+            document.querySelectorAll('.media-item').forEach(item => {
+                const name = item.querySelector('.name').textContent.toLowerCase();
+                item.style.display = name.includes(query) ? 'block' : 'none';
+            });
+        }
+        
+        function toggleSelect(item) {
+            if (event.detail === 2) {
+                // Double click - show details
+                document.getElementById('detailModal').classList.add('active');
+                return;
+            }
+            item.classList.toggle('selected');
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            const selected = document.querySelectorAll('.media-item.selected').length;
+            document.getElementById('selectedCount').textContent = selected;
+            document.getElementById('bulkActions').classList.toggle('visible', selected > 0);
+        }
+        
+        function clearSelection() {
+            document.querySelectorAll('.media-item.selected').forEach(item => item.classList.remove('selected'));
+            updateBulkActions();
+        }
+        
+        function downloadSelected() { TrueVault.Toast.success('Downloading selected files...'); }
+        function deleteSelected() {
+            if (confirm('Delete selected files?')) TrueVault.Toast.success('Files deleted');
+            clearSelection();
+        }
+        
+        function hideModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+        
+        function copyUrl() {
+            const url = document.getElementById('fileUrl');
+            url.select();
+            document.execCommand('copy');
+            TrueVault.Toast.success('URL copied!');
+        }
+        
+        function downloadFile() { TrueVault.Toast.success('Downloading...'); }
+        function deleteFile() {
+            if (confirm('Delete this file?')) {
+                TrueVault.Toast.success('File deleted');
+                hideModal();
+            }
+        }
+        
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) hideModal();
+        });
+        
+        if (checkAdminAuth()) {
+            const admin = JSON.parse(localStorage.getItem('truevault_admin') || '{}');
+            document.getElementById('adminName').textContent = admin.first_name || 'Administrator';
+        }
+    </script>
+</body>
+</html>
