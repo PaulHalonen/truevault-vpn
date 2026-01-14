@@ -2,6 +2,7 @@
 /**
  * TrueVault VPN - User Billing API
  * Manages user subscriptions and payment methods
+ * Uses Database helper class (SQLite3 version)
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -16,25 +17,23 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'status';
 
 try {
-    $subDb = Database::getConnection('subscriptions');
-    $payDb = Database::getConnection('payments');
-    
     switch ($method) {
         case 'GET':
             if ($action === 'status') {
                 // Get current subscription status
-                $stmt = $subDb->prepare("SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-                $stmt->execute([$user['id']]);
-                $subscription = $stmt->fetch(PDO::FETCH_ASSOC);
+                $subscription = Database::queryOne('subscriptions', "SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", [$user['id']]);
                 
                 // Get payment method (masked)
-                $payStmt = $payDb->prepare("
-                    SELECT id, payment_method, card_last_four, card_brand, is_default, created_at
-                    FROM payment_methods WHERE user_id = ? AND is_active = 1
-                    ORDER BY is_default DESC, created_at DESC
-                ");
-                $payStmt->execute([$user['id']]);
-                $paymentMethods = $payStmt->fetchAll(PDO::FETCH_ASSOC);
+                $paymentMethods = [];
+                try {
+                    $paymentMethods = Database::query('payments', "
+                        SELECT id, payment_method, card_last_four, card_brand, is_default, created_at
+                        FROM payment_methods WHERE user_id = ? AND is_active = 1
+                        ORDER BY is_default DESC, created_at DESC
+                    ", [$user['id']]);
+                } catch (Exception $e) {
+                    // Payment methods table may not exist
+                }
                 
                 // Plan details
                 $plans = [
@@ -44,10 +43,9 @@ try {
                     'vip' => ['name' => 'VIP', 'price' => 0, 'devices' => 100, 'identities' => 100, 'mesh' => true, 'api' => true, 'dedicated' => true]
                 ];
                 
-                $currentPlan = $plans[$subscription['plan_type'] ?? 'personal'] ?? $plans['personal'];
+                $currentPlan = $plans[$subscription['plan_type'] ?? $user['plan_type'] ?? 'personal'] ?? $plans['personal'];
                 
-                Response::json([
-                    'success' => true,
+                Response::success([
                     'subscription' => $subscription,
                     'plan_details' => $currentPlan,
                     'payment_methods' => $paymentMethods,
@@ -60,21 +58,17 @@ try {
                 $limit = 10;
                 $offset = ($page - 1) * $limit;
                 
-                $stmt = $payDb->prepare("
+                $invoices = Database::query('payments', "
                     SELECT * FROM payments 
                     WHERE user_id = ? AND status IN ('completed', 'refunded')
                     ORDER BY created_at DESC
-                    LIMIT ? OFFSET ?
-                ");
-                $stmt->execute([$user['id'], $limit, $offset]);
-                $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    LIMIT $limit OFFSET $offset
+                ", [$user['id']]);
                 
-                $countStmt = $payDb->prepare("SELECT COUNT(*) FROM payments WHERE user_id = ?");
-                $countStmt->execute([$user['id']]);
-                $total = $countStmt->fetchColumn();
+                $countResult = Database::queryOne('payments', "SELECT COUNT(*) as total FROM payments WHERE user_id = ?", [$user['id']]);
+                $total = $countResult['total'] ?? 0;
                 
-                Response::json([
-                    'success' => true,
+                Response::success([
                     'invoices' => $invoices,
                     'pagination' => [
                         'page' => $page,
@@ -85,32 +79,26 @@ try {
                 
             } elseif ($action === 'usage') {
                 // Get usage statistics
-                $devDb = Database::getConnection('devices');
-                $meshDb = Database::getConnection('mesh');
-                $vpnDb = Database::getConnection('vpn');
                 
                 // Device count
-                $devStmt = $devDb->prepare("SELECT COUNT(*) FROM user_devices WHERE user_id = ?");
-                $devStmt->execute([$user['id']]);
-                $deviceCount = $devStmt->fetchColumn();
+                $deviceResult = Database::queryOne('devices', "SELECT COUNT(*) as count FROM user_devices WHERE user_id = ?", [$user['id']]);
+                $deviceCount = $deviceResult['count'] ?? 0;
                 
                 // Bandwidth usage (from VPN connections)
-                $bwStmt = $vpnDb->prepare("
+                $bwResult = Database::queryOne('vpn', "
                     SELECT COALESCE(SUM(data_transfer), 0) as bandwidth
                     FROM vpn_connections 
                     WHERE user_id = ? AND connected_at >= datetime('now', '-30 days')
-                ");
-                $bwStmt->execute([$user['id']]);
-                $bandwidth = $bwStmt->fetchColumn();
+                ", [$user['id']]);
+                $bandwidth = $bwResult['bandwidth'] ?? 0;
                 
                 // Mesh members
-                $meshStmt = $meshDb->prepare("
-                    SELECT COUNT(*) FROM mesh_members mm
+                $meshResult = Database::queryOne('mesh', "
+                    SELECT COUNT(*) as count FROM mesh_members mm
                     JOIN mesh_networks mn ON mm.network_id = mn.id
                     WHERE mn.owner_id = ?
-                ");
-                $meshStmt->execute([$user['id']]);
-                $meshMembers = $meshStmt->fetchColumn();
+                ", [$user['id']]);
+                $meshMembers = $meshResult['count'] ?? 0;
                 
                 // Plan limits
                 $limits = [
@@ -121,8 +109,7 @@ try {
                 ];
                 $planLimits = $limits[$user['plan_type']] ?? $limits['personal'];
                 
-                Response::json([
-                    'success' => true,
+                Response::success([
                     'usage' => [
                         'devices' => ['used' => (int)$deviceCount, 'limit' => $planLimits['devices']],
                         'bandwidth_gb' => ['used' => round($bandwidth / 1073741824, 2), 'limit' => $planLimits['bandwidth']],
@@ -151,35 +138,29 @@ try {
                 $prices = ['personal' => 9.99, 'family' => 14.99, 'business' => 29.99];
                 
                 // Update subscription
-                $stmt = $subDb->prepare("
+                Database::execute('subscriptions', "
                     UPDATE subscriptions 
                     SET plan_type = ?, amount = ?, updated_at = datetime('now')
                     WHERE user_id = ?
-                ");
-                $stmt->execute([$data['plan'], $prices[$data['plan']], $user['id']]);
+                ", [$data['plan'], $prices[$data['plan']], $user['id']]);
                 
                 // Update user's plan type
-                $userDb = Database::getConnection('users');
-                $userStmt = $userDb->prepare("UPDATE users SET plan_type = ? WHERE id = ?");
-                $userStmt->execute([$data['plan'], $user['id']]);
+                Database::execute('users', "UPDATE users SET plan_type = ? WHERE id = ?", [$data['plan'], $user['id']]);
                 
-                Response::json([
-                    'success' => true,
+                Response::success([
                     'message' => 'Plan updated successfully',
                     'new_plan' => $data['plan']
                 ]);
                 
             } elseif ($action === 'cancel') {
                 // Cancel subscription
-                $stmt = $subDb->prepare("
+                Database::execute('subscriptions', "
                     UPDATE subscriptions 
                     SET status = 'cancelled', cancelled_at = datetime('now')
                     WHERE user_id = ?
-                ");
-                $stmt->execute([$user['id']]);
+                ", [$user['id']]);
                 
-                Response::json([
-                    'success' => true,
+                Response::success([
                     'message' => 'Subscription cancelled. You will retain access until your billing period ends.'
                 ]);
                 
@@ -190,28 +171,23 @@ try {
                 }
                 
                 // Simulate adding payment method
-                $stmt = $payDb->prepare("
+                $result = Database::execute('payments', "
                     INSERT INTO payment_methods 
                     (user_id, payment_method, card_last_four, card_brand, is_default, is_active, created_at)
                     VALUES (?, 'card', ?, ?, 1, 1, datetime('now'))
-                ");
-                $stmt->execute([
+                ", [
                     $user['id'],
                     $data['last_four'] ?? '4242',
                     $data['brand'] ?? 'Visa'
                 ]);
                 
                 // Set other methods as non-default
-                $updateStmt = $payDb->prepare("
+                Database::execute('payments', "
                     UPDATE payment_methods SET is_default = 0 
                     WHERE user_id = ? AND id != ?
-                ");
-                $updateStmt->execute([$user['id'], $payDb->lastInsertId()]);
+                ", [$user['id'], $result['lastInsertId']]);
                 
-                Response::json([
-                    'success' => true,
-                    'message' => 'Payment method added'
-                ]);
+                Response::success(['message' => 'Payment method added']);
             } else {
                 Response::error('Invalid action', 400);
             }
@@ -220,13 +196,12 @@ try {
         case 'DELETE':
             if ($action === 'payment-method' && isset($_GET['id'])) {
                 // Remove payment method
-                $stmt = $payDb->prepare("
+                Database::execute('payments', "
                     UPDATE payment_methods SET is_active = 0 
                     WHERE id = ? AND user_id = ?
-                ");
-                $stmt->execute([$_GET['id'], $user['id']]);
+                ", [$_GET['id'], $user['id']]);
                 
-                Response::json(['success' => true, 'message' => 'Payment method removed']);
+                Response::success(['message' => 'Payment method removed']);
             } else {
                 Response::error('Invalid action', 400);
             }
@@ -237,5 +212,5 @@ try {
     }
 } catch (Exception $e) {
     error_log("Billing API error: " . $e->getMessage());
-    Response::error('Server error', 500);
+    Response::error('Server error: ' . $e->getMessage(), 500);
 }

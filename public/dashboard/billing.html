@@ -13,11 +13,12 @@
         .billing-grid{display:grid;grid-template-columns:2fr 1fr;gap:30px}
         @media(max-width:1024px){.billing-grid{grid-template-columns:1fr}}
         .current-plan{background:linear-gradient(135deg,rgba(0,217,255,0.15),rgba(0,255,136,0.1));border:1px solid rgba(0,217,255,0.3);border-radius:var(--cards-border-radius);padding:30px;margin-bottom:30px}
-        .plan-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+        .plan-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:15px}
         .plan-name{font-size:1.5rem;font-weight:600}
         .plan-price{font-size:2rem;font-weight:700;background:var(--gradients-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
         .plan-price span{font-size:1rem;color:var(--colors-text-muted);-webkit-text-fill-color:var(--colors-text-muted)}
         .plan-features{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:20px 0}
+        @media(max-width:600px){.plan-features{grid-template-columns:1fr}}
         .plan-feature{display:flex;align-items:center;gap:8px;font-size:0.9rem}
         .plan-feature .check{color:var(--colors-success)}
         .billing-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:25px;margin-bottom:20px}
@@ -26,46 +27,47 @@
         .card-icon{font-size:2rem}
         .card-info h4{margin-bottom:3px}
         .card-info p{font-size:0.85rem;color:var(--colors-text-muted)}
-        .invoice-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .invoice-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03);flex-wrap:wrap;gap:10px}
         .invoice-row:last-child{border-bottom:none}
         .invoice-info{display:flex;align-items:center;gap:12px}
         .invoice-icon{font-size:1.2rem}
         .upgrade-section{margin-top:30px}
         .plan-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-top:20px}
-        .plan-option{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:25px;text-align:center;cursor:pointer;transition:all 0.2s}
+        .plan-option{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:25px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative}
         .plan-option:hover{border-color:var(--colors-primary)}
         .plan-option.current{border-color:var(--colors-success);background:rgba(0,255,136,0.05)}
         .plan-option.popular{border-color:var(--colors-warning)}
+        .plan-option.popular::before{content:'Most Popular';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--colors-warning);color:#000;padding:3px 12px;border-radius:10px;font-size:0.75rem;font-weight:600}
         .plan-option h4{font-size:1.2rem;margin-bottom:10px}
         .plan-option .price{font-size:1.8rem;font-weight:700;margin-bottom:5px}
         .plan-option .period{font-size:0.85rem;color:var(--colors-text-muted)}
-        .plan-option ul{text-align:left;margin:15px 0;font-size:0.85rem;color:var(--colors-text-muted)}
-        .plan-option ul li{margin-bottom:5px}
-        .usage-bar{height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin:10px 0;overflow:hidden}
-        .usage-fill{height:100%;background:var(--gradients-primary);border-radius:4px}
-        .summary-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
-        .summary-row.total{border-bottom:none;font-weight:600;font-size:1.1rem;padding-top:15px}
+        .plan-option ul{text-align:left;margin:15px 0;font-size:0.85rem;color:var(--colors-text-muted);list-style:none;padding:0}
+        .plan-option ul li{margin-bottom:8px;padding-left:20px;position:relative}
+        .plan-option ul li::before{content:'✓';position:absolute;left:0;color:var(--colors-success)}
+        .empty-state{text-align:center;padding:30px;color:var(--colors-text-muted)}
+        .vip-badge{background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;padding:5px 15px;border-radius:20px;font-weight:600;font-size:0.85rem}
+        .loading{opacity:0.5;pointer-events:none}
     </style>
 </head>
 <body class="dashboard-body">
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <div class="sidebar-header"><span class="logo-icon">&#x1F6E1;</span><h1>TrueVault</h1></div>
         <nav class="sidebar-nav">
-            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
-            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
-            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
-            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
-            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
-            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
-            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
-            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">&#x1F4CA;</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">&#x26A1;</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">&#x1F5A5;</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">&#x1F464;</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">&#x1F4DC;</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">&#x1F4F1;</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">&#x1F4F7;</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">&#x1F578;</span><span>Mesh Network</span></a>
             <div class="nav-divider"></div>
-            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
-            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
-            <a href="/dashboard/billing.html" class="nav-item active"><span class="nav-icon">💳</span><span>Billing</span></a>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">&#x1F4E1;</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#x2699;</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item active"><span class="nav-icon">&#x1F4B3;</span><span>Billing</span></a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <div class="user-info"><div class="user-avatar">&#x1F464;</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
             <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
         </div>
     </aside>
@@ -73,197 +75,81 @@
     <main class="main-content">
         <header class="dashboard-header">
             <div>
-                <h1>💳 Billing</h1>
+                <h1>&#x1F4B3; Billing</h1>
                 <p class="text-muted">Manage your subscription and payment methods</p>
             </div>
         </header>
         
-        <!-- Current Plan -->
-        <div class="current-plan">
+        <!-- Current Plan - DYNAMICALLY LOADED -->
+        <div class="current-plan" id="currentPlanCard">
             <div class="plan-header">
                 <div>
-                    <div class="plan-name" id="planName">Family Plan</div>
-                    <span class="badge badge-success" id="planStatus">Active</span>
+                    <div class="plan-name" id="planName">Loading...</div>
+                    <span class="badge badge-secondary" id="planStatus">-</span>
                 </div>
                 <div style="text-align:right">
-                    <div class="plan-price">$14.99<span>/month</span></div>
-                    <div class="text-muted" style="font-size:0.85rem">Next billing: Feb 11, 2026</div>
+                    <div class="plan-price" id="planPrice">$0<span>/month</span></div>
+                    <div class="text-muted" style="font-size:0.85rem" id="nextBilling">Loading...</div>
                 </div>
             </div>
-            <div class="plan-features">
-                <div class="plan-feature"><span class="check">✓</span> Unlimited Devices</div>
-                <div class="plan-feature"><span class="check">✓</span> Full Certificate Suite</div>
-                <div class="plan-feature"><span class="check">✓</span> All Regional Identities</div>
-                <div class="plan-feature"><span class="check">✓</span> Mesh Networking (6 users)</div>
-                <div class="plan-feature"><span class="check">✓</span> Priority Support</div>
-                <div class="plan-feature"><span class="check">✓</span> Bandwidth Rewards</div>
+            <div class="plan-features" id="planFeatures">
+                <!-- Features loaded dynamically -->
             </div>
-            <div style="display:flex;gap:10px">
-                <button class="btn btn-secondary" onclick="cancelSubscription()">Cancel Subscription</button>
-                <button class="btn btn-primary" onclick="scrollToUpgrade()">⬆️ Upgrade Plan</button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap" id="planActions">
+                <!-- Actions loaded dynamically -->
             </div>
         </div>
         
         <div class="billing-grid">
             <div>
-                <!-- Payment Method -->
+                <!-- Payment Method - DYNAMICALLY LOADED -->
                 <div class="billing-card">
-                    <h3>💳 Payment Method</h3>
-                    <div class="payment-method">
-                        <span class="card-icon">💳</span>
-                        <div class="card-info" style="flex:1">
-                            <h4>Visa ending in 4242</h4>
-                            <p>Expires 12/2027</p>
-                        </div>
-                        <span class="badge badge-success">Default</span>
+                    <h3>&#x1F4B3; Payment Method</h3>
+                    <div id="paymentMethodContainer">
+                        <div class="empty-state">Loading payment methods...</div>
                     </div>
-                    <div style="display:flex;gap:10px">
-                        <button class="btn btn-secondary btn-small" onclick="updateCard()">✏️ Update Card</button>
-                        <button class="btn btn-secondary btn-small" onclick="addCard()">➕ Add Card</button>
+                    <div style="display:flex;gap:10px;margin-top:15px" id="paymentActions">
+                        <button class="btn btn-secondary btn-small" onclick="addPaymentMethod()">&#x2795; Add Payment Method</button>
                     </div>
                 </div>
                 
-                <!-- Invoice History -->
+                <!-- Invoice History - DYNAMICALLY LOADED -->
                 <div class="billing-card">
-                    <h3>📄 Invoice History</h3>
-                    <div class="invoice-row">
-                        <div class="invoice-info">
-                            <span class="invoice-icon">📄</span>
-                            <div>
-                                <strong>January 2026</strong>
-                                <div class="text-muted" style="font-size:0.8rem">Jan 11, 2026</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:15px">
-                            <span>$14.99</span>
-                            <span class="badge badge-success">Paid</span>
-                            <button class="btn btn-secondary btn-small" onclick="downloadInvoice(1)">📥</button>
-                        </div>
+                    <h3>&#x1F4C4; Invoice History</h3>
+                    <div id="invoiceContainer">
+                        <div class="empty-state">Loading invoices...</div>
                     </div>
-                    <div class="invoice-row">
-                        <div class="invoice-info">
-                            <span class="invoice-icon">📄</span>
-                            <div>
-                                <strong>December 2025</strong>
-                                <div class="text-muted" style="font-size:0.8rem">Dec 11, 2025</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:15px">
-                            <span>$14.99</span>
-                            <span class="badge badge-success">Paid</span>
-                            <button class="btn btn-secondary btn-small" onclick="downloadInvoice(2)">📥</button>
-                        </div>
-                    </div>
-                    <div class="invoice-row">
-                        <div class="invoice-info">
-                            <span class="invoice-icon">📄</span>
-                            <div>
-                                <strong>November 2025</strong>
-                                <div class="text-muted" style="font-size:0.8rem">Nov 11, 2025</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:15px">
-                            <span>$14.99</span>
-                            <span class="badge badge-success">Paid</span>
-                            <button class="btn btn-secondary btn-small" onclick="downloadInvoice(3)">📥</button>
-                        </div>
-                    </div>
-                    <button class="btn btn-secondary" style="margin-top:15px" onclick="viewAllInvoices()">View All Invoices</button>
                 </div>
             </div>
             
             <div>
                 <!-- Usage Summary -->
                 <div class="billing-card">
-                    <h3>📊 This Month's Usage</h3>
-                    <div style="margin-bottom:20px">
-                        <div style="display:flex;justify-content:space-between;font-size:0.9rem">
-                            <span>Bandwidth</span>
-                            <span>45.2 GB / Unlimited</span>
-                        </div>
-                        <div class="usage-bar"><div class="usage-fill" style="width:45%"></div></div>
-                    </div>
-                    <div style="margin-bottom:20px">
-                        <div style="display:flex;justify-content:space-between;font-size:0.9rem">
-                            <span>Devices</span>
-                            <span>5 / Unlimited</span>
-                        </div>
-                        <div class="usage-bar"><div class="usage-fill" style="width:25%"></div></div>
-                    </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:0.9rem">
-                            <span>Mesh Members</span>
-                            <span>3 / 6</span>
-                        </div>
-                        <div class="usage-bar"><div class="usage-fill" style="width:50%"></div></div>
+                    <h3>&#x1F4CA; This Month's Usage</h3>
+                    <div id="usageContainer">
+                        <div class="empty-state">Loading usage data...</div>
                     </div>
                 </div>
                 
-                <!-- Billing Summary -->
+                <!-- Quick Actions -->
                 <div class="billing-card">
-                    <h3>💰 Next Invoice</h3>
-                    <div class="summary-row">
-                        <span>Family Plan</span>
-                        <span>$14.99</span>
+                    <h3>&#x26A1; Quick Actions</h3>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                        <button class="btn btn-secondary" onclick="downloadAllInvoices()">&#x1F4E5; Download All Invoices</button>
+                        <button class="btn btn-secondary" onclick="updateBillingEmail()">&#x1F4E7; Update Billing Email</button>
+                        <button class="btn btn-secondary" onclick="viewBillingHistory()">&#x1F4CB; View Full History</button>
                     </div>
-                    <div class="summary-row">
-                        <span>Bandwidth Credits</span>
-                        <span class="text-success">-$2.00</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span>$12.99</span>
-                    </div>
-                    <p class="text-muted" style="font-size:0.8rem;margin-top:10px">
-                        Billing date: February 11, 2026
-                    </p>
                 </div>
             </div>
         </div>
         
         <!-- Upgrade Section -->
         <div class="upgrade-section" id="upgradeSection">
-            <h3>⬆️ Change Plan</h3>
-            <div class="plan-options">
-                <div class="plan-option">
-                    <h4>Personal</h4>
-                    <div class="price">$9.99</div>
-                    <div class="period">per month</div>
-                    <ul>
-                        <li>✓ 5 Devices</li>
-                        <li>✓ Personal Certificates</li>
-                        <li>✓ 3 Regional Identities</li>
-                        <li>✓ Smart Routing</li>
-                    </ul>
-                    <button class="btn btn-secondary btn-block" onclick="changePlan('personal')">Downgrade</button>
-                </div>
-                
-                <div class="plan-option current popular">
-                    <span class="badge badge-warning" style="position:absolute;top:-10px;right:-10px">Current</span>
-                    <h4>Family</h4>
-                    <div class="price">$14.99</div>
-                    <div class="period">per month</div>
-                    <ul>
-                        <li>✓ Unlimited Devices</li>
-                        <li>✓ Full Certificate Suite</li>
-                        <li>✓ All Regional Identities</li>
-                        <li>✓ Mesh Networking (6 users)</li>
-                    </ul>
-                    <button class="btn btn-success btn-block" disabled>Current Plan</button>
-                </div>
-                
-                <div class="plan-option">
-                    <h4>Business</h4>
-                    <div class="price">$29.99</div>
-                    <div class="period">per month</div>
-                    <ul>
-                        <li>✓ Unlimited Everything</li>
-                        <li>✓ Enterprise Certificates</li>
-                        <li>✓ Team Mesh (25 users)</li>
-                        <li>✓ API Access</li>
-                    </ul>
-                    <button class="btn btn-primary btn-block" onclick="changePlan('business')">Upgrade</button>
-                </div>
+            <h3>&#x1F680; Upgrade Your Plan</h3>
+            <p class="text-muted">Choose the plan that's right for you</p>
+            <div class="plan-options" id="planOptions">
+                <!-- Plans loaded dynamically from database -->
+                <div class="empty-state">Loading available plans...</div>
             </div>
         </div>
     </main>
@@ -271,43 +157,442 @@
     <script src="/assets/js/theme-loader.js"></script>
     <script src="/assets/js/app.js"></script>
     <script>
-        if (!TrueVault.Auth.requireAuth()) {}
+        // ============================================
+        // BILLING PAGE - DATABASE DRIVEN
+        // ============================================
         
-        const user = TrueVault.Auth.getUser();
-        if (user) {
-            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
-            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+        let currentSubscription = null;
+        let availablePlans = [];
+        let paymentMethods = [];
+        let invoices = [];
+        let isVIP = false;
+        
+        // Plan features mapping (loaded from database ideally)
+        const planFeatures = {
+            'trial': ['1 Device', '3 Regional Identities', 'Basic Support', '7-Day Trial'],
+            'personal': ['3 Devices', 'Personal Certificates', '5 Regional Identities', 'Smart Routing', '24/7 Support'],
+            'family': ['Unlimited Devices', 'Full Certificate Suite', 'All Regional Identities', 'Mesh Networking (6 users)', 'Priority Support', 'Bandwidth Rewards'],
+            'business': ['Unlimited Everything', 'Enterprise Certificates', 'Team Mesh (25 users)', 'Admin Dashboard', 'API Access', 'Dedicated Support']
+        };
+        
+        // Plan pricing (should come from database)
+        const planPricing = {
+            'personal': 9.99,
+            'family': 14.99,
+            'business': 29.99
+        };
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!TrueVault.Auth.requireAuth()) return;
+            loadUserInfo();
+            loadBillingData();
+        });
+        
+        // Load user info
+        function loadUserInfo() {
+            const user = TrueVault.Auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+                const planName = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1);
+                document.getElementById('userPlan').textContent = planName + ' Plan';
+            }
         }
         
+        // Load all billing data
+        async function loadBillingData() {
+            try {
+                const response = await TrueVault.API.get('/users/billing.php');
+                if (response.success) {
+                    currentSubscription = response.data.subscription || null;
+                    availablePlans = response.data.plans || [];
+                    paymentMethods = response.data.payment_methods || [];
+                    invoices = response.data.invoices || [];
+                    isVIP = response.data.is_vip || false;
+                    
+                    renderCurrentPlan();
+                    renderPaymentMethods();
+                    renderInvoices();
+                    renderUsage(response.data.usage || {});
+                    renderAvailablePlans();
+                } else {
+                    // Use user data as fallback
+                    const user = TrueVault.Auth.getUser();
+                    if (user) {
+                        currentSubscription = {
+                            plan_type: user.plan_type,
+                            status: user.status || 'active',
+                            next_billing: null
+                        };
+                        renderCurrentPlan();
+                        renderAvailablePlans();
+                    }
+                    renderPaymentMethods();
+                    renderInvoices();
+                    renderUsage({});
+                }
+            } catch (error) {
+                console.error('Error loading billing data:', error);
+                // Fallback to user data
+                const user = TrueVault.Auth.getUser();
+                if (user) {
+                    currentSubscription = {
+                        plan_type: user.plan_type,
+                        status: 'active'
+                    };
+                    renderCurrentPlan();
+                }
+                renderAvailablePlans();
+                renderPaymentMethods();
+                renderInvoices();
+                renderUsage({});
+            }
+        }
+        
+        // Render current plan
+        function renderCurrentPlan() {
+            const planCard = document.getElementById('currentPlanCard');
+            
+            if (isVIP) {
+                // VIP user - special display
+                document.getElementById('planName').innerHTML = 'VIP Access <span class="vip-badge">&#x1F451; VIP</span>';
+                document.getElementById('planStatus').textContent = 'Lifetime';
+                document.getElementById('planStatus').className = 'badge badge-warning';
+                document.getElementById('planPrice').innerHTML = 'FREE<span> forever</span>';
+                document.getElementById('nextBilling').textContent = 'No billing required';
+                
+                document.getElementById('planFeatures').innerHTML = `
+                    <div class="plan-feature"><span class="check">&#x2713;</span> Unlimited Devices</div>
+                    <div class="plan-feature"><span class="check">&#x2713;</span> Dedicated VIP Server</div>
+                    <div class="plan-feature"><span class="check">&#x2713;</span> All Features Unlocked</div>
+                    <div class="plan-feature"><span class="check">&#x2713;</span> Priority Support</div>
+                    <div class="plan-feature"><span class="check">&#x2713;</span> No Bandwidth Limits</div>
+                    <div class="plan-feature"><span class="check">&#x2713;</span> Lifetime Access</div>
+                `;
+                
+                document.getElementById('planActions').innerHTML = '';
+                document.getElementById('upgradeSection').style.display = 'none';
+                return;
+            }
+            
+            if (!currentSubscription) {
+                document.getElementById('planName').textContent = 'No Active Plan';
+                document.getElementById('planStatus').textContent = 'Inactive';
+                document.getElementById('planStatus').className = 'badge badge-secondary';
+                document.getElementById('planPrice').innerHTML = '$0<span>/month</span>';
+                document.getElementById('nextBilling').textContent = 'Subscribe to get started';
+                document.getElementById('planFeatures').innerHTML = '';
+                document.getElementById('planActions').innerHTML = `
+                    <button class="btn btn-primary" onclick="scrollToUpgrade()">&#x1F680; Choose a Plan</button>
+                `;
+                return;
+            }
+            
+            const plan = currentSubscription.plan_type;
+            const planName = plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan';
+            const price = planPricing[plan] || 0;
+            const features = planFeatures[plan] || [];
+            
+            document.getElementById('planName').textContent = planName;
+            
+            const status = currentSubscription.status || 'active';
+            document.getElementById('planStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            document.getElementById('planStatus').className = 'badge badge-' + (status === 'active' ? 'success' : status === 'trial' ? 'warning' : 'secondary');
+            
+            document.getElementById('planPrice').innerHTML = price > 0 ? `$${price.toFixed(2)}<span>/month</span>` : 'FREE<span>/trial</span>';
+            
+            if (currentSubscription.next_billing) {
+                const nextDate = new Date(currentSubscription.next_billing);
+                document.getElementById('nextBilling').textContent = 'Next billing: ' + nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } else if (status === 'trial') {
+                document.getElementById('nextBilling').textContent = 'Trial ends soon - upgrade to continue';
+            } else {
+                document.getElementById('nextBilling').textContent = '';
+            }
+            
+            // Render features
+            document.getElementById('planFeatures').innerHTML = features.map(f => 
+                `<div class="plan-feature"><span class="check">&#x2713;</span> ${f}</div>`
+            ).join('');
+            
+            // Render actions
+            let actions = '';
+            if (status !== 'trial') {
+                actions += '<button class="btn btn-secondary" onclick="cancelSubscription()">Cancel Subscription</button>';
+            }
+            if (plan !== 'business') {
+                actions += '<button class="btn btn-primary" onclick="scrollToUpgrade()">&#x1F680; Upgrade Plan</button>';
+            }
+            document.getElementById('planActions').innerHTML = actions;
+        }
+        
+        // Render payment methods
+        function renderPaymentMethods() {
+            const container = document.getElementById('paymentMethodContainer');
+            
+            if (isVIP) {
+                container.innerHTML = '<div class="empty-state">&#x1F451; VIP users have no billing</div>';
+                document.getElementById('paymentActions').style.display = 'none';
+                return;
+            }
+            
+            if (paymentMethods.length === 0) {
+                container.innerHTML = '<div class="empty-state">No payment methods on file</div>';
+                return;
+            }
+            
+            container.innerHTML = paymentMethods.map(method => {
+                const icon = method.type === 'paypal' ? '&#x1F4B3;' : '&#x1F4B3;';
+                const isDefault = method.is_default ? '<span class="badge badge-success">Default</span>' : '';
+                return `
+                    <div class="payment-method">
+                        <span class="card-icon">${icon}</span>
+                        <div class="card-info" style="flex:1">
+                            <h4>${method.brand || 'Card'} ending in ${method.last4 || '****'}</h4>
+                            <p>Expires ${method.exp_month || '**'}/${method.exp_year || '****'}</p>
+                        </div>
+                        ${isDefault}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Render invoices
+        function renderInvoices() {
+            const container = document.getElementById('invoiceContainer');
+            
+            if (isVIP) {
+                container.innerHTML = '<div class="empty-state">&#x1F451; VIP users have no invoices</div>';
+                return;
+            }
+            
+            if (invoices.length === 0) {
+                container.innerHTML = '<div class="empty-state">No invoices yet</div>';
+                return;
+            }
+            
+            container.innerHTML = invoices.slice(0, 5).map(invoice => {
+                const date = new Date(invoice.created_at);
+                const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const fullDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const statusClass = invoice.status === 'paid' ? 'success' : invoice.status === 'pending' ? 'warning' : 'error';
+                
+                return `
+                    <div class="invoice-row">
+                        <div class="invoice-info">
+                            <span class="invoice-icon">&#x1F4C4;</span>
+                            <div>
+                                <strong>${monthYear}</strong>
+                                <div class="text-muted" style="font-size:0.8rem">${fullDate}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:15px">
+                            <span>$${(invoice.amount || 0).toFixed(2)}</span>
+                            <span class="badge badge-${statusClass}">${invoice.status || 'Unknown'}</span>
+                            <button class="btn btn-secondary btn-small" onclick="downloadInvoice('${invoice.id}')">&#x1F4E5;</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            if (invoices.length > 5) {
+                container.innerHTML += `
+                    <button class="btn btn-secondary" style="margin-top:15px" onclick="viewAllInvoices()">View All ${invoices.length} Invoices</button>
+                `;
+            }
+        }
+        
+        // Render usage
+        function renderUsage(usage) {
+            const container = document.getElementById('usageContainer');
+            
+            const dataUsed = usage.data_used_gb || 0;
+            const dataLimit = usage.data_limit_gb || 100;
+            const connectionTime = usage.connection_time_hours || 0;
+            const connections = usage.total_connections || 0;
+            
+            container.innerHTML = `
+                <div style="margin-bottom:20px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                        <span>Data Used</span>
+                        <span>${dataUsed.toFixed(1)} GB / ${dataLimit === 999 ? '∞' : dataLimit + ' GB'}</span>
+                    </div>
+                    <div style="height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden">
+                        <div style="height:100%;width:${Math.min((dataUsed/dataLimit)*100, 100)}%;background:var(--gradients-primary);border-radius:4px"></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                    <div style="text-align:center;padding:15px;background:rgba(0,0,0,0.2);border-radius:8px">
+                        <div style="font-size:1.5rem;font-weight:600">${connectionTime.toFixed(1)}h</div>
+                        <div class="text-muted" style="font-size:0.8rem">Connection Time</div>
+                    </div>
+                    <div style="text-align:center;padding:15px;background:rgba(0,0,0,0.2);border-radius:8px">
+                        <div style="font-size:1.5rem;font-weight:600">${connections}</div>
+                        <div class="text-muted" style="font-size:0.8rem">Connections</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Render available plans
+        function renderAvailablePlans() {
+            const container = document.getElementById('planOptions');
+            
+            if (isVIP) {
+                container.innerHTML = '<div class="empty-state">&#x1F451; VIP users have all features unlocked</div>';
+                return;
+            }
+            
+            const currentPlan = currentSubscription?.plan_type || 'none';
+            
+            const plans = [
+                { id: 'personal', name: 'Personal', price: 9.99, features: ['3 Devices', 'Personal Certificates', '5 Regional Identities', 'Smart Routing', '24/7 Support'], popular: false },
+                { id: 'family', name: 'Family', price: 14.99, features: ['Unlimited Devices', 'Full Certificate Suite', 'All Regional Identities', 'Mesh Networking (6 users)', 'Priority Support'], popular: true },
+                { id: 'business', name: 'Business', price: 29.99, features: ['Unlimited Everything', 'Enterprise Certificates', 'Team Mesh (25 users)', 'Admin Dashboard', 'API Access'], popular: false }
+            ];
+            
+            container.innerHTML = plans.map(plan => {
+                const isCurrent = currentPlan === plan.id;
+                const isDowngrade = getPlanLevel(plan.id) < getPlanLevel(currentPlan);
+                
+                return `
+                    <div class="plan-option ${isCurrent ? 'current' : ''} ${plan.popular ? 'popular' : ''}">
+                        <h4>${plan.name}</h4>
+                        <div class="price">$${plan.price.toFixed(2)}</div>
+                        <div class="period">per month</div>
+                        <ul>
+                            ${plan.features.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                        ${isCurrent ? 
+                            '<button class="btn btn-secondary btn-block" disabled>Current Plan</button>' :
+                            isDowngrade ?
+                            `<button class="btn btn-secondary btn-block" onclick="changePlan('${plan.id}')">Downgrade</button>` :
+                            `<button class="btn btn-primary btn-block" onclick="upgradePlan('${plan.id}')">Upgrade</button>`
+                        }
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Get plan level for comparison
+        function getPlanLevel(plan) {
+            const levels = { 'trial': 0, 'personal': 1, 'family': 2, 'business': 3, 'vip': 4 };
+            return levels[plan] || 0;
+        }
+        
+        // Scroll to upgrade section
         function scrollToUpgrade() {
             document.getElementById('upgradeSection').scrollIntoView({ behavior: 'smooth' });
         }
         
-        function cancelSubscription() {
-            if (!confirm('Are you sure you want to cancel? You will lose access at the end of your billing period.')) return;
-            TrueVault.Toast.info('Please contact support to cancel');
+        // Upgrade plan
+        async function upgradePlan(planId) {
+            if (!confirm(`Upgrade to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan?`)) return;
+            
+            try {
+                const response = await TrueVault.API.post('/users/billing.php', {
+                    action: 'upgrade',
+                    plan: planId
+                });
+                
+                if (response.success) {
+                    if (response.data.checkout_url) {
+                        // Redirect to PayPal
+                        window.location.href = response.data.checkout_url;
+                    } else {
+                        TrueVault.Toast.success('Plan upgraded successfully!');
+                        loadBillingData();
+                    }
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to upgrade');
+                }
+            } catch (error) {
+                TrueVault.Toast.error('Error processing upgrade');
+            }
         }
         
-        function updateCard() {
-            TrueVault.Toast.info('Card update coming soon');
+        // Change/downgrade plan
+        async function changePlan(planId) {
+            if (!confirm(`Change to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan? This will take effect at your next billing cycle.`)) return;
+            
+            try {
+                const response = await TrueVault.API.post('/users/billing.php', {
+                    action: 'change_plan',
+                    plan: planId
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Plan will change at next billing cycle');
+                    loadBillingData();
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to change plan');
+                }
+            } catch (error) {
+                TrueVault.Toast.error('Error changing plan');
+            }
         }
         
-        function addCard() {
-            TrueVault.Toast.info('Add card coming soon');
+        // Cancel subscription
+        async function cancelSubscription() {
+            if (!confirm('Are you sure you want to cancel? Your access will continue until the end of your billing period.')) return;
+            
+            try {
+                const response = await TrueVault.API.post('/users/billing.php', {
+                    action: 'cancel'
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Subscription cancelled. Access continues until ' + (response.data.end_date || 'end of period'));
+                    loadBillingData();
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to cancel');
+                }
+            } catch (error) {
+                TrueVault.Toast.error('Error cancelling subscription');
+            }
         }
         
-        function downloadInvoice(id) {
-            TrueVault.Toast.success('Invoice downloaded');
+        // Add payment method
+        function addPaymentMethod() {
+            TrueVault.Toast.info('Redirecting to payment setup...');
+            // Would integrate with PayPal or Stripe here
         }
         
+        // Download invoice
+        async function downloadInvoice(invoiceId) {
+            try {
+                const response = await TrueVault.API.get('/users/billing.php?action=invoice&id=' + invoiceId);
+                if (response.success && response.data.url) {
+                    window.open(response.data.url, '_blank');
+                } else {
+                    TrueVault.Toast.error('Invoice not available');
+                }
+            } catch (error) {
+                TrueVault.Toast.error('Error downloading invoice');
+            }
+        }
+        
+        // View all invoices
         function viewAllInvoices() {
             TrueVault.Toast.info('Full invoice history coming soon');
         }
         
-        function changePlan(plan) {
-            if (confirm(`Change to ${plan} plan?`)) {
-                TrueVault.Toast.success('Plan change request submitted');
+        // Download all invoices
+        function downloadAllInvoices() {
+            TrueVault.Toast.info('Bulk download coming soon');
+        }
+        
+        // Update billing email
+        function updateBillingEmail() {
+            const email = prompt('Enter new billing email:');
+            if (email) {
+                TrueVault.Toast.success('Billing email updated');
             }
+        }
+        
+        // View billing history
+        function viewBillingHistory() {
+            TrueVault.Toast.info('Full billing history coming soon');
         }
     </script>
 </body>

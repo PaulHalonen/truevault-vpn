@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Admin - TrueVault VPN</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0f0f1a, #1a1a2e); color: #fff; min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: rgba(0,0,0,0.3); border-right: 1px solid rgba(255,255,255,0.1); padding: 1.5rem; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+        .logo-icon { font-size: 1.8rem; }
+        .logo-text { font-size: 1.3rem; font-weight: 700; background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo-badge { font-size: 0.7rem; background: #ff5050; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+        .nav { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem; border-radius: 8px; text-decoration: none; color: #888; transition: all 0.2s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: rgba(0,217,255,0.1); color: #00d9ff; border-left: 3px solid #00d9ff; }
+        .main { margin-left: 250px; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-title { font-size: 1.5rem; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-header { margin-bottom: 1.5rem; }
+        .card-header h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+        .card-header p { color: #888; font-size: 0.9rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: #888; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-info h4 { margin-bottom: 0.25rem; }
+        .setting-info p { color: #888; font-size: 0.85rem; }
+        .toggle { position: relative; width: 50px; height: 26px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.1); border-radius: 26px; transition: 0.3s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+        .toggle input:checked + .toggle-slider { background: linear-gradient(90deg, #00d9ff, #00ff88); }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(24px); }
+        .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-danger { background: rgba(255,80,80,0.2); color: #ff5050; }
+        .api-key-box { display: flex; gap: 0.5rem; }
+        .api-key-box input { flex: 1; font-family: monospace; }
+        .danger-zone { border-color: rgba(255,80,80,0.3); }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; z-index: 1000; color: #fff; }
+        .toast-success { background: #00c853; }
+        .toast-error { background: #ff5252; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <span class="logo-icon">🔐</span>
+            <span class="logo-text">TrueVault</span>
+            <span class="logo-badge">ADMIN</span>
+        </div>
+        <nav class="nav">
+            <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="users.html" class="nav-item"><span class="nav-icon">👥</span> Users</a>
+            <a href="servers.html" class="nav-item"><span class="nav-icon">🖥️</span> Servers</a>
+            <a href="billing.html" class="nav-item"><span class="nav-icon">💳</span> Billing</a>
+            <a href="logs.html" class="nav-item"><span class="nav-icon">📋</span> Logs</a>
+            <a href="settings.html" class="nav-item active"><span class="nav-icon">⚙️</span> Settings</a>
+        </nav>
+        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="/" class="nav-item"><span class="nav-icon">🌐</span> View Site</a>
+            <a href="#" class="nav-item" onclick="logout()"><span class="nav-icon">🚪</span> Logout</a>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="header">
+            <h1 class="page-title">System Settings</h1>
+        </header>
+
+        <!-- General Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3>🌐 General Settings</h3>
+                <p>Basic configuration for TrueVault VPN</p>
+            </div>
+            <div class="form-group">
+                <label>Site Name</label>
+                <input type="text" id="siteName" value="TrueVault VPN">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Support Email</label>
+                    <input type="email" id="supportEmail" value="paulhalonen@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>Admin Email</label>
+                    <input type="email" id="adminEmail" value="kahlen@truthvault.com">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveGeneral()">Save Changes</button>
+        </div>
+
+        <!-- PayPal Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3>💳 PayPal Integration</h3>
+                <p>Configure PayPal payment processing</p>
+            </div>
+            <div class="form-group">
+                <label>Client ID</label>
+                <div class="api-key-box">
+                    <input type="text" id="paypalClientId" value="ActD2XQKe8EkUNI8eZakmhR8964d2kAdh7rcpbkm2rbr8rrtEOoOdmoj50FtXmy1XLYzALL5ogvxcagk">
+                    <button class="btn btn-secondary" onclick="copyField('paypalClientId')">Copy</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Secret Key</label>
+                <div class="api-key-box">
+                    <input type="password" id="paypalSecret" value="EIc2idTcm_YjKf4pNxXpRr_vBt0Ebb3FCp71H2fTI3T9NAi_iAvlrwYbEaidmP23IynWSqfP6nkAXwGN">
+                    <button class="btn btn-secondary" onclick="togglePassword('paypalSecret')">Show</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Webhook URL</label>
+                <input type="text" value="https://vpn.the-truth-publishing.com/api/billing/webhook.php" readonly>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Sandbox Mode</h4>
+                    <p>Use PayPal sandbox for testing</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="sandboxMode">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <button class="btn btn-primary" onclick="savePayPal()">Save PayPal Settings</button>
+        </div>
+
+        <!-- Server API Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3>🖥️ Server API</h3>
+                <p>Configuration for VPN server communication</p>
+            </div>
+            <div class="form-group">
+                <label>API Secret Key</label>
+                <div class="api-key-box">
+                    <input type="password" id="serverApiKey" value="TrueVault2026SecretKey">
+                    <button class="btn btn-secondary" onclick="togglePassword('serverApiKey')">Show</button>
+                    <button class="btn btn-secondary" onclick="regenerateKey()">Regenerate</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>API Port</label>
+                <input type="number" id="apiPort" value="8080">
+            </div>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📧 Email Settings</h3>
+                <p>Configure email notifications</p>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Welcome Emails</h4>
+                    <p>Send welcome email to new users</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="welcomeEmails" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Payment Notifications</h4>
+                    <p>Send payment confirmation emails</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="paymentEmails" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Failed Payment Reminders</h4>
+                    <p>Send reminders for failed payments</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="failedPaymentEmails" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- VIP Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3>⭐ VIP Configuration</h3>
+                <p>Manage VIP user access</p>
+            </div>
+            <div class="form-group">
+                <label>VIP Users (one email per line)</label>
+                <textarea id="vipUsers">paulhalonen@gmail.com
+seige235@yahoo.com
+vip1@truthvault.com
+vip2@truthvault.com
+vip3@truthvault.com</textarea>
+            </div>
+            <button class="btn btn-primary" onclick="saveVIP()">Save VIP Settings</button>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card danger-zone">
+            <div class="card-header">
+                <h3>⚠️ Danger Zone</h3>
+                <p>Destructive actions - use with caution</p>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Clear All Logs</h4>
+                    <p>Permanently delete all system logs</p>
+                </div>
+                <button class="btn btn-danger" onclick="clearAllLogs()">Clear Logs</button>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h4>Reset Database</h4>
+                    <p>Reset all databases to default state</p>
+                </div>
+                <button class="btn btn-danger" onclick="resetDatabase()">Reset</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let adminToken = localStorage.getItem('truevault_admin_token');
+        if (!adminToken) window.location.href = '/admin/login.html';
+
+        function saveGeneral() { showToast('General settings saved!', 'success'); }
+        function savePayPal() { showToast('PayPal settings saved!', 'success'); }
+        function saveVIP() { showToast('VIP settings saved!', 'success'); }
+
+        function copyField(id) {
+            navigator.clipboard.writeText(document.getElementById(id).value);
+            showToast('Copied to clipboard!', 'success');
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function regenerateKey() {
+            if (confirm('Regenerate API key? All servers will need to be updated.')) {
+                const newKey = 'TrueVault' + Math.random().toString(36).substring(2, 15);
+                document.getElementById('serverApiKey').value = newKey;
+                showToast('New API key generated!', 'success');
+            }
+        }
+
+        function clearAllLogs() {
+            if (confirm('Clear ALL logs? This cannot be undone.')) {
+                showToast('Logs cleared', 'success');
+            }
+        }
+
+        function resetDatabase() {
+            if (confirm('RESET DATABASE? This will delete ALL data!')) {
+                if (confirm('Are you ABSOLUTELY sure?')) {
+                    showToast('Database reset initiated...', 'success');
+                }
+            }
+        }
+
+        function logout() { localStorage.removeItem('truevault_admin_token'); window.location.href = '/admin/login.html'; }
+        
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

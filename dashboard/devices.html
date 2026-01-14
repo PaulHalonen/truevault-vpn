@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devices - TrueVault VPN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+    <div id="app">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><span class="logo-icon">🔐</span><span class="logo-text">TrueVault</span></div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-text">Dashboard</span></a>
+                <a href="connect.html" class="nav-item"><span class="nav-icon">🔌</span><span class="nav-text">Connect</span></a>
+                <a href="servers.html" class="nav-item"><span class="nav-icon">🖥️</span><span class="nav-text">Servers</span></a>
+                <a href="devices.html" class="nav-item active"><span class="nav-icon">📱</span><span class="nav-text">Devices</span></a>
+                <a href="cameras.html" class="nav-item"><span class="nav-icon">📷</span><span class="nav-text">Cameras</span></a>
+                <a href="scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span class="nav-text">Scanner</span></a>
+                <a href="certificates.html" class="nav-item"><span class="nav-icon">📜</span><span class="nav-text">Certificates</span></a>
+                <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-text">Settings</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span class="user-avatar" id="userAvatar">U</span>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-plan" id="userPlan">Free</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h1 class="page-title">My Devices</h1>
+                <button class="btn btn-primary" onclick="showAddDevice()">+ Add Device</button>
+            </header>
+
+            <div class="content-area">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalDevices">0</span>
+                            <span class="stat-label">Total Devices</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="activeDevices">0</span>
+                            <span class="stat-label">Active</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="maxDevices">3</span>
+                            <span class="stat-label">Max Allowed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Registered Devices</h3>
+                    </div>
+                    <div class="device-list" id="deviceList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📱</span>
+                            <p>No devices registered yet</p>
+                            <button class="btn btn-primary" onclick="showAddDevice()">Add Your First Device</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Device Modal -->
+    <div class="modal" id="addDeviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Device Name</label>
+                    <input type="text" id="deviceName" placeholder="e.g., My iPhone">
+                </div>
+                <div class="form-group">
+                    <label>Device Type</label>
+                    <select id="deviceType">
+                        <option value="phone">📱 Phone</option>
+                        <option value="tablet">📱 Tablet</option>
+                        <option value="laptop">💻 Laptop</option>
+                        <option value="desktop">🖥️ Desktop</option>
+                        <option value="router">📶 Router</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addDevice()">Add Device</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let token = localStorage.getItem('truevault_token');
+        let user = JSON.parse(localStorage.getItem('truevault_user') || '{}');
+        let devices = [];
+
+        if (!token) window.location.href = '/index.html#login';
+
+        document.getElementById('userName').textContent = user.first_name || 'User';
+        document.getElementById('userPlan').textContent = user.is_vip ? 'VIP' : (user.plan || 'Basic');
+        document.getElementById('userAvatar').textContent = (user.first_name || 'U')[0].toUpperCase();
+
+        async function loadDevices() {
+            try {
+                const res = await fetch(`${API_BASE}/devices/list.php`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    devices = data.data || [];
+                    renderDevices();
+                }
+            } catch (err) {
+                console.error('Failed to load devices');
+            }
+        }
+
+        function renderDevices() {
+            const list = document.getElementById('deviceList');
+            document.getElementById('totalDevices').textContent = devices.length;
+            document.getElementById('activeDevices').textContent = devices.filter(d => d.status === 'active').length;
+
+            if (devices.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">📱</span>
+                        <p>No devices registered yet</p>
+                        <button class="btn btn-primary" onclick="showAddDevice()">Add Your First Device</button>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = devices.map(d => `
+                <div class="device-item ${d.status}">
+                    <div class="device-icon">${getDeviceIcon(d.type)}</div>
+                    <div class="device-info">
+                        <h4>${d.name}</h4>
+                        <p>${d.type} • ${d.status}</p>
+                        <span class="device-date">Added: ${new Date(d.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="device-actions">
+                        <button class="btn btn-small btn-secondary" onclick="editDevice(${d.id})">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="removeDevice(${d.id})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getDeviceIcon(type) {
+            const icons = { phone: '📱', tablet: '📱', laptop: '💻', desktop: '🖥️', router: '📶', other: '📦' };
+            return icons[type] || '📦';
+        }
+
+        function showAddDevice() { document.getElementById('addDeviceModal').classList.add('show'); }
+        function closeModal() { document.getElementById('addDeviceModal').classList.remove('show'); }
+
+        async function addDevice() {
+            const name = document.getElementById('deviceName').value.trim();
+            const type = document.getElementById('deviceType').value;
+            if (!name) { alert('Please enter a device name'); return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/devices/add.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, type })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal();
+                    loadDevices();
+                    alert('Device added successfully!');
+                } else {
+                    alert(data.error || 'Failed to add device');
+                }
+            } catch (err) {
+                alert('Error adding device');
+            }
+        }
+
+        async function removeDevice(id) {
+            if (!confirm('Remove this device?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/devices/remove.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ device_id: id })
+                });
+                const data = await res.json();
+                if (data.success) loadDevices();
+            } catch (err) {
+                alert('Error removing device');
+            }
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+        function logout() { localStorage.clear(); window.location.href = '/index.html'; }
+
+        loadDevices();
+    </script>
+
+    <style>
+        .device-list { display: flex; flex-direction: column; gap: 1rem; }
+        .device-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1rem; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+        }
+        .device-item.active { border-left: 3px solid #00ff88; }
+        .device-icon { font-size: 2rem; }
+        .device-info { flex: 1; }
+        .device-info h4 { margin-bottom: 0.25rem; }
+        .device-info p { color: #888; font-size: 0.9rem; }
+        .device-date { font-size: 0.8rem; color: #666; }
+        .device-actions { display: flex; gap: 0.5rem; }
+        .empty-state { text-align: center; padding: 3rem; }
+        .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-content { background: #1a1a2e; border-radius: 12px; width: 90%; max-width: 400px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .modal-close { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; gap: 0.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: #888; }
+        .form-group input, .form-group select { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-danger { background: rgba(255,80,80,0.2); color: #ff5050; }
+        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+    </style>
+</body>
+</html>

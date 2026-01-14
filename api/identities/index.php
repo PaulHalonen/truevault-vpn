@@ -2,6 +2,7 @@
 /**
  * TrueVault VPN - Regional Identities API
  * Manages persistent digital identities for different regions
+ * Uses Database helper class (SQLite3 version)
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -16,35 +17,29 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 
 try {
-    $db = Database::getConnection('identities');
-    
     switch ($method) {
         case 'GET':
             if ($action === 'list') {
                 // Get all identities for user
-                $stmt = $db->prepare("
+                $identities = Database::query('identities', "
                     SELECT * FROM regional_identities 
                     WHERE user_id = ? 
                     ORDER BY is_active DESC, created_at DESC
-                ");
-                $stmt->execute([$user['id']]);
-                $identities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                ", [$user['id']]);
                 
-                Response::json(['success' => true, 'identities' => $identities]);
+                Response::success(['identities' => $identities]);
             } elseif ($action === 'get' && isset($_GET['id'])) {
                 // Get single identity
-                $stmt = $db->prepare("
+                $identity = Database::queryOne('identities', "
                     SELECT * FROM regional_identities 
                     WHERE id = ? AND user_id = ?
-                ");
-                $stmt->execute([$_GET['id'], $user['id']]);
-                $identity = $stmt->fetch(PDO::FETCH_ASSOC);
+                ", [$_GET['id'], $user['id']]);
                 
                 if (!$identity) {
                     Response::error('Identity not found', 404);
                 }
                 
-                Response::json(['success' => true, 'identity' => $identity]);
+                Response::success(['identity' => $identity]);
             } else {
                 Response::error('Invalid action', 400);
             }
@@ -64,9 +59,8 @@ try {
                 if ($user['plan_type'] === 'family') $maxIdentities = 10;
                 if ($user['plan_type'] === 'business') $maxIdentities = 50;
                 
-                $stmt = $db->prepare("SELECT COUNT(*) FROM regional_identities WHERE user_id = ?");
-                $stmt->execute([$user['id']]);
-                $count = $stmt->fetchColumn();
+                $countResult = Database::queryOne('identities', "SELECT COUNT(*) as count FROM regional_identities WHERE user_id = ?", [$user['id']]);
+                $count = $countResult['count'] ?? 0;
                 
                 if ($count >= $maxIdentities) {
                     Response::error("Identity limit reached ($maxIdentities for your plan)", 403);
@@ -97,12 +91,11 @@ try {
                 // Generate browser fingerprint hash
                 $fingerprint = hash('sha256', $user['id'] . $region . time());
                 
-                $stmt = $db->prepare("
+                $result = Database::execute('identities', "
                     INSERT INTO regional_identities 
                     (user_id, name, region, persistent_ip, timezone, fingerprint_hash, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-                ");
-                $stmt->execute([
+                ", [
                     $user['id'],
                     $data['name'],
                     $region,
@@ -111,22 +104,23 @@ try {
                     substr($fingerprint, 0, 12)
                 ]);
                 
-                $identityId = $db->lastInsertId();
+                $identityId = $result['lastInsertId'];
                 
                 // Log the creation
-                $logDb = Database::getConnection('logs');
-                $logStmt = $logDb->prepare("
-                    INSERT INTO activity_log (user_id, action, details, ip_address, created_at)
-                    VALUES (?, 'identity_created', ?, ?, datetime('now'))
-                ");
-                $logStmt->execute([
-                    $user['id'],
-                    json_encode(['identity_id' => $identityId, 'region' => $region]),
-                    $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-                ]);
+                try {
+                    Database::execute('logs', "
+                        INSERT INTO activity_log (user_id, action, details, ip_address, created_at)
+                        VALUES (?, 'identity_created', ?, ?, datetime('now'))
+                    ", [
+                        $user['id'],
+                        json_encode(['identity_id' => $identityId, 'region' => $region]),
+                        $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+                    ]);
+                } catch (Exception $e) {
+                    // Log failure is not critical
+                }
                 
-                Response::json([
-                    'success' => true,
+                Response::success([
                     'message' => 'Identity created',
                     'identity' => [
                         'id' => $identityId,
@@ -138,17 +132,15 @@ try {
                 ]);
             } elseif ($action === 'activate' && isset($data['id'])) {
                 // Deactivate all identities first
-                $stmt = $db->prepare("UPDATE regional_identities SET is_active = 0 WHERE user_id = ?");
-                $stmt->execute([$user['id']]);
+                Database::execute('identities', "UPDATE regional_identities SET is_active = 0 WHERE user_id = ?", [$user['id']]);
                 
                 // Activate the selected one
-                $stmt = $db->prepare("
+                Database::execute('identities', "
                     UPDATE regional_identities SET is_active = 1 
                     WHERE id = ? AND user_id = ?
-                ");
-                $stmt->execute([$data['id'], $user['id']]);
+                ", [$data['id'], $user['id']]);
                 
-                Response::json(['success' => true, 'message' => 'Identity activated']);
+                Response::success(['message' => 'Identity activated']);
             } else {
                 Response::error('Invalid action', 400);
             }
@@ -162,9 +154,7 @@ try {
             }
             
             // Verify ownership
-            $stmt = $db->prepare("SELECT * FROM regional_identities WHERE id = ? AND user_id = ?");
-            $stmt->execute([$data['id'], $user['id']]);
-            $identity = $stmt->fetch(PDO::FETCH_ASSOC);
+            $identity = Database::queryOne('identities', "SELECT * FROM regional_identities WHERE id = ? AND user_id = ?", [$data['id'], $user['id']]);
             
             if (!$identity) {
                 Response::error('Identity not found', 404);
@@ -172,11 +162,10 @@ try {
             
             // Update name if provided
             if (!empty($data['name'])) {
-                $stmt = $db->prepare("UPDATE regional_identities SET name = ? WHERE id = ?");
-                $stmt->execute([$data['name'], $data['id']]);
+                Database::execute('identities', "UPDATE regional_identities SET name = ? WHERE id = ?", [$data['name'], $data['id']]);
             }
             
-            Response::json(['success' => true, 'message' => 'Identity updated']);
+            Response::success(['message' => 'Identity updated']);
             break;
             
         case 'DELETE':
@@ -187,19 +176,16 @@ try {
             }
             
             // Verify ownership
-            $stmt = $db->prepare("SELECT * FROM regional_identities WHERE id = ? AND user_id = ?");
-            $stmt->execute([$id, $user['id']]);
-            $identity = $stmt->fetch(PDO::FETCH_ASSOC);
+            $identity = Database::queryOne('identities', "SELECT * FROM regional_identities WHERE id = ? AND user_id = ?", [$id, $user['id']]);
             
             if (!$identity) {
                 Response::error('Identity not found', 404);
             }
             
             // Delete the identity
-            $stmt = $db->prepare("DELETE FROM regional_identities WHERE id = ?");
-            $stmt->execute([$id]);
+            Database::execute('identities', "DELETE FROM regional_identities WHERE id = ?", [$id]);
             
-            Response::json(['success' => true, 'message' => 'Identity deleted']);
+            Response::success(['message' => 'Identity deleted']);
             break;
             
         default:
@@ -207,5 +193,5 @@ try {
     }
 } catch (Exception $e) {
     error_log("Identities API error: " . $e->getMessage());
-    Response::error('Server error', 500);
+    Response::error('Server error: ' . $e->getMessage(), 500);
 }

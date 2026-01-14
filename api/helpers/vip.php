@@ -1,343 +1,433 @@
 <?php
 /**
- * TrueVault VPN - VIP Helper Functions
- * Checks VIP status, manages VIP privileges
+ * TrueVault VPN - VIP Manager (Database-Driven)
+ * Handles VIP user detection and special access
+ * VIP list is stored in database and managed via admin panel
  */
 
+require_once __DIR__ . '/../config/database.php';
+
 class VIPManager {
-    private static $db = null;
     
-    private static function getDB() {
-        if (self::$db === null) {
-            $dbPath = __DIR__ . '/../../data/vip.db';
-            if (!file_exists($dbPath)) {
-                return null;
-            }
-            self::$db = new SQLite3($dbPath);
-        }
-        return self::$db;
+    private static $vipTableCreated = false;
+    
+    /**
+     * Ensure VIP table exists
+     */
+    private static function ensureTable() {
+        if (self::$vipTableCreated) return;
+        
+        $db = Database::getConnection('users');
+        $db->exec("CREATE TABLE IF NOT EXISTS vip_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            type TEXT NOT NULL DEFAULT 'vip_basic',
+            plan TEXT NOT NULL DEFAULT 'family',
+            dedicated_server_id INTEGER,
+            description TEXT,
+            added_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        // Create index for fast lookups
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_vip_email ON vip_users(email)");
+        
+        self::$vipTableCreated = true;
     }
     
     /**
-     * Check if email is a VIP
+     * Check if email is a VIP user
      */
     public static function isVIP($email) {
-        $db = self::getDB();
-        if (!$db) return false;
+        self::ensureTable();
+        $email = strtolower(trim($email));
         
-        $stmt = $db->prepare("SELECT * FROM vip_users WHERE LOWER(email) = LOWER(?)");
-        $stmt->bindValue(1, strtolower($email), SQLITE3_TEXT);
-        $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        $result = Database::queryOne('users',
+            "SELECT id FROM vip_users WHERE LOWER(email) = ?",
+            [$email]
+        );
         
-        return $result ? true : false;
+        return $result !== false && $result !== null;
     }
     
     /**
-     * Get VIP details for a user
+     * Get VIP details for email
      */
     public static function getVIPDetails($email) {
-        $db = self::getDB();
-        if (!$db) return null;
+        self::ensureTable();
+        $email = strtolower(trim($email));
         
-        $stmt = $db->prepare("SELECT * FROM vip_users WHERE LOWER(email) = LOWER(?)");
-        $stmt->bindValue(1, strtolower($email), SQLITE3_TEXT);
-        $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-        
-        return $result ?: null;
+        return Database::queryOne('users',
+            "SELECT * FROM vip_users WHERE LOWER(email) = ?",
+            [$email]
+        );
     }
     
     /**
-     * Activate VIP user (when they first register/login)
+     * Get VIP type (owner, vip_dedicated, vip_basic)
      */
-    public static function activateVIP($email, $userId, $firstName = null, $lastName = null) {
-        $db = self::getDB();
-        if (!$db) return false;
+    public static function getVIPType($email) {
+        $details = self::getVIPDetails($email);
+        return $details ? $details['type'] : null;
+    }
+    
+    /**
+     * Get VIP plan type for subscription
+     */
+    public static function getVIPPlan($email) {
+        $details = self::getVIPDetails($email);
+        return $details ? $details['plan'] : null;
+    }
+    
+    /**
+     * Check if user is owner
+     */
+    public static function isOwner($email) {
+        $details = self::getVIPDetails($email);
+        return $details && $details['type'] === 'owner';
+    }
+    
+    /**
+     * Check if user can access a specific server
+     */
+    public static function canAccessServer($email, $serverId) {
+        $details = self::getVIPDetails($email);
         
-        $stmt = $db->prepare("UPDATE vip_users SET activated_at = CURRENT_TIMESTAMP WHERE LOWER(email) = LOWER(?) AND activated_at IS NULL");
-        $stmt->bindValue(1, strtolower($email), SQLITE3_TEXT);
-        $stmt->execute();
+        if (!$details) {
+            return false; // Not VIP, need to check subscription
+        }
         
+        // Owner can access everything
+        if ($details['type'] === 'owner') {
+            return true;
+        }
+        
+        // Check if this is a VIP-dedicated server
+        $server = Database::queryOne('vpn',
+            "SELECT is_vip, vip_user_email FROM vpn_servers WHERE id = ?",
+            [$serverId]
+        );
+        
+        if ($server && $server['is_vip']) {
+            // VIP server - check if user has dedicated access
+            if ($details['dedicated_server_id'] == $serverId) {
+                return true;
+            }
+            // Check if server is assigned to this email
+            if ($server['vip_user_email'] && strtolower($server['vip_user_email']) === strtolower($email)) {
+                return true;
+            }
+            return false;
+        }
+        
+        // All VIPs can access shared servers
         return true;
     }
     
     /**
-     * Get plan limits for VIP user
+     * Get list of servers VIP can access
      */
-    public static function getVIPLimits($email) {
-        $vip = self::getVIPDetails($email);
-        if (!$vip) return null;
+    public static function getAccessibleServers($email) {
+        $details = self::getVIPDetails($email);
         
-        return [
-            'tier' => $vip['tier'],
-            'max_devices' => $vip['max_devices'],
-            'max_cameras' => $vip['max_cameras'],
-            'dedicated_server_id' => $vip['dedicated_server_id'],
-            'dedicated_server_ip' => $vip['dedicated_server_ip'],
-            'is_dedicated' => $vip['tier'] === 'vip_dedicated',
-            'bypass_payment' => true,
-            'badge' => $vip['tier'] === 'vip_dedicated' ? '👑 VIP Dedicated' : '⭐ VIP'
-        ];
+        if (!$details) {
+            return []; // Not VIP
+        }
+        
+        // Owner gets all servers
+        if ($details['type'] === 'owner') {
+            $servers = Database::query('vpn', "SELECT id FROM vpn_servers WHERE status = 'online'");
+            return array_column($servers, 'id');
+        }
+        
+        // Get shared servers
+        $servers = Database::query('vpn', 
+            "SELECT id FROM vpn_servers WHERE status = 'online' AND is_vip = 0"
+        );
+        $serverIds = array_column($servers, 'id');
+        
+        // Add dedicated server if user has one
+        if ($details['dedicated_server_id']) {
+            $serverIds[] = (int)$details['dedicated_server_id'];
+        }
+        
+        return $serverIds;
     }
     
     /**
      * Check if user has dedicated server
      */
     public static function hasDedicatedServer($email) {
-        $vip = self::getVIPDetails($email);
-        return $vip && !empty($vip['dedicated_server_id']);
+        $details = self::getVIPDetails($email);
+        return $details && !empty($details['dedicated_server_id']);
     }
     
     /**
-     * Get user's dedicated server
+     * Get dedicated server ID for user
      */
     public static function getDedicatedServer($email) {
-        $vip = self::getVIPDetails($email);
-        if (!$vip || empty($vip['dedicated_server_id'])) return null;
-        
-        return [
-            'server_id' => $vip['dedicated_server_id'],
-            'server_ip' => $vip['dedicated_server_ip']
-        ];
+        $details = self::getVIPDetails($email);
+        return $details ? $details['dedicated_server_id'] : null;
     }
     
     /**
-     * Add new VIP user (admin function)
-     */
-    public static function addVIP($email, $tier = 'vip_basic', $maxDevices = 8, $maxCameras = 2, $notes = '') {
-        $db = self::getDB();
-        if (!$db) return false;
-        
-        $stmt = $db->prepare("INSERT OR REPLACE INTO vip_users 
-            (email, tier, max_devices, max_cameras, notes) 
-            VALUES (?, ?, ?, ?, ?)");
-        $stmt->bindValue(1, strtolower($email), SQLITE3_TEXT);
-        $stmt->bindValue(2, $tier, SQLITE3_TEXT);
-        $stmt->bindValue(3, $maxDevices, SQLITE3_INTEGER);
-        $stmt->bindValue(4, $maxCameras, SQLITE3_INTEGER);
-        $stmt->bindValue(5, $notes, SQLITE3_TEXT);
-        
-        return $stmt->execute() ? true : false;
-    }
-    
-    /**
-     * Get all VIP users (admin function)
+     * Get all VIP users (for admin)
      */
     public static function getAllVIPs() {
-        $db = self::getDB();
-        if (!$db) return [];
+        self::ensureTable();
+        return Database::query('users',
+            "SELECT * FROM vip_users ORDER BY type, created_at"
+        );
+    }
+    
+    /**
+     * Get all VIP emails
+     */
+    public static function getAllVIPEmails() {
+        $vips = self::getAllVIPs();
+        return array_column($vips, 'email');
+    }
+    
+    /**
+     * Get VIP count by type
+     */
+    public static function getVIPCounts() {
+        self::ensureTable();
         
-        $result = $db->query("SELECT * FROM vip_users ORDER BY created_at DESC");
-        $vips = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $vips[] = $row;
+        $counts = ['owner' => 0, 'vip_dedicated' => 0, 'vip_basic' => 0, 'total' => 0];
+        
+        $results = Database::query('users',
+            "SELECT type, COUNT(*) as count FROM vip_users GROUP BY type"
+        );
+        
+        foreach ($results as $row) {
+            $counts[$row['type']] = (int)$row['count'];
+            $counts['total'] += (int)$row['count'];
         }
-        return $vips;
-    }
-}
-
-/**
- * Plan limits for regular (non-VIP) users
- */
-class PlanLimits {
-    
-    const PLANS = [
-        'basic' => [
-            'name' => 'Basic',
-            'price' => 9.99,
-            'max_devices' => 3,
-            'max_cameras' => 1,
-            'camera_server' => 'ny_only',  // Cameras only on NY
-            'servers' => 'shared',
-            'features' => ['Basic VPN access', '3 devices', '1 IP camera (NY server)', 'Network scanner']
-        ],
-        'family' => [
-            'name' => 'Family',
-            'price' => 14.99,
-            'max_devices' => 5,
-            'max_cameras' => 2,
-            'camera_server' => 'ny_only',
-            'servers' => 'shared',
-            'features' => ['Family VPN access', '5 devices', '2 IP cameras', 'Network scanner', 'Priority support']
-        ],
-        'dedicated' => [
-            'name' => 'Dedicated',
-            'price' => 29.99,
-            'max_devices' => 999,  // Unlimited on dedicated
-            'max_devices_ny' => 5,  // Plus 5 on NY
-            'max_cameras' => 12,
-            'camera_server' => 'any',
-            'servers' => 'dedicated',
-            'features' => [
-                'Your own dedicated server',
-                'Unlimited devices',
-                'Up to 12 IP cameras',
-                'Static IP addresses',
-                'Drag & drop port forwarding',
-                'Advanced terminal access',
-                'Full bandwidth - torrents OK',
-                '24/7 priority support'
-            ]
-        ],
-        'corporate' => [
-            'name' => 'Corporate',
-            'price' => 0,  // Contact for pricing
-            'max_devices' => 999,
-            'max_cameras' => 999,
-            'camera_server' => 'any',
-            'servers' => 'dedicated',
-            'features' => ['Custom solution', '12+ cameras', 'Multiple dedicated servers', 'SLA guarantee']
-        ]
-    ];
-    
-    public static function getPlan($planType) {
-        return self::PLANS[$planType] ?? self::PLANS['basic'];
-    }
-    
-    public static function getAllPlans() {
-        return self::PLANS;
-    }
-    
-    public static function getLimits($planType) {
-        $plan = self::getPlan($planType);
-        return [
-            'max_devices' => $plan['max_devices'],
-            'max_cameras' => $plan['max_cameras'],
-            'camera_server' => $plan['camera_server']
-        ];
-    }
-}
-
-/**
- * Server rules and restrictions
- */
-class ServerRules {
-    
-    const SERVERS = [
-        1 => [
-            'id' => 1,
-            'name' => 'New York',
-            'location' => 'New York, USA',
-            'ip' => '66.94.103.91',
-            'type' => 'shared',
-            'provider' => 'Contabo',
-            'flag' => '🇺🇸',
-            'rules' => [
-                'torrents' => true,
-                'xbox' => true,
-                'gaming' => true,
-                'streaming' => true,
-                'cameras' => true,
-                'home_devices' => true
-            ],
-            'description' => 'Full access - Best for home devices, gaming, torrents',
-            'recommended_for' => ['Xbox', 'PlayStation', 'Torrents', 'Home devices', 'IP cameras']
-        ],
-        2 => [
-            'id' => 2,
-            'name' => 'St. Louis (VIP)',
-            'location' => 'St. Louis, USA',
-            'ip' => '144.126.133.253',
-            'type' => 'dedicated',
-            'provider' => 'Contabo',
-            'flag' => '🇺🇸',
-            'vip_only' => true,
-            'assigned_to' => 'seige235@yahoo.com',
-            'rules' => [
-                'torrents' => true,
-                'xbox' => true,
-                'gaming' => true,
-                'streaming' => true,
-                'unlimited_bandwidth' => true
-            ],
-            'description' => 'Dedicated VIP server - Unlimited bandwidth',
-            'recommended_for' => ['Everything - Dedicated access']
-        ],
-        3 => [
-            'id' => 3,
-            'name' => 'Dallas',
-            'location' => 'Dallas, USA',
-            'ip' => '66.241.124.4',
-            'type' => 'shared',
-            'provider' => 'Fly.io',
-            'flag' => '🇺🇸',
-            'rules' => [
-                'torrents' => false,
-                'xbox' => false,
-                'gaming' => false,
-                'streaming' => true,
-                'netflix' => true
-            ],
-            'description' => 'Netflix unblocked - NO torrents/gaming (limited bandwidth)',
-            'recommended_for' => ['Netflix', 'Streaming', 'Browsing'],
-            'blocked' => ['Torrents', 'Xbox', 'High-bandwidth gaming']
-        ],
-        4 => [
-            'id' => 4,
-            'name' => 'Toronto',
-            'location' => 'Toronto, Canada',
-            'ip' => '66.241.125.247',
-            'type' => 'shared',
-            'provider' => 'Fly.io',
-            'flag' => '🇨🇦',
-            'rules' => [
-                'torrents' => false,
-                'xbox' => false,
-                'gaming' => false,
-                'streaming' => true,
-                'netflix' => true
-            ],
-            'description' => 'Canadian IP - Netflix unblocked - NO torrents/gaming',
-            'recommended_for' => ['Canadian Netflix', 'Streaming', 'Browsing'],
-            'blocked' => ['Torrents', 'Xbox', 'High-bandwidth gaming']
-        ]
-    ];
-    
-    public static function getServer($id) {
-        return self::SERVERS[$id] ?? null;
-    }
-    
-    public static function getAllServers() {
-        return self::SERVERS;
-    }
-    
-    public static function getSharedServers() {
-        return array_filter(self::SERVERS, fn($s) => $s['type'] === 'shared');
-    }
-    
-    public static function getAvailableServers($email = null) {
-        $servers = [];
         
-        foreach (self::SERVERS as $server) {
-            // Skip VIP-only servers unless user is assigned
-            if (!empty($server['vip_only'])) {
-                if ($email && strtolower($email) === strtolower($server['assigned_to'])) {
-                    $servers[] = $server;
+        return $counts;
+    }
+    
+    /**
+     * Add a VIP user
+     */
+    public static function addVIP($email, $type = 'vip_basic', $plan = 'family', $dedicatedServerId = null, $description = '', $addedBy = null) {
+        self::ensureTable();
+        $email = strtolower(trim($email));
+        
+        // Check if already VIP
+        if (self::isVIP($email)) {
+            return ['success' => false, 'error' => 'Email is already a VIP'];
+        }
+        
+        // Validate type
+        $validTypes = ['owner', 'vip_dedicated', 'vip_basic'];
+        if (!in_array($type, $validTypes)) {
+            return ['success' => false, 'error' => 'Invalid VIP type'];
+        }
+        
+        // Validate plan
+        $validPlans = ['dedicated', 'family', 'personal'];
+        if (!in_array($plan, $validPlans)) {
+            return ['success' => false, 'error' => 'Invalid plan type'];
+        }
+        
+        try {
+            Database::execute('users',
+                "INSERT INTO vip_users (email, type, plan, dedicated_server_id, description, added_by, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))",
+                [$email, $type, $plan, $dedicatedServerId, $description, $addedBy]
+            );
+            
+            $vipId = Database::lastInsertId('users');
+            
+            // If user exists in users table, update their is_vip flag
+            Database::execute('users',
+                "UPDATE users SET is_vip = 1 WHERE LOWER(email) = ?",
+                [$email]
+            );
+            
+            // If user has an account, create/update their subscription
+            $user = Database::queryOne('users', 
+                "SELECT id FROM users WHERE LOWER(email) = ?", 
+                [$email]
+            );
+            
+            if ($user) {
+                // Check if subscription exists
+                $existingSub = Database::queryOne('billing',
+                    "SELECT id FROM subscriptions WHERE user_id = ?",
+                    [$user['id']]
+                );
+                
+                $maxDevices = $plan === 'dedicated' ? 999 : ($plan === 'family' ? 10 : 3);
+                
+                if ($existingSub) {
+                    // Update existing subscription
+                    Database::execute('billing',
+                        "UPDATE subscriptions SET plan_type = ?, status = 'active', max_devices = ?, 
+                         end_date = datetime('now', '+100 years') WHERE user_id = ?",
+                        [$plan, $maxDevices, $user['id']]
+                    );
+                } else {
+                    // Create new subscription
+                    Database::execute('billing',
+                        "INSERT INTO subscriptions (user_id, plan_type, status, max_devices, start_date, end_date, created_at)
+                         VALUES (?, ?, 'active', ?, datetime('now'), datetime('now', '+100 years'), datetime('now'))",
+                        [$user['id'], $plan, $maxDevices]
+                    );
                 }
-                continue;
             }
             
-            $servers[] = $server;
+            return ['success' => true, 'id' => $vipId];
+            
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
         }
-        
-        return $servers;
     }
     
-    public static function canUseServer($serverId, $email) {
-        $server = self::getServer($serverId);
-        if (!$server) return false;
+    /**
+     * Remove a VIP user
+     */
+    public static function removeVIP($email) {
+        self::ensureTable();
+        $email = strtolower(trim($email));
         
-        // Check if VIP-only server
-        if (!empty($server['vip_only'])) {
-            return $email && strtolower($email) === strtolower($server['assigned_to']);
+        // Check if VIP exists
+        $vip = self::getVIPDetails($email);
+        if (!$vip) {
+            return ['success' => false, 'error' => 'Email is not a VIP'];
         }
         
-        return true;
+        // Prevent removing owner
+        if ($vip['type'] === 'owner') {
+            return ['success' => false, 'error' => 'Cannot remove owner from VIP list'];
+        }
+        
+        try {
+            Database::execute('users',
+                "DELETE FROM vip_users WHERE LOWER(email) = ?",
+                [$email]
+            );
+            
+            // Update user's is_vip flag
+            Database::execute('users',
+                "UPDATE users SET is_vip = 0 WHERE LOWER(email) = ?",
+                [$email]
+            );
+            
+            // Note: We don't delete their subscription - it will expire naturally
+            // or admin can manually cancel it
+            
+            return ['success' => true];
+            
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
     
-    public static function isAllowed($serverId, $ruleType) {
-        $server = self::getServer($serverId);
-        if (!$server) return false;
+    /**
+     * Update a VIP user
+     */
+    public static function updateVIP($email, $data) {
+        self::ensureTable();
+        $email = strtolower(trim($email));
         
-        return $server['rules'][$ruleType] ?? false;
+        // Check if VIP exists
+        if (!self::isVIP($email)) {
+            return ['success' => false, 'error' => 'Email is not a VIP'];
+        }
+        
+        $updates = [];
+        $params = [];
+        
+        if (isset($data['type'])) {
+            $validTypes = ['owner', 'vip_dedicated', 'vip_basic'];
+            if (!in_array($data['type'], $validTypes)) {
+                return ['success' => false, 'error' => 'Invalid VIP type'];
+            }
+            $updates[] = "type = ?";
+            $params[] = $data['type'];
+        }
+        
+        if (isset($data['plan'])) {
+            $validPlans = ['dedicated', 'family', 'personal'];
+            if (!in_array($data['plan'], $validPlans)) {
+                return ['success' => false, 'error' => 'Invalid plan type'];
+            }
+            $updates[] = "plan = ?";
+            $params[] = $data['plan'];
+        }
+        
+        if (array_key_exists('dedicated_server_id', $data)) {
+            $updates[] = "dedicated_server_id = ?";
+            $params[] = $data['dedicated_server_id'];
+        }
+        
+        if (isset($data['description'])) {
+            $updates[] = "description = ?";
+            $params[] = $data['description'];
+        }
+        
+        if (empty($updates)) {
+            return ['success' => false, 'error' => 'No updates provided'];
+        }
+        
+        $params[] = $email;
+        
+        try {
+            Database::execute('users',
+                "UPDATE vip_users SET " . implode(', ', $updates) . " WHERE LOWER(email) = ?",
+                $params
+            );
+            
+            return ['success' => true];
+            
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Seed initial VIP users (run once during setup)
+     */
+    public static function seedInitialVIPs() {
+        self::ensureTable();
+        
+        $initialVIPs = [
+            [
+                'email' => 'paulhalonen@gmail.com',
+                'type' => 'owner',
+                'plan' => 'dedicated',
+                'dedicated_server_id' => null, // Owner has access to all
+                'description' => 'System Owner'
+            ],
+            [
+                'email' => 'seige235@yahoo.com',
+                'type' => 'vip_dedicated',
+                'plan' => 'dedicated',
+                'dedicated_server_id' => 2, // STL server
+                'description' => 'VIP Dedicated - St. Louis Server'
+            ]
+        ];
+        
+        $added = 0;
+        foreach ($initialVIPs as $vip) {
+            if (!self::isVIP($vip['email'])) {
+                $result = self::addVIP(
+                    $vip['email'],
+                    $vip['type'],
+                    $vip['plan'],
+                    $vip['dedicated_server_id'],
+                    $vip['description'],
+                    'system_setup'
+                );
+                if ($result['success']) {
+                    $added++;
+                }
+            }
+        }
+        
+        return $added;
     }
 }

@@ -12,14 +12,10 @@
     <style>
         .mesh-intro{background:linear-gradient(135deg,rgba(138,43,226,0.15),rgba(0,217,255,0.1));border:1px solid rgba(138,43,226,0.3);border-radius:var(--cards-border-radius);padding:30px;margin-bottom:30px}
         .mesh-intro h2{margin-bottom:10px;color:#9b59b6}
-        .mesh-visual{position:relative;height:300px;background:rgba(0,0,0,0.2);border-radius:var(--cards-border-radius);margin-bottom:30px;overflow:hidden}
-        .mesh-node{position:absolute;width:80px;height:80px;background:rgba(255,255,255,0.05);border:2px solid var(--colors-border);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s}
-        .mesh-node:hover{border-color:var(--colors-primary);transform:scale(1.1)}
-        .mesh-node.active{border-color:var(--colors-success);background:rgba(0,255,136,0.1)}
-        .mesh-node.you{border-color:var(--colors-primary);background:rgba(0,217,255,0.1)}
-        .mesh-node .icon{font-size:1.5rem}
-        .mesh-node .name{font-size:0.7rem;margin-top:5px;text-align:center}
-        .mesh-line{position:absolute;height:2px;background:linear-gradient(90deg,rgba(0,217,255,0.3),rgba(138,43,226,0.3));transform-origin:left center}
+        .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:15px;margin-bottom:25px}
+        .stat-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:10px;padding:20px;text-align:center}
+        .stat-card .number{font-size:1.8rem;font-weight:700;background:linear-gradient(90deg,var(--colors-primary),var(--colors-secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .stat-card .label{color:var(--colors-text-muted);font-size:0.85rem;margin-top:5px}
         .members-section{margin-bottom:30px}
         .members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:15px;margin-top:15px}
         .member-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:20px;display:flex;align-items:center;gap:15px}
@@ -32,6 +28,7 @@
         .shared-resources{margin-top:30px}
         .resource-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:15px;margin-bottom:10px}
         .resource-icon{font-size:2rem}
+        .resource-info{flex:1}
         .resource-info h4{margin-bottom:3px}
         .resource-info p{font-size:0.85rem;color:var(--colors-text-muted)}
         .invite-section{background:rgba(138,43,226,0.1);border:1px solid rgba(138,43,226,0.3);border-radius:var(--cards-border-radius);padding:25px;margin-top:30px}
@@ -39,30 +36,33 @@
         .invite-form input{flex:1}
         .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s}
         .modal.active{opacity:1;visibility:visible}
-        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:500px}
+        .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
         .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
         .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+        .empty-state{text-align:center;padding:40px;background:rgba(255,255,255,0.02);border-radius:var(--cards-border-radius);border:1px dashed var(--colors-border)}
+        .loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:var(--colors-primary);animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
     </style>
 </head>
 <body class="dashboard-body">
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <div class="sidebar-header"><span class="logo-icon">&#x1F6E1;</span><h1>TrueVault</h1></div>
         <nav class="sidebar-nav">
-            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
-            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
-            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
-            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
-            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
-            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
-            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
-            <a href="/dashboard/mesh.html" class="nav-item active"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">&#x1F4CA;</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">&#x26A1;</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">&#x1F5A5;</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">&#x1F465;</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">&#x1F4DC;</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">&#x1F4F1;</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">&#x1F4F7;</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item active"><span class="nav-icon">&#x1F578;</span><span>Mesh Network</span></a>
             <div class="nav-divider"></div>
-            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
-            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
-            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">&#x1F4E1;</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#x2699;</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">&#x1F4B3;</span><span>Billing</span></a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <div class="user-info"><div class="user-avatar">&#x1F464;</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
             <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
         </div>
     </aside>
@@ -70,160 +70,65 @@
     <main class="main-content">
         <header class="dashboard-header">
             <div>
-                <h1>👨‍👩‍👧‍👦 Family Mesh Network</h1>
+                <h1>&#x1F578; Family Mesh Network</h1>
                 <p class="text-muted">Connect devices across locations as if they're on the same network</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" onclick="showInviteModal()">➕ Invite Member</button>
+                <button class="btn btn-primary" onclick="showInviteModal()">&#x2795; Invite Member</button>
             </div>
         </header>
         
-        <!-- Intro -->
         <div class="mesh-intro">
-            <h2>🔗 Your Private Overlay Network</h2>
-            <p class="text-muted">Connect all your devices and trusted family members as if they're on the same local network — regardless of physical location. Share printers, access cameras, transfer files, and more without complex port forwarding.</p>
+            <h2>&#x1F310; Your Private Overlay Network</h2>
+            <p class="text-muted">Connect all your devices and trusted family members as if they're on the same local network - regardless of physical location. Share printers, access cameras, transfer files, and more without complex port forwarding.</p>
         </div>
         
-        <!-- Visual Mesh -->
-        <div class="mesh-visual" id="meshVisual">
-            <!-- Center node (You) -->
-            <div class="mesh-node you" style="left:50%;top:50%;transform:translate(-50%,-50%)">
-                <span class="icon">👤</span>
-                <span class="name">You</span>
-            </div>
-            <!-- Family members -->
-            <div class="mesh-node active" style="left:20%;top:30%">
-                <span class="icon">👩</span>
-                <span class="name">Sarah</span>
-            </div>
-            <div class="mesh-node active" style="left:75%;top:25%">
-                <span class="icon">👦</span>
-                <span class="name">Mike</span>
-            </div>
-            <div class="mesh-node" style="left:80%;top:70%">
-                <span class="icon">🖨️</span>
-                <span class="name">Printer</span>
-            </div>
-            <div class="mesh-node" style="left:15%;top:70%">
-                <span class="icon">📷</span>
-                <span class="name">Camera</span>
-            </div>
+        <div class="stats-bar">
+            <div class="stat-card"><div class="number" id="memberCount">0</div><div class="label">Members</div></div>
+            <div class="stat-card"><div class="number" id="onlineCount">0</div><div class="label">Online</div></div>
+            <div class="stat-card"><div class="number" id="deviceCount">0</div><div class="label">Devices</div></div>
+            <div class="stat-card"><div class="number" id="resourceCount">0</div><div class="label">Shared Resources</div></div>
         </div>
         
-        <!-- Members -->
         <div class="members-section">
-            <h3>👥 Network Members (<span id="memberCount">3</span>)</h3>
-            <div class="members-grid">
-                <div class="member-card">
-                    <div class="member-avatar">👤</div>
-                    <div class="member-info">
-                        <h4>You (Owner)</h4>
-                        <div class="email">john@example.com</div>
-                        <div class="status"><span class="badge badge-success">Online</span></div>
-                    </div>
-                </div>
-                
-                <div class="member-card">
-                    <div class="member-avatar">👩</div>
-                    <div class="member-info">
-                        <h4>Sarah</h4>
-                        <div class="email">sarah@example.com</div>
-                        <div class="status"><span class="badge badge-success">Online</span> • 3 devices</div>
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="manageMember(1)">⚙️</button>
-                </div>
-                
-                <div class="member-card">
-                    <div class="member-avatar">👦</div>
-                    <div class="member-info">
-                        <h4>Mike</h4>
-                        <div class="email">mike@example.com</div>
-                        <div class="status"><span class="badge badge-info">Away</span> • 2 devices</div>
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="manageMember(2)">⚙️</button>
-                </div>
-                
-                <div class="member-card pending">
-                    <div class="member-avatar">📧</div>
-                    <div class="member-info">
-                        <h4>Pending Invite</h4>
-                        <div class="email">grandma@example.com</div>
-                        <div class="status"><span class="badge badge-warning">Pending</span></div>
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="resendInvite()">🔄</button>
-                </div>
+            <h3>&#x1F465; Network Members</h3>
+            <div class="members-grid" id="membersGrid">
+                <div class="loading"><span class="loading-spinner"></span> Loading members...</div>
             </div>
         </div>
         
-        <!-- Shared Resources -->
         <div class="shared-resources">
-            <h3>📂 Shared Resources</h3>
-            <div class="resource-card">
-                <span class="resource-icon">🖨️</span>
-                <div class="resource-info">
-                    <h4>HP LaserJet Pro</h4>
-                    <p>Shared by You • Available to all members</p>
-                </div>
-                <button class="btn btn-secondary btn-small" onclick="manageResource(1)">⚙️</button>
-            </div>
-            <div class="resource-card">
-                <span class="resource-icon">📷</span>
-                <div class="resource-info">
-                    <h4>Front Door Camera</h4>
-                    <p>Shared by You • View only</p>
-                </div>
-                <button class="btn btn-secondary btn-small" onclick="manageResource(2)">⚙️</button>
-            </div>
-            <div class="resource-card">
-                <span class="resource-icon">📁</span>
-                <div class="resource-info">
-                    <h4>Family Photos NAS</h4>
-                    <p>Shared by Sarah • Full access</p>
-                </div>
-                <button class="btn btn-secondary btn-small" onclick="manageResource(3)">⚙️</button>
+            <h3>&#x1F4C1; Shared Resources</h3>
+            <div id="resourcesContainer">
+                <div class="loading"><span class="loading-spinner"></span> Loading resources...</div>
             </div>
         </div>
         
-        <!-- Invite Section -->
         <div class="invite-section">
-            <h3>📨 Invite Family Members</h3>
+            <h3>&#x2709; Invite Family Members</h3>
             <p class="text-muted">Members you invite can connect to your mesh network and access shared resources.</p>
-            <div class="invite-form">
-                <input type="email" id="inviteEmail" placeholder="Enter email address">
-                <button class="btn btn-primary" onclick="sendInvite()">Send Invite</button>
-            </div>
+            <form class="invite-form" onsubmit="sendInvite(event)">
+                <input type="email" id="inviteEmail" placeholder="Enter email address" required>
+                <button type="submit" class="btn btn-primary" id="inviteBtn">Send Invite</button>
+            </form>
         </div>
     </main>
     
-    <!-- Invite Modal -->
     <div class="modal" id="inviteModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>➕ Invite to Mesh Network</h2>
-                <button class="modal-close" onclick="hideModal()">&times;</button>
-            </div>
-            <form id="inviteForm">
-                <div class="form-group">
-                    <label>Email Address *</label>
-                    <input type="email" name="email" placeholder="family@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Nickname</label>
-                    <input type="text" name="nickname" placeholder="e.g., Mom, Dad, Kids">
-                </div>
-                <div class="form-group">
-                    <label>Permissions</label>
-                    <select name="permissions">
-                        <option value="full">Full Access - Can share resources</option>
-                        <option value="limited">Limited - Can only view shared resources</option>
-                        <option value="readonly">Read Only - View only, no changes</option>
-                    </select>
-                </div>
-                <div style="display:flex;gap:10px;margin-top:25px">
-                    <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1">📨 Send Invitation</button>
-                </div>
+            <div class="modal-header"><h2>&#x2795; Invite Member</h2><button class="modal-close" onclick="hideInviteModal()">&times;</button></div>
+            <form onsubmit="sendInviteFromModal(event)">
+                <div class="form-group"><label>Email Address *</label><input type="email" id="modalInviteEmail" required></div>
+                <div class="form-group"><label>Permission Level</label><select id="permissionLevel"><option value="viewer">Viewer - Can view shared resources</option><option value="member">Member - Can view and use resources</option><option value="admin">Admin - Full access</option></select></div>
+                <div style="display:flex;gap:10px;margin-top:25px"><button type="button" class="btn btn-secondary" onclick="hideInviteModal()">Cancel</button><button type="submit" class="btn btn-primary" style="flex:1">&#x2709; Send Invitation</button></div>
             </form>
+        </div>
+    </div>
+    
+    <div class="modal" id="memberModal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>&#x1F464; Member Settings</h2><button class="modal-close" onclick="hideMemberModal()">&times;</button></div>
+            <div id="memberDetails"></div>
         </div>
     </div>
     
@@ -232,52 +137,143 @@
     <script>
         if (!TrueVault.Auth.requireAuth()) {}
         
-        const user = TrueVault.Auth.getUser();
-        if (user) {
-            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
-            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
-        }
+        let members = [];
+        let resources = [];
+        let currentMemberId = null;
         
-        function showInviteModal() {
-            document.getElementById('inviteModal').classList.add('active');
-        }
-        
-        function hideModal() {
-            document.getElementById('inviteModal').classList.remove('active');
-        }
-        
-        document.getElementById('inviteForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            TrueVault.Toast.success('Invitation sent!');
-            hideModal();
-            this.reset();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadUserInfo();
+            await loadMeshData();
         });
         
-        function sendInvite() {
-            const email = document.getElementById('inviteEmail').value;
-            if (!email) {
-                TrueVault.Toast.error('Please enter an email');
+        async function loadUserInfo() {
+            const user = TrueVault.Auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+                document.getElementById('userPlan').textContent = (user.plan_type || 'personal').charAt(0).toUpperCase() + (user.plan_type || 'personal').slice(1) + ' Plan';
+            }
+        }
+        
+        async function loadMeshData() {
+            try {
+                const result = await TrueVault.API.get('/mesh/index.php');
+                if (result.success) {
+                    members = result.data.members || [];
+                    resources = result.data.resources || [];
+                    updateStats();
+                    renderMembers();
+                    renderResources();
+                } else {
+                    document.getElementById('membersGrid').innerHTML = '<p class="text-error">Failed to load mesh data</p>';
+                }
+            } catch (error) {
+                document.getElementById('membersGrid').innerHTML = '<p class="text-error">Failed to load mesh data</p>';
+            }
+        }
+        
+        function updateStats() {
+            const online = members.filter(m => m.is_online).length;
+            const devices = members.reduce((sum, m) => sum + (parseInt(m.device_count) || 0), 0);
+            document.getElementById('memberCount').textContent = members.length;
+            document.getElementById('onlineCount').textContent = online;
+            document.getElementById('deviceCount').textContent = devices;
+            document.getElementById('resourceCount').textContent = resources.length;
+        }
+        
+        function renderMembers() {
+            const grid = document.getElementById('membersGrid');
+            if (members.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div style="font-size:3rem;opacity:0.3;margin-bottom:15px">&#x1F465;</div><h3>No Members Yet</h3><p class="text-muted">Invite family members to join your mesh network</p></div>';
                 return;
             }
-            TrueVault.Toast.success('Invitation sent to ' + email);
-            document.getElementById('inviteEmail').value = '';
+            grid.innerHTML = members.map(renderMember).join('');
+        }
+        
+        function renderMember(member) {
+            const statusBadge = member.status === 'pending' ? '<span class="badge badge-warning">Pending</span>' : (member.is_online ? '<span class="badge badge-success">Online</span>' : '<span class="badge badge-info">Offline</span>');
+            const isOwner = member.role === 'owner';
+            return '<div class="member-card' + (member.status === 'pending' ? ' pending' : '') + '"><div class="member-avatar">&#x1F464;</div><div class="member-info"><h4>' + escapeHtml(member.name || member.email) + (isOwner ? ' (Owner)' : '') + '</h4><div class="email">' + escapeHtml(member.email) + '</div><div class="status">' + statusBadge + (member.device_count ? ' &#x2022; ' + member.device_count + ' devices' : '') + '</div></div>' + (!isOwner ? '<button class="btn btn-secondary btn-small" onclick="manageMember(' + member.id + ')">&#x2699;</button>' : '') + '</div>';
+        }
+        
+        function renderResources() {
+            const container = document.getElementById('resourcesContainer');
+            if (resources.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div style="font-size:3rem;opacity:0.3;margin-bottom:15px">&#x1F4C1;</div><h3>No Shared Resources</h3><p class="text-muted">Add devices from your network to share with members</p><button class="btn btn-primary" onclick="showShareResourceModal()" style="margin-top:15px">&#x2795; Share Resource</button></div>';
+                return;
+            }
+            container.innerHTML = resources.map(renderResource).join('');
+        }
+        
+        function renderResource(resource) {
+            const icons = { printer: '&#x1F5A8;', camera: '&#x1F4F7;', nas: '&#x1F4BE;', server: '&#x1F5A5;', other: '&#x1F4E6;' };
+            const icon = icons[resource.type] || icons.other;
+            return '<div class="resource-card"><span class="resource-icon">' + icon + '</span><div class="resource-info"><h4>' + escapeHtml(resource.name) + '</h4><p>Shared by ' + escapeHtml(resource.shared_by || 'You') + ' &#x2022; ' + escapeHtml(resource.access_level || 'Full access') + '</p></div><button class="btn btn-secondary btn-small" onclick="manageResource(' + resource.id + ')">&#x2699;</button></div>';
+        }
+        
+        function showInviteModal() { document.getElementById('modalInviteEmail').value = ''; document.getElementById('inviteModal').classList.add('active'); }
+        function hideInviteModal() { document.getElementById('inviteModal').classList.remove('active'); }
+        function hideMemberModal() { document.getElementById('memberModal').classList.remove('active'); }
+        
+        async function sendInvite(e) {
+            e.preventDefault();
+            const email = document.getElementById('inviteEmail').value.trim();
+            if (!email) return;
+            const btn = document.getElementById('inviteBtn');
+            btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>';
+            try {
+                const result = await TrueVault.API.post('/mesh/invite.php', { email: email, permission: 'member' });
+                if (result.success) { TrueVault.Toast.success('Invitation sent to ' + email); document.getElementById('inviteEmail').value = ''; await loadMeshData(); }
+                else { TrueVault.Toast.error(result.error || 'Failed to send invitation'); }
+            } catch (error) { TrueVault.Toast.error('Failed to send invitation'); }
+            finally { btn.disabled = false; btn.textContent = 'Send Invite'; }
+        }
+        
+        async function sendInviteFromModal(e) {
+            e.preventDefault();
+            const email = document.getElementById('modalInviteEmail').value.trim();
+            const permission = document.getElementById('permissionLevel').value;
+            if (!email) return;
+            try {
+                const result = await TrueVault.API.post('/mesh/invite.php', { email: email, permission: permission });
+                if (result.success) { TrueVault.Toast.success('Invitation sent!'); hideInviteModal(); await loadMeshData(); }
+                else { TrueVault.Toast.error(result.error || 'Failed to send invitation'); }
+            } catch (error) { TrueVault.Toast.error('Failed to send invitation'); }
         }
         
         function manageMember(id) {
-            TrueVault.Toast.info('Member management coming soon');
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+            currentMemberId = id;
+            document.getElementById('memberDetails').innerHTML = '<div style="padding:20px;background:rgba(0,0,0,0.2);border-radius:10px;margin-bottom:20px"><div style="display:flex;align-items:center;gap:15px;margin-bottom:15px"><div class="member-avatar">&#x1F464;</div><div><h3>' + escapeHtml(member.name || member.email) + '</h3><p class="text-muted">' + escapeHtml(member.email) + '</p></div></div><div style="display:grid;gap:10px"><div style="display:flex;justify-content:space-between"><span>Status</span><span>' + (member.is_online ? '&#x2705; Online' : '&#x274C; Offline') + '</span></div><div style="display:flex;justify-content:space-between"><span>Devices</span><span>' + (member.device_count || 0) + '</span></div><div style="display:flex;justify-content:space-between"><span>Permission</span><span>' + escapeHtml(member.permission || 'Member') + '</span></div></div></div><div class="form-group"><label>Permission Level</label><select id="memberPermission"><option value="viewer"' + (member.permission === 'viewer' ? ' selected' : '') + '>Viewer</option><option value="member"' + (member.permission === 'member' ? ' selected' : '') + '>Member</option><option value="admin"' + (member.permission === 'admin' ? ' selected' : '') + '>Admin</option></select></div><div style="display:flex;gap:10px;margin-top:20px"><button class="btn btn-secondary" onclick="hideMemberModal()">Cancel</button><button class="btn btn-primary" style="flex:1" onclick="saveMember()">Save Changes</button><button class="btn btn-danger" onclick="removeMember(' + id + ')">Remove</button></div>';
+            document.getElementById('memberModal').classList.add('active');
         }
         
-        function manageResource(id) {
-            TrueVault.Toast.info('Resource management coming soon');
+        async function saveMember() {
+            if (!currentMemberId) return;
+            const permission = document.getElementById('memberPermission').value;
+            try {
+                const result = await TrueVault.API.post('/mesh/members.php', { action: 'update', id: currentMemberId, permission: permission });
+                if (result.success) { TrueVault.Toast.success('Member updated'); hideMemberModal(); await loadMeshData(); }
+                else { TrueVault.Toast.error(result.error || 'Failed to update'); }
+            } catch (error) { TrueVault.Toast.error('Failed to update'); }
         }
         
-        function resendInvite() {
-            TrueVault.Toast.success('Invitation resent!');
+        async function removeMember(id) {
+            if (!confirm('Remove this member from your mesh network?')) return;
+            try {
+                const result = await TrueVault.API.post('/mesh/members.php', { action: 'remove', id: id });
+                if (result.success) { TrueVault.Toast.success('Member removed'); hideMemberModal(); await loadMeshData(); }
+                else { TrueVault.Toast.error(result.error || 'Failed to remove'); }
+            } catch (error) { TrueVault.Toast.error('Failed to remove'); }
         }
         
-        document.getElementById('inviteModal').addEventListener('click', function(e) {
-            if (e.target === this) hideModal();
-        });
+        function manageResource(id) { TrueVault.Toast.info('Resource settings - feature in development'); }
+        function showShareResourceModal() { TrueVault.Toast.info('Share resource - feature in development'); }
+        
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        document.getElementById('inviteModal').addEventListener('click', function(e) { if (e.target === this) hideInviteModal(); });
+        document.getElementById('memberModal').addEventListener('click', function(e) { if (e.target === this) hideMemberModal(); });
     </script>
 </body>
 </html>

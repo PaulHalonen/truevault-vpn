@@ -4,82 +4,128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - TrueVault VPN</title>
-    <link rel="stylesheet" href="assets/css/theme.css">
+    <link rel="stylesheet" href="/assets/css/theme.css">
     <style>
         .success-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .success-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
             max-width: 500px;
-            margin: 100px auto;
             text-align: center;
-            padding: 2rem;
+            border: 1px solid var(--border-color);
         }
         .success-icon {
-            font-size: 5rem;
-            margin-bottom: 1rem;
+            font-size: 80px;
+            margin-bottom: 20px;
         }
         .success-title {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--success);
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: var(--success-color);
         }
         .success-message {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.6;
         }
-        .action-btn {
+        .next-steps {
+            background: rgba(0,255,136,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .next-steps h4 {
+            margin-bottom: 15px;
+            color: var(--success-color);
+        }
+        .next-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .next-steps li {
+            margin: 10px 0;
+            color: var(--text-color);
+        }
+        .btn-dashboard {
             display: inline-block;
-            padding: 1rem 2rem;
-            background: var(--gradient-primary);
-            color: var(--bg-primary);
-            text-decoration: none;
+            background: var(--primary-gradient);
+            color: var(--btn-text);
+            padding: 15px 40px;
             border-radius: 8px;
+            text-decoration: none;
             font-weight: 600;
-            margin: 0.5rem;
+            margin-top: 20px;
+        }
+        .invoice-info {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .invoice-info span {
+            color: var(--primary-color);
+            font-family: monospace;
         }
     </style>
 </head>
 <body>
     <div class="success-container">
-        <div class="success-icon">✅</div>
-        <h1 class="success-title">Payment Successful!</h1>
-        <p class="success-message">
-            Thank you for subscribing to TrueVault VPN. Your account has been activated and you can now connect to all available servers.
-        </p>
-        <p id="processingMessage" style="display: none; color: var(--warning);">
-            Processing your subscription...
-        </p>
-        <a href="dashboard.html" class="action-btn">Go to Dashboard</a>
-    </div>
-
-    <script>
-        // Complete the payment if we have an order ID
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderId = urlParams.get('token');
-        
-        if (orderId) {
-            document.getElementById('processingMessage').style.display = 'block';
+        <div class="success-card">
+            <div class="success-icon">✅</div>
+            <h1 class="success-title">Payment Successful!</h1>
+            <p class="success-message">
+                Thank you for subscribing to TrueVault VPN. Your account is now active and ready to use.
+            </p>
             
-            fetch('/api/billing/complete.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('truevault_token')
-                },
-                body: JSON.stringify({ order_id: orderId })
-            })
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('processingMessage').style.display = 'none';
-                if (data.success) {
-                    console.log('Payment completed:', data);
-                } else {
-                    console.error('Payment completion failed:', data);
+            <div class="invoice-info" id="invoice-info" style="display:none;">
+                Invoice: <span id="invoice-number"></span>
+            </div>
+            
+            <div class="next-steps">
+                <h4>🚀 Next Steps:</h4>
+                <ol>
+                    <li>Go to your Dashboard</li>
+                    <li>Click "Get Config" on your preferred server</li>
+                    <li>Copy the config to your WireGuard app</li>
+                    <li>Connect and enjoy secure browsing!</li>
+                </ol>
+            </div>
+            
+            <a href="/dashboard.html" class="btn-dashboard">Go to Dashboard →</a>
+        </div>
+    </div>
+    
+    <script src="/assets/js/api.js"></script>
+    <script>
+        // Complete payment if order_id present
+        async function completePayment() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('token'); // PayPal uses 'token' param
+            
+            if (orderId) {
+                try {
+                    const response = await fetch(`/api/billing/complete.php?order_id=${orderId}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.data.invoice_id) {
+                        document.getElementById('invoice-info').style.display = 'block';
+                        document.getElementById('invoice-number').textContent = data.data.invoice_id;
+                    }
+                } catch (error) {
+                    console.error('Payment completion error:', error);
                 }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                document.getElementById('processingMessage').style.display = 'none';
-            });
+            }
         }
+        
+        completePayment();
     </script>
 </body>
 </html>

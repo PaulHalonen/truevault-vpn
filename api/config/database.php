@@ -1,195 +1,174 @@
 <?php
 /**
- * TrueVault VPN - Database Helper (SQLite3 version)
- * Provides database connections using SQLite3 class
+ * TrueVault VPN - Database Manager
+ * Handles all SQLite database connections
+ * 
+ * Usage:
+ *   $db = Database::getConnection('users');
+ *   $db = Database::getConnection('billing');
  */
 
 class Database {
     private static $connections = [];
     private static $basePath = null;
     
+    // Database paths
+    private static $databases = [
+        // Core
+        'users' => 'core/users.db',
+        'sessions' => 'core/sessions.db',
+        'admin' => 'core/admin.db',
+        
+        // VPN
+        'vpn' => 'vpn/vpn.db',
+        'servers' => 'vpn/servers.db',
+        'certificates' => 'vpn/certificates.db',
+        'identities' => 'vpn/identities.db',
+        
+        // Devices
+        'devices' => 'devices/devices.db',
+        'cameras' => 'devices/cameras.db',
+        'port_forwarding' => 'devices/port_forwarding.db',
+        'mesh' => 'devices/mesh.db',
+        
+        // Billing
+        'billing' => 'billing/billing.db',
+        'invoices' => 'billing/invoices.db',
+        
+        // CMS
+        'cms' => 'cms/cms.db',
+        'themes' => 'cms/themes.db',
+        
+        // Automation
+        'automation' => 'automation/automation.db',
+        'logs' => 'automation/logs.db',
+        
+        // Analytics
+        'analytics' => 'analytics/analytics.db'
+    ];
+    
     /**
-     * Get the base path for database files
+     * Get database base path
      */
     private static function getBasePath() {
         if (self::$basePath === null) {
-            self::$basePath = __DIR__ . '/../../data';
+            // Check if we're on production or local
+            if (file_exists('/home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/databases')) {
+                self::$basePath = '/home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/databases';
+            } else {
+                self::$basePath = dirname(__DIR__, 2) . '/databases';
+            }
         }
         return self::$basePath;
     }
     
     /**
-     * Get a database connection by name
+     * Get PDO connection for a database
      */
-    public static function getConnection($name) {
-        if (!isset(self::$connections[$name])) {
-            $dbPath = self::getBasePath() . "/$name.db";
-            
-            if (!file_exists($dbPath)) {
-                throw new Exception("Database not found: $name.db - Run setup-databases.php first");
-            }
-            
-            self::$connections[$name] = new SQLite3($dbPath);
-            self::$connections[$name]->enableExceptions(true);
+    public static function getConnection($dbName) {
+        if (!isset(self::$databases[$dbName])) {
+            throw new Exception("Unknown database: {$dbName}");
         }
         
-        return self::$connections[$name];
+        if (!isset(self::$connections[$dbName])) {
+            $path = self::getBasePath() . '/' . self::$databases[$dbName];
+            
+            // Create directory if not exists
+            $dir = dirname($path);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            
+            try {
+                $pdo = new PDO("sqlite:{$path}");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                $pdo->exec('PRAGMA foreign_keys = ON');
+                self::$connections[$dbName] = $pdo;
+            } catch (PDOException $e) {
+                throw new Exception("Database connection failed: " . $e->getMessage());
+            }
+        }
+        
+        return self::$connections[$dbName];
     }
     
     /**
-     * Execute a query and return results as array
+     * Execute a query and return result
      */
     public static function query($dbName, $sql, $params = []) {
         $db = self::getConnection($dbName);
         $stmt = $db->prepare($sql);
-        
-        if ($stmt === false) {
-            throw new Exception("Failed to prepare statement: " . $db->lastErrorMsg());
-        }
-        
-        // Bind parameters
-        foreach ($params as $key => $value) {
-            $paramName = is_int($key) ? $key + 1 : $key;
-            $type = SQLITE3_TEXT;
-            
-            if (is_int($value)) {
-                $type = SQLITE3_INTEGER;
-            } elseif (is_float($value)) {
-                $type = SQLITE3_FLOAT;
-            } elseif (is_null($value)) {
-                $type = SQLITE3_NULL;
-            }
-            
-            $stmt->bindValue($paramName, $value, $type);
-        }
-        
-        $result = $stmt->execute();
-        
-        if ($result === false) {
-            throw new Exception("Query failed: " . $db->lastErrorMsg());
-        }
-        
-        // Fetch all results
-        $rows = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $rows[] = $row;
-        }
-        
-        return $rows;
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
     
     /**
      * Execute a query and return single row
      */
     public static function queryOne($dbName, $sql, $params = []) {
-        $rows = self::query($dbName, $sql, $params);
-        return $rows[0] ?? null;
+        $db = self::getConnection($dbName);
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetch();
     }
     
     /**
-     * Alias for query - returns all rows
-     */
-    public static function queryAll($dbName, $sql, $params = []) {
-        return self::query($dbName, $sql, $params);
-    }
-    
-    /**
-     * Get the path to a database file
-     */
-    public static function getPath($name) {
-        return self::getBasePath() . "/$name.db";
-    }
-    
-    /**
-     * Execute an INSERT/UPDATE/DELETE and return affected info
+     * Execute insert/update/delete
      */
     public static function execute($dbName, $sql, $params = []) {
         $db = self::getConnection($dbName);
         $stmt = $db->prepare($sql);
-        
-        if ($stmt === false) {
-            throw new Exception("Failed to prepare statement: " . $db->lastErrorMsg());
-        }
-        
-        // Bind parameters
-        foreach ($params as $key => $value) {
-            $paramName = is_int($key) ? $key + 1 : $key;
-            $type = SQLITE3_TEXT;
-            
-            if (is_int($value)) {
-                $type = SQLITE3_INTEGER;
-            } elseif (is_float($value)) {
-                $type = SQLITE3_FLOAT;
-            } elseif (is_null($value)) {
-                $type = SQLITE3_NULL;
-            }
-            
-            $stmt->bindValue($paramName, $value, $type);
-        }
-        
-        $result = $stmt->execute();
-        
-        if ($result === false) {
-            throw new Exception("Execute failed: " . $db->lastErrorMsg());
-        }
-        
-        return [
-            'lastInsertId' => $db->lastInsertRowID(),
-            'changes' => $db->changes()
-        ];
+        return $stmt->execute($params);
     }
     
     /**
      * Get last insert ID
      */
     public static function lastInsertId($dbName) {
-        $db = self::getConnection($dbName);
-        return $db->lastInsertRowID();
+        return self::getConnection($dbName)->lastInsertId();
     }
     
     /**
-     * Close a specific connection
+     * Begin transaction
      */
-    public static function close($name) {
-        if (isset(self::$connections[$name])) {
-            self::$connections[$name]->close();
-            unset(self::$connections[$name]);
+    public static function beginTransaction($dbName) {
+        return self::getConnection($dbName)->beginTransaction();
+    }
+    
+    /**
+     * Commit transaction
+     */
+    public static function commit($dbName) {
+        return self::getConnection($dbName)->commit();
+    }
+    
+    /**
+     * Rollback transaction
+     */
+    public static function rollback($dbName) {
+        return self::getConnection($dbName)->rollBack();
+    }
+    
+    /**
+     * Check if table exists
+     */
+    public static function tableExists($dbName, $tableName) {
+        $result = self::queryOne($dbName, 
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            [$tableName]
+        );
+        return $result !== false;
+    }
+    
+    /**
+     * Get all database paths for backup
+     */
+    public static function getAllPaths() {
+        $paths = [];
+        foreach (self::$databases as $name => $path) {
+            $paths[$name] = self::getBasePath() . '/' . $path;
         }
+        return $paths;
     }
-    
-    /**
-     * Close all connections
-     */
-    public static function closeAll() {
-        foreach (self::$connections as $name => $db) {
-            $db->close();
-        }
-        self::$connections = [];
-    }
-    
-    /**
-     * Check if database exists
-     */
-    public static function databaseExists($name) {
-        return file_exists(self::getBasePath() . "/$name.db");
-    }
-    
-    /**
-     * List all available databases
-     */
-    public static function getDatabaseList() {
-        $databases = [];
-        $files = glob(self::getBasePath() . '/*.db');
-        foreach ($files as $file) {
-            $databases[] = basename($file, '.db');
-        }
-        return $databases;
-    }
-}
-
-/**
- * Shorthand function for getting database connection
- */
-function db($name) {
-    return Database::getConnection($name);
 }

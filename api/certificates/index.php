@@ -4,6 +4,7 @@
  * GET/POST /api/certificates/index.php
  * 
  * Personal Certificate Authority - certificates generated on VPN servers
+ * FIXED: January 14, 2026 - Changed DatabaseManager to Database class
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -19,17 +20,16 @@ $user = Auth::requireAuth();
 $method = Response::getMethod();
 
 try {
-    $certsDb = DatabaseManager::getInstance()->certificates();
-    
     switch ($method) {
         case 'GET':
             // Get certificate type filter
             $type = $_GET['type'] ?? null;
             
             // Check if user has a CA
-            $stmt = $certsDb->prepare("SELECT * FROM certificate_authority WHERE user_id = ? AND is_active = 1");
-            $stmt->execute([$user['id']]);
-            $ca = $stmt->fetch();
+            $ca = Database::queryOne('certificates', 
+                "SELECT * FROM certificate_authority WHERE user_id = ? AND is_active = 1", 
+                [$user['id']]
+            );
             
             if (!$ca) {
                 Response::success([
@@ -41,24 +41,20 @@ try {
             
             // Get certificates
             if ($type) {
-                $stmt = $certsDb->prepare("
+                $certificates = Database::query('certificates', "
                     SELECT id, certificate_type, certificate_name, serial_number, issued_at, expires_at, is_revoked, device_id, region_code
                     FROM user_certificates 
                     WHERE user_id = ? AND certificate_type = ?
                     ORDER BY issued_at DESC
-                ");
-                $stmt->execute([$user['id'], $type]);
+                ", [$user['id'], $type]);
             } else {
-                $stmt = $certsDb->prepare("
+                $certificates = Database::query('certificates', "
                     SELECT id, certificate_type, certificate_name, serial_number, issued_at, expires_at, is_revoked, device_id, region_code
                     FROM user_certificates 
                     WHERE user_id = ?
                     ORDER BY issued_at DESC
-                ");
-                $stmt->execute([$user['id']]);
+                ", [$user['id']]);
             }
-            
-            $certificates = $stmt->fetchAll();
             
             // Add status to each certificate
             foreach ($certificates as &$cert) {
@@ -108,13 +104,14 @@ try {
             $meshNetworkId = $input['mesh_network_id'] ?? null;
             
             // Check/create CA
-            $stmt = $certsDb->prepare("SELECT * FROM certificate_authority WHERE user_id = ? AND is_active = 1");
-            $stmt->execute([$user['id']]);
-            $ca = $stmt->fetch();
+            $ca = Database::queryOne('certificates', 
+                "SELECT * FROM certificate_authority WHERE user_id = ? AND is_active = 1", 
+                [$user['id']]
+            );
             
             if (!$ca) {
                 // Create CA first
-                $ca = createUserCA($user, $certsDb);
+                $ca = createUserCA($user);
                 if (!$ca) {
                     Response::serverError('Failed to create Certificate Authority');
                 }
@@ -129,16 +126,17 @@ try {
             
             // Update CA serial
             $newSerial = $ca['ca_serial'] + 1;
-            $stmt = $certsDb->prepare("UPDATE certificate_authority SET ca_serial = ? WHERE id = ?");
-            $stmt->execute([$newSerial, $ca['id']]);
+            Database::execute('certificates', 
+                "UPDATE certificate_authority SET ca_serial = ? WHERE id = ?", 
+                [$newSerial, $ca['id']]
+            );
             
             // Store certificate
-            $stmt = $certsDb->prepare("
+            $result = Database::execute('certificates', "
                 INSERT INTO user_certificates 
                 (user_id, ca_id, certificate_type, certificate_name, certificate_data, public_key, serial_number, expires_at, device_id, region_code, mesh_network_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', '+365 days'), ?, ?, ?)
-            ");
-            $stmt->execute([
+            ", [
                 $user['id'],
                 $ca['id'],
                 $certType,
@@ -151,7 +149,7 @@ try {
                 $meshNetworkId
             ]);
             
-            $certId = $certsDb->lastInsertId();
+            $certId = $result['lastInsertId'];
             
             Logger::info('Certificate generated', [
                 'user_id' => $user['id'],
@@ -183,7 +181,7 @@ try {
 /**
  * Create user's personal Certificate Authority
  */
-function createUserCA($user, $certsDb) {
+function createUserCA($user) {
     // In production, this would call the VPN server API
     // For now, generate placeholder data
     
@@ -192,19 +190,19 @@ function createUserCA($user, $certsDb) {
         base64_encode("CA Certificate for User {$user['id']} - " . time()) . 
         "\n-----END CERTIFICATE-----";
     
-    $stmt = $certsDb->prepare("
+    $encryptedKey = Encryption::encrypt($caPrivateKey);
+    
+    $result = Database::execute('certificates', "
         INSERT INTO certificate_authority (user_id, ca_certificate, ca_private_key_encrypted, expires_at)
         VALUES (?, ?, ?, datetime('now', '+10 years'))
-    ");
+    ", [$user['id'], $caCertificate, $encryptedKey]);
     
-    $encryptedKey = Encryption::encrypt($caPrivateKey);
-    $stmt->execute([$user['id'], $caCertificate, $encryptedKey]);
+    $caId = $result['lastInsertId'];
     
-    $caId = $certsDb->lastInsertId();
-    
-    $stmt = $certsDb->prepare("SELECT * FROM certificate_authority WHERE id = ?");
-    $stmt->execute([$caId]);
-    return $stmt->fetch();
+    return Database::queryOne('certificates', 
+        "SELECT * FROM certificate_authority WHERE id = ?", 
+        [$caId]
+    );
 }
 
 /**

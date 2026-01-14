@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing - Admin - TrueVault VPN</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0f0f1a, #1a1a2e); color: #fff; min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: rgba(0,0,0,0.3); border-right: 1px solid rgba(255,255,255,0.1); padding: 1.5rem; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+        .logo-icon { font-size: 1.8rem; }
+        .logo-text { font-size: 1.3rem; font-weight: 700; background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo-badge { font-size: 0.7rem; background: #ff5050; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+        .nav { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem; border-radius: 8px; text-decoration: none; color: #888; transition: all 0.2s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: rgba(0,217,255,0.1); color: #00d9ff; border-left: 3px solid #00d9ff; }
+        .main { margin-left: 250px; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-title { font-size: 1.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; }
+        .stat-card.highlight { background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,217,255,0.1)); border-color: rgba(0,255,136,0.3); }
+        .stat-value { font-size: 2rem; font-weight: 700; background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-label { color: #888; font-size: 0.9rem; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .tab { padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.05); border: none; border-radius: 8px; color: #888; cursor: pointer; }
+        .tab.active { background: rgba(0,217,255,0.2); color: #00d9ff; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { color: #888; font-weight: 500; font-size: 0.85rem; text-transform: uppercase; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        .status { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .status.paid { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .status.pending { background: rgba(255,215,0,0.2); color: #ffd700; }
+        .status.failed { background: rgba(255,80,80,0.2); color: #ff5050; }
+        .status.refunded { background: rgba(150,150,150,0.2); color: #999; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+        .amount { font-family: monospace; color: #00ff88; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; z-index: 1000; color: #fff; }
+        .toast-success { background: #00c853; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <span class="logo-icon">🔐</span>
+            <span class="logo-text">TrueVault</span>
+            <span class="logo-badge">ADMIN</span>
+        </div>
+        <nav class="nav">
+            <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="users.html" class="nav-item"><span class="nav-icon">👥</span> Users</a>
+            <a href="servers.html" class="nav-item"><span class="nav-icon">🖥️</span> Servers</a>
+            <a href="billing.html" class="nav-item active"><span class="nav-icon">💳</span> Billing</a>
+            <a href="logs.html" class="nav-item"><span class="nav-icon">📋</span> Logs</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </nav>
+        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="/" class="nav-item"><span class="nav-icon">🌐</span> View Site</a>
+            <a href="#" class="nav-item" onclick="logout()"><span class="nav-icon">🚪</span> Logout</a>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="header">
+            <h1 class="page-title">Billing & Payments</h1>
+            <button class="btn btn-secondary" onclick="exportReport()">📥 Export Report</button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-value" id="monthlyRevenue">$0</div>
+                <div class="stat-label">Monthly Revenue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTransactions">0</div>
+                <div class="stat-label">Transactions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeSubscriptions">0</div>
+                <div class="stat-label">Active Subscriptions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="failedPayments">0</div>
+                <div class="stat-label">Failed Payments</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('transactions')">Transactions</button>
+            <button class="tab" onclick="showTab('subscriptions')">Subscriptions</button>
+            <button class="tab" onclick="showTab('invoices')">Invoices</button>
+            <button class="tab" onclick="showTab('refunds')">Refunds</button>
+        </div>
+
+        <div class="card" id="transactionsTab">
+            <div class="card-header">
+                <h3>Recent Transactions</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTable">
+                    <tr>
+                        <td>Jan 12, 2026</td>
+                        <td>john@example.com</td>
+                        <td>Family Plan - Monthly</td>
+                        <td class="amount">$14.99</td>
+                        <td><span class="status paid">Paid</span></td>
+                        <td><button class="btn btn-small btn-secondary">View</button></td>
+                    </tr>
+                    <tr>
+                        <td>Jan 11, 2026</td>
+                        <td>jane@example.com</td>
+                        <td>Basic Plan - Monthly</td>
+                        <td class="amount">$9.99</td>
+                        <td><span class="status paid">Paid</span></td>
+                        <td><button class="btn btn-small btn-secondary">View</button></td>
+                    </tr>
+                    <tr>
+                        <td>Jan 10, 2026</td>
+                        <td>bob@example.com</td>
+                        <td>Dedicated Plan - Monthly</td>
+                        <td class="amount">$29.99</td>
+                        <td><span class="status failed">Failed</span></td>
+                        <td><button class="btn btn-small btn-secondary">Retry</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card" id="subscriptionsTab" style="display: none;">
+            <div class="card-header">
+                <h3>Active Subscriptions</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Plan</th>
+                        <th>Started</th>
+                        <th>Next Billing</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="subscriptionsTable">
+                    <tr><td colspan="6" style="text-align: center; color: #666;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card" id="invoicesTab" style="display: none;">
+            <div class="card-header">
+                <h3>Invoices</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="invoicesTable">
+                    <tr><td colspan="6" style="text-align: center; color: #666;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card" id="refundsTab" style="display: none;">
+            <div class="card-header">
+                <h3>Refunds</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Original Amount</th>
+                        <th>Refund Amount</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="refundsTable">
+                    <tr><td colspan="6" style="text-align: center; color: #666;">No refunds</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let adminToken = localStorage.getItem('truevault_admin_token');
+        if (!adminToken) window.location.href = '/admin/login.html';
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.card[id$="Tab"]').forEach(c => c.style.display = 'none');
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').style.display = 'block';
+        }
+
+        function exportReport() {
+            showToast('Generating report...', 'success');
+        }
+
+        function logout() { localStorage.removeItem('truevault_admin_token'); window.location.href = '/admin/login.html'; }
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

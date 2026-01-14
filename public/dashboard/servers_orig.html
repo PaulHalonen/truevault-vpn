@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servers - TrueVault VPN</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-variables">:root{--colors-primary:#00d9ff;--colors-secondary:#00ff88;--colors-accent:#ff6b6b;--colors-background:#0f0f1a;--colors-background-secondary:#1a1a2e;--colors-text:#ffffff;--colors-text-muted:#888888;--colors-success:#00ff88;--colors-warning:#ffbb00;--colors-error:#ff5050;--gradients-primary:linear-gradient(90deg,#00d9ff,#00ff88);--gradients-background:linear-gradient(135deg,#0f0f1a,#1a1a2e);--buttons-border-radius:8px;--cards-border-radius:14px;--colors-border:rgba(255,255,255,0.08);--layout-sidebar-width:260px;}</style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <style>
+        .servers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+        .server-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:20px;transition:all 0.2s}
+        .server-card:hover{border-color:var(--colors-primary)}
+        .server-card.vip{border-color:var(--colors-warning);background:rgba(255,187,0,0.05)}
+        .server-card.connected{border-color:var(--colors-success);background:rgba(0,255,136,0.05)}
+        .server-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+        .server-flag{font-size:2.5rem}
+        .server-badges{display:flex;gap:6px}
+        .server-name{font-size:1.2rem;font-weight:600;margin-bottom:5px}
+        .server-location{color:var(--colors-text-muted);font-size:0.9rem}
+        .server-stats{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0;padding:15px 0;border-top:1px solid var(--colors-border);border-bottom:1px solid var(--colors-border)}
+        .server-stat{text-align:center}
+        .server-stat-value{font-size:1.3rem;font-weight:600}
+        .server-stat-label{font-size:0.8rem;color:var(--colors-text-muted)}
+        .load-indicator{display:flex;align-items:center;gap:10px}
+        .load-bar{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden}
+        .load-fill{height:100%;border-radius:3px}
+        .load-fill.low{background:var(--colors-success)}
+        .load-fill.medium{background:var(--colors-warning)}
+        .load-fill.high{background:var(--colors-error)}
+        .server-features{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}
+        .server-feature{padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:15px;font-size:0.75rem;color:var(--colors-text-muted)}
+        .region-filter{display:flex;gap:10px;margin-bottom:25px;flex-wrap:wrap}
+        .region-btn{padding:8px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--colors-border);border-radius:20px;color:var(--colors-text);cursor:pointer;transition:all 0.2s}
+        .region-btn:hover,.region-btn.active{background:var(--colors-primary);color:var(--colors-background);border-color:var(--colors-primary)}
+        .connection-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:15px;font-size:0.8rem;font-weight:600}
+        .connection-badge.connected{background:var(--colors-success);color:#000}
+        .server-ip{font-family:monospace;font-size:0.85rem;color:var(--colors-text-muted);margin-top:5px}
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item active"><span class="nav-icon">🌐</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div>
+                <h1>🌐 VPN Servers</h1>
+                <p class="text-muted">Choose a server to connect. Servers optimized for speed, privacy, and reliability.</p>
+            </div>
+            <div class="header-actions" id="connectionStatus">
+                <!-- Connection status will be inserted here -->
+            </div>
+        </header>
+        
+        <!-- Region Filter -->
+        <div class="region-filter">
+            <button class="region-btn active" data-region="all">🌍 All Regions</button>
+            <button class="region-btn" data-region="americas">🌎 Americas</button>
+            <button class="region-btn" data-region="europe">🌍 Europe</button>
+            <button class="region-btn" data-region="asia">🌏 Asia Pacific</button>
+        </div>
+        
+        <!-- Servers Grid -->
+        <section class="servers-grid" id="serversGrid">
+            <div class="loading">Loading servers...</div>
+        </section>
+    </main>
+    
+    <script src="/assets/js/theme-loader.js"></script>
+    <script src="/assets/js/app.js"></script>
+    <script>
+        if (!TrueVault.Auth.requireAuth()) {}
+        
+        let servers = [];
+        let currentConnection = null;
+        let currentRegion = 'all';
+        
+        const user = TrueVault.Auth.getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+        }
+        
+        // Region filter
+        document.querySelectorAll('.region-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentRegion = this.dataset.region;
+                renderServers();
+            });
+        });
+        
+        async function loadServers() {
+            // Load servers
+            const result = await TrueVault.API.get('/vpn/servers.php');
+            if (result.success) {
+                servers = result.data.servers;
+                renderServers();
+            }
+            
+            // Load connection status
+            const status = await TrueVault.API.get('/vpn/status.php');
+            if (status.success && status.data.is_connected) {
+                currentConnection = status.data.connections[0];
+                updateConnectionStatus();
+            }
+        }
+        
+        function updateConnectionStatus() {
+            const container = document.getElementById('connectionStatus');
+            if (currentConnection) {
+                container.innerHTML = `
+                    <div class="connection-badge connected">
+                        🟢 Connected to ${currentConnection.server.name}
+                    </div>
+                    <button class="btn btn-danger btn-small" onclick="disconnect()">Disconnect</button>
+                `;
+            } else {
+                container.innerHTML = `<span class="badge badge-error">Disconnected</span>`;
+            }
+        }
+        
+        function renderServers() {
+            const grid = document.getElementById('serversGrid');
+            let filtered = servers;
+            
+            if (currentRegion !== 'all') {
+                const regionMap = {
+                    'americas': ['US', 'CA', 'MX', 'BR'],
+                    'europe': ['UK', 'GB', 'DE', 'FR', 'NL', 'SE', 'CH'],
+                    'asia': ['JP', 'SG', 'AU', 'KR', 'IN', 'HK']
+                };
+                filtered = servers.filter(s => regionMap[currentRegion]?.includes(s.country));
+            }
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p class="text-muted">No servers found in this region</p>';
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(renderServerCard).join('');
+        }
+        
+        function renderServerCard(server) {
+            const isConnected = currentConnection && currentConnection.server.id === server.id;
+            const isVip = server.is_vip_only;
+            const loadClass = server.load_percent < 40 ? 'low' : server.load_percent < 70 ? 'medium' : 'high';
+            
+            const flags = {
+                'US': '🇺🇸', 'CA': '🇨🇦', 'UK': '🇬🇧', 'GB': '🇬🇧',
+                'DE': '🇩🇪', 'FR': '🇫🇷', 'AU': '🇦🇺', 'JP': '🇯🇵', 
+                'SG': '🇸🇬', 'NL': '🇳🇱', 'SE': '🇸🇪', 'CH': '🇨🇭'
+            };
+            
+            return `
+                <div class="server-card ${isConnected ? 'connected' : ''} ${isVip ? 'vip' : ''}">
+                    <div class="server-card-header">
+                        <span class="server-flag">${flags[server.country] || '🌐'}</span>
+                        <div class="server-badges">
+                            ${isVip ? '<span class="badge badge-warning">👑 VIP</span>' : ''}
+                            ${isConnected ? '<span class="badge badge-success">Connected</span>' : ''}
+                            <span class="badge badge-${server.status === 'active' ? 'success' : 'error'}">${server.status}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="server-name">${server.server_name}</div>
+                    <div class="server-location">${server.city}, ${server.region}</div>
+                    <div class="server-ip">${server.ip_address}</div>
+                    
+                    <div class="server-stats">
+                        <div class="server-stat">
+                            <div class="server-stat-value">${server.load_percent}%</div>
+                            <div class="server-stat-label">Load</div>
+                        </div>
+                        <div class="server-stat">
+                            <div class="server-stat-value">${server.current_connections}/${server.max_connections}</div>
+                            <div class="server-stat-label">Users</div>
+                        </div>
+                    </div>
+                    
+                    <div class="load-indicator">
+                        <span class="text-muted" style="font-size:0.8rem">Server Load</span>
+                        <div class="load-bar">
+                            <div class="load-fill ${loadClass}" style="width: ${server.load_percent}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="server-features">
+                        ${server.supports_p2p ? '<span class="server-feature">P2P</span>' : ''}
+                        ${server.supports_streaming ? '<span class="server-feature">Streaming</span>' : ''}
+                        <span class="server-feature">WireGuard</span>
+                    </div>
+                    
+                    <button class="btn ${isConnected ? 'btn-danger' : 'btn-primary'} btn-block" 
+                            onclick="${isConnected ? 'disconnect()' : `connectTo(${server.id})`}"
+                            ${server.status !== 'active' ? 'disabled' : ''}>
+                        ${isConnected ? '🔌 Disconnect' : '🔗 Connect'}
+                    </button>
+                </div>
+            `;
+        }
+        
+        async function connectTo(serverId) {
+            const server = servers.find(s => s.id === serverId);
+            if (!server) return;
+            
+            TrueVault.Toast.info(`Connecting to ${server.server_name}...`);
+            
+            const result = await TrueVault.API.post('/vpn/connect.php', { server_id: serverId });
+            
+            if (result.success) {
+                currentConnection = {
+                    server: server,
+                    connection_id: result.data.connection_id
+                };
+                TrueVault.Toast.success(`Connected to ${server.server_name}!`);
+                updateConnectionStatus();
+                renderServers();
+            } else {
+                TrueVault.Toast.error(result.error || 'Connection failed');
+            }
+        }
+        
+        async function disconnect() {
+            const result = await TrueVault.API.post('/vpn/disconnect.php', {});
+            
+            if (result.success) {
+                currentConnection = null;
+                TrueVault.Toast.success('Disconnected');
+                updateConnectionStatus();
+                renderServers();
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to disconnect');
+            }
+        }
+        
+        loadServers();
+        // Refresh every 30 seconds
+        setInterval(loadServers, 30000);
+    </script>
+</body>
+</html>
+

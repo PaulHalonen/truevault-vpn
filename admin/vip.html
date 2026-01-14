@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Management - TrueVault Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255,255,255,0.03);
+            --text-primary: #ffffff;
+            --text-muted: #888888;
+            --border-color: rgba(255,255,255,0.08);
+            --accent-primary: #00d9ff;
+            --accent-secondary: #00ff88;
+            --accent-warning: #ffd700;
+            --accent-danger: #ff5050;
+            --gradient-primary: linear-gradient(90deg, #00d9ff, #00ff88);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon { font-size: 2rem; }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header-actions { display: flex; gap: 10px; }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        
+        .btn-danger {
+            background: rgba(255, 80, 80, 0.15);
+            color: var(--accent-danger);
+            border: 1px solid rgba(255, 80, 80, 0.3);
+        }
+        
+        .btn-danger:hover { background: rgba(255, 80, 80, 0.25); }
+        
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        
+        tr:hover { background: rgba(255,255,255,0.02); }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-owner {
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--accent-warning);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .badge-dedicated {
+            background: rgba(0, 217, 255, 0.15);
+            color: var(--accent-primary);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+        }
+        
+        .badge-basic {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-secondary);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .badge-active {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-secondary);
+        }
+        
+        .badge-pending {
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--accent-warning);
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+        
+        .modal-title { font-size: 1.3rem; }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast-success { background: #00c853; color: white; }
+        .toast-error { background: #ff5252; color: white; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-muted);
+        }
+        
+        .empty-state .icon { font-size: 3rem; margin-bottom: 15px; }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .user-email { font-weight: 500; }
+        .user-name { font-size: 0.85rem; color: var(--text-muted); }
+        
+        .actions-cell { display: flex; gap: 8px; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            th, td { padding: 10px; font-size: 0.9rem; }
+            .actions-cell { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">👑</span>
+                <div>
+                    <h1>VIP Management</h1>
+                    <small style="color: var(--text-muted)">Manage VIP users and access</small>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    ➕ Add VIP
+                </button>
+                <a href="/admin/" class="btn btn-secondary">← Back to Admin</a>
+            </div>
+        </header>
+        
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total VIPs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-owner">0</div>
+                <div class="stat-label">👑 Owners</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-dedicated">0</div>
+                <div class="stat-label">⭐ Dedicated</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-basic">0</div>
+                <div class="stat-label">✓ Basic</div>
+            </div>
+        </div>
+        
+        <!-- VIP List -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">👑 VIP Users</h2>
+                <button class="btn btn-secondary btn-sm" onclick="loadVIPs()">🔄 Refresh</button>
+            </div>
+            
+            <div id="vip-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Type</th>
+                            <th>Plan</th>
+                            <th>Dedicated Server</th>
+                            <th>Account Status</th>
+                            <th>Added</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vip-list">
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <div class="icon">⏳</div>
+                                <p>Loading VIP users...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="vip-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Add VIP User</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="vip-form" onsubmit="saveVIP(event)">
+                <input type="hidden" id="edit-mode" value="add">
+                <input type="hidden" id="original-email" value="">
+                
+                <div class="form-group">
+                    <label for="vip-email">Email Address *</label>
+                    <input type="email" id="vip-email" required placeholder="user@example.com">
+                    <div class="form-hint">The email address for VIP access</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vip-type">VIP Type *</label>
+                    <select id="vip-type" required>
+                        <option value="vip_basic">Basic VIP - Shared servers only</option>
+                        <option value="vip_dedicated">Dedicated VIP - Has dedicated server</option>
+                        <option value="owner">Owner - Full system access</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vip-plan">Plan Level *</label>
+                    <select id="vip-plan" required>
+                        <option value="personal">Personal (3 devices)</option>
+                        <option value="family">Family (10 devices)</option>
+                        <option value="dedicated">Dedicated (Unlimited)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="server-group" style="display: none;">
+                    <label for="vip-server">Dedicated Server</label>
+                    <select id="vip-server">
+                        <option value="">None</option>
+                    </select>
+                    <div class="form-hint">Assign a dedicated server to this VIP</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vip-description">Description</label>
+                    <textarea id="vip-description" rows="2" placeholder="Optional notes about this VIP"></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-btn">Add VIP</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = '/api/admin/vip';
+        let servers = [];
+        
+        // Get admin token
+        function getToken() {
+            return localStorage.getItem('truevault_admin_token');
+        }
+        
+        // Check auth
+        if (!getToken()) {
+            window.location.href = '/admin/login.html';
+        }
+        
+        // Toast notification
+        function toast(message, type = 'success') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.textContent = message;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+        
+        // API request
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`,
+                    ...options.headers
+                }
+            };
+            
+            if (options.body && typeof options.body !== 'string') {
+                config.body = JSON.stringify(options.body);
+            }
+            
+            const response = await fetch(url, config);
+            const data = await response.json();
+            
+            if (response.status === 401) {
+                window.location.href = '/admin/login.html';
+                return;
+            }
+            
+            return data;
+        }
+        
+        // Load VIPs
+        async function loadVIPs() {
+            const result = await apiRequest('/manage.php');
+            
+            if (!result || !result.success) {
+                toast(result?.error || 'Failed to load VIPs', 'error');
+                return;
+            }
+            
+            const { vips, counts, servers: serverList } = result.data;
+            servers = serverList;
+            
+            // Update stats
+            document.getElementById('stat-total').textContent = counts.total || 0;
+            document.getElementById('stat-owner').textContent = counts.owner || 0;
+            document.getElementById('stat-dedicated').textContent = counts.vip_dedicated || 0;
+            document.getElementById('stat-basic').textContent = counts.vip_basic || 0;
+            
+            // Update server dropdown
+            const serverSelect = document.getElementById('vip-server');
+            serverSelect.innerHTML = '<option value="">None</option>';
+            servers.forEach(s => {
+                serverSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.location})</option>`;
+            });
+            
+            // Render VIP list
+            const tbody = document.getElementById('vip-list');
+            
+            if (!vips || vips.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <div class="icon">👑</div>
+                            <p>No VIP users yet</p>
+                            <button class="btn btn-primary" onclick="openAddModal()" style="margin-top: 15px;">Add First VIP</button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = vips.map(vip => `
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <span class="user-email">${escapeHtml(vip.email)}</span>
+                            ${vip.user_name ? `<span class="user-name">${escapeHtml(vip.user_name)}</span>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-${vip.type === 'owner' ? 'owner' : vip.type === 'vip_dedicated' ? 'dedicated' : 'basic'}">
+                            ${vip.type === 'owner' ? '👑 Owner' : vip.type === 'vip_dedicated' ? '⭐ Dedicated' : '✓ Basic'}
+                        </span>
+                    </td>
+                    <td>${capitalizeFirst(vip.plan)}</td>
+                    <td>${vip.dedicated_server_name || '-'}</td>
+                    <td>
+                        ${vip.has_account 
+                            ? `<span class="badge badge-active">✓ Registered</span>` 
+                            : `<span class="badge badge-pending">Pending</span>`}
+                    </td>
+                    <td>${formatDate(vip.created_at)}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-secondary btn-sm" onclick='editVIP(${JSON.stringify(vip)})'>Edit</button>
+                        ${vip.type !== 'owner' 
+                            ? `<button class="btn btn-danger btn-sm" onclick="removeVIP('${escapeHtml(vip.email)}')">Remove</button>`
+                            : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Open add modal
+        function openAddModal() {
+            document.getElementById('edit-mode').value = 'add';
+            document.getElementById('original-email').value = '';
+            document.getElementById('modal-title').textContent = 'Add VIP User';
+            document.getElementById('save-btn').textContent = 'Add VIP';
+            document.getElementById('vip-form').reset();
+            document.getElementById('vip-email').disabled = false;
+            document.getElementById('vip-modal').classList.add('active');
+            updateServerVisibility();
+        }
+        
+        // Edit VIP
+        function editVIP(vip) {
+            document.getElementById('edit-mode').value = 'edit';
+            document.getElementById('original-email').value = vip.email;
+            document.getElementById('modal-title').textContent = 'Edit VIP User';
+            document.getElementById('save-btn').textContent = 'Save Changes';
+            
+            document.getElementById('vip-email').value = vip.email;
+            document.getElementById('vip-email').disabled = true; // Can't change email
+            document.getElementById('vip-type').value = vip.type;
+            document.getElementById('vip-plan').value = vip.plan;
+            document.getElementById('vip-server').value = vip.dedicated_server_id || '';
+            document.getElementById('vip-description').value = vip.description || '';
+            
+            document.getElementById('vip-modal').classList.add('active');
+            updateServerVisibility();
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('vip-modal').classList.remove('active');
+        }
+        
+        // Update server visibility based on type
+        function updateServerVisibility() {
+            const type = document.getElementById('vip-type').value;
+            const serverGroup = document.getElementById('server-group');
+            serverGroup.style.display = (type === 'vip_dedicated') ? 'block' : 'none';
+        }
+        
+        document.getElementById('vip-type').addEventListener('change', updateServerVisibility);
+        
+        // Save VIP
+        async function saveVIP(e) {
+            e.preventDefault();
+            
+            const mode = document.getElementById('edit-mode').value;
+            const email = mode === 'edit' 
+                ? document.getElementById('original-email').value 
+                : document.getElementById('vip-email').value;
+            
+            const data = {
+                email: email,
+                type: document.getElementById('vip-type').value,
+                plan: document.getElementById('vip-plan').value,
+                dedicated_server_id: document.getElementById('vip-server').value || null,
+                description: document.getElementById('vip-description').value
+            };
+            
+            const method = mode === 'edit' ? 'PUT' : 'POST';
+            const result = await apiRequest('/manage.php', { method, body: data });
+            
+            if (result.success) {
+                toast(mode === 'edit' ? 'VIP updated successfully' : 'VIP added successfully');
+                closeModal();
+                loadVIPs();
+            } else {
+                toast(result.error || 'Failed to save VIP', 'error');
+            }
+        }
+        
+        // Remove VIP
+        async function removeVIP(email) {
+            if (!confirm(`Are you sure you want to remove VIP access for ${email}?`)) {
+                return;
+            }
+            
+            const result = await apiRequest('/manage.php', {
+                method: 'DELETE',
+                body: { email }
+            });
+            
+            if (result.success) {
+                toast('VIP removed successfully');
+                loadVIPs();
+            } else {
+                toast(result.error || 'Failed to remove VIP', 'error');
+            }
+        }
+        
+        // Helpers
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
+        function capitalizeFirst(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString();
+        }
+        
+        // Initial load
+        loadVIPs();
+    </script>
+</body>
+</html>

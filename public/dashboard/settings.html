@@ -31,27 +31,34 @@
         .avatar-preview{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--colors-primary),var(--colors-secondary));display:flex;align-items:center;justify-content:center;font-size:2.5rem}
         .danger-zone{border-color:var(--colors-error);background:rgba(255,80,80,0.05)}
         .danger-zone h3{color:var(--colors-error)}
+        .loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:var(--colors-primary);animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .session-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:rgba(0,0,0,0.2);border-radius:8px;margin-bottom:10px}
+        .session-info{display:flex;align-items:center;gap:15px}
+        .session-icon{font-size:1.5rem}
+        .session-details h4{margin-bottom:3px}
+        .session-details p{font-size:0.8rem;color:var(--colors-text-muted)}
     </style>
 </head>
 <body class="dashboard-body">
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <div class="sidebar-header"><span class="logo-icon">&#x1F6E1;</span><h1>TrueVault</h1></div>
         <nav class="sidebar-nav">
-            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
-            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
-            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
-            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
-            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
-            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
-            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
-            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">&#x1F4CA;</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">&#x26A1;</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">&#x1F5A5;</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">&#x1F465;</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">&#x1F4DC;</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">&#x1F4F1;</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">&#x1F4F7;</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">&#x1F578;</span><span>Mesh Network</span></a>
             <div class="nav-divider"></div>
-            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
-            <a href="/dashboard/settings.html" class="nav-item active"><span class="nav-icon">⚙️</span><span>Settings</span></a>
-            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">&#x1F4E1;</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item active"><span class="nav-icon">&#x2699;</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">&#x1F4B3;</span><span>Billing</span></a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <div class="user-info"><div class="user-avatar">&#x1F464;</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
             <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
         </div>
     </aside>
@@ -59,40 +66,39 @@
     <main class="main-content">
         <header class="dashboard-header">
             <div>
-                <h1>⚙️ Settings</h1>
+                <h1>&#x2699; Settings</h1>
                 <p class="text-muted">Manage your account and preferences</p>
             </div>
         </header>
         
         <!-- Settings Navigation -->
         <div class="settings-nav">
-            <button class="settings-nav-btn active" data-section="profile">👤 Profile</button>
-            <button class="settings-nav-btn" data-section="security">🔒 Security</button>
-            <button class="settings-nav-btn" data-section="connection">🔌 Connection</button>
-            <button class="settings-nav-btn" data-section="notifications">🔔 Notifications</button>
-            <button class="settings-nav-btn" data-section="advanced">🔧 Advanced</button>
+            <button class="settings-nav-btn active" data-section="profile" onclick="showSection('profile')">&#x1F464; Profile</button>
+            <button class="settings-nav-btn" data-section="security" onclick="showSection('security')">&#x1F512; Security</button>
+            <button class="settings-nav-btn" data-section="connection" onclick="showSection('connection')">&#x1F310; Connection</button>
+            <button class="settings-nav-btn" data-section="notifications" onclick="showSection('notifications')">&#x1F514; Notifications</button>
+            <button class="settings-nav-btn" data-section="advanced" onclick="showSection('advanced')">&#x1F527; Advanced</button>
         </div>
         
         <!-- Profile Section -->
         <div class="settings-section active" id="section-profile">
             <div class="settings-card">
-                <h3>👤 Profile Information</h3>
+                <h3>&#x1F464; Profile Information</h3>
                 <div class="avatar-section">
-                    <div class="avatar-preview" id="avatarPreview">👤</div>
+                    <div class="avatar-preview" id="avatarPreview">&#x1F464;</div>
                     <div>
-                        <button class="btn btn-secondary btn-small">📷 Change Photo</button>
-                        <p class="text-muted" style="margin-top:10px;font-size:0.8rem">JPG, PNG. Max 2MB</p>
+                        <p class="text-muted" style="font-size:0.9rem">Your profile avatar is generated from your initials</p>
                     </div>
                 </div>
-                <form id="profileForm">
+                <form id="profileForm" onsubmit="saveProfile(event)">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
                         <div class="form-group">
                             <label>First Name</label>
-                            <input type="text" name="first_name" id="firstName">
+                            <input type="text" name="first_name" id="firstName" required>
                         </div>
                         <div class="form-group">
                             <label>Last Name</label>
-                            <input type="text" name="last_name" id="lastName">
+                            <input type="text" name="last_name" id="lastName" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -107,11 +113,15 @@
                             <option value="America/Chicago">Central Time (US)</option>
                             <option value="America/Denver">Mountain Time (US)</option>
                             <option value="America/Los_Angeles">Pacific Time (US)</option>
+                            <option value="America/Toronto">Toronto (Canada)</option>
                             <option value="Europe/London">London (UK)</option>
                             <option value="Europe/Paris">Paris (EU)</option>
+                            <option value="Europe/Berlin">Berlin (EU)</option>
+                            <option value="Asia/Tokyo">Tokyo (Japan)</option>
+                            <option value="Australia/Sydney">Sydney (Australia)</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="submit" class="btn btn-primary" id="saveProfileBtn">&#x1F4BE; Save Changes</button>
                 </form>
             </div>
         </div>
@@ -119,73 +129,74 @@
         <!-- Security Section -->
         <div class="settings-section" id="section-security">
             <div class="settings-card">
-                <h3>🔒 Password</h3>
-                <form id="passwordForm">
+                <h3>&#x1F512; Change Password</h3>
+                <form id="passwordForm" onsubmit="changePassword(event)">
                     <div class="form-group">
                         <label>Current Password</label>
-                        <input type="password" name="current_password" required>
+                        <input type="password" name="current_password" id="currentPassword" required>
                     </div>
                     <div class="form-group">
                         <label>New Password</label>
-                        <input type="password" name="new_password" required>
+                        <input type="password" name="new_password" id="newPassword" required minlength="8">
+                        <small class="text-muted">Minimum 8 characters</small>
                     </div>
                     <div class="form-group">
                         <label>Confirm New Password</label>
-                        <input type="password" name="confirm_password" required>
+                        <input type="password" name="confirm_password" id="confirmPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">🔐 Update Password</button>
+                    <button type="submit" class="btn btn-primary" id="changePasswordBtn">&#x1F511; Update Password</button>
                 </form>
             </div>
             
             <div class="settings-card">
-                <h3>🛡️ Two-Factor Authentication</h3>
+                <h3>&#x1F4F1; Two-Factor Authentication</h3>
                 <div class="setting-row">
                     <div class="setting-info">
                         <h4>Authenticator App</h4>
                         <p>Use an app like Google Authenticator or Authy</p>
                     </div>
-                    <button class="btn btn-secondary btn-small" onclick="setup2FA()">Setup</button>
+                    <span class="badge badge-warning" id="2faStatus">Not Enabled</span>
                 </div>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>Recovery Codes</h4>
-                        <p>Generate backup codes in case you lose your phone</p>
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="generateCodes()">Generate</button>
-                </div>
+                <p class="text-muted" style="margin-top:15px;font-size:0.9rem">&#x1F6A7; Two-factor authentication setup will be available in a future update.</p>
             </div>
             
             <div class="settings-card">
-                <h3>📱 Active Sessions</h3>
+                <h3>&#x1F4BB; Active Sessions</h3>
+                <div id="sessionsContainer">
+                    <p class="text-muted"><span class="loading-spinner"></span> Loading sessions...</p>
+                </div>
+            </div>
+            
+            <div class="settings-card danger-zone">
+                <h3>&#x26A0; Danger Zone</h3>
                 <div class="setting-row">
                     <div class="setting-info">
-                        <h4>Windows PC • Current Session</h4>
-                        <p>Last active: Now • Chicago, IL</p>
+                        <h4>Log Out All Devices</h4>
+                        <p>This will sign you out of all devices except this one</p>
                     </div>
-                    <span class="badge badge-success">Active</span>
+                    <button class="btn btn-danger btn-small" onclick="logoutAllDevices()">Log Out All</button>
                 </div>
                 <div class="setting-row">
                     <div class="setting-info">
-                        <h4>iPhone 15 Pro</h4>
-                        <p>Last active: 2 hours ago • Chicago, IL</p>
+                        <h4>Delete Account</h4>
+                        <p>Permanently delete your account and all data</p>
                     </div>
-                    <button class="btn btn-danger btn-small" onclick="revokeSession(1)">Revoke</button>
+                    <button class="btn btn-danger btn-small" onclick="requestAccountDeletion()">Delete Account</button>
                 </div>
-                <button class="btn btn-danger" style="margin-top:15px" onclick="revokeAllSessions()">🚫 Revoke All Other Sessions</button>
             </div>
         </div>
         
         <!-- Connection Section -->
         <div class="settings-section" id="section-connection">
             <div class="settings-card">
-                <h3>🔌 VPN Preferences</h3>
+                <h3>&#x1F310; VPN Preferences</h3>
                 <div class="setting-row">
                     <div class="setting-info">
                         <h4>Auto-Connect on Startup</h4>
                         <p>Automatically connect to VPN when your device starts</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox" checked>
+                        <input type="checkbox" id="autoConnect" onchange="saveSetting('auto_connect', this.checked)">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -195,31 +206,39 @@
                         <p>Block internet if VPN connection drops</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox" checked>
+                        <input type="checkbox" id="killSwitch" onchange="saveSetting('kill_switch', this.checked)" checked>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <div class="setting-info">
-                        <h4>Split Tunneling</h4>
-                        <p>Choose which apps use VPN</p>
+                        <h4>DNS Leak Protection</h4>
+                        <p>Prevent DNS queries from leaking outside the VPN</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox">
+                        <input type="checkbox" id="dnsLeak" onchange="saveSetting('dns_leak_protection', this.checked)" checked>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
             </div>
             
             <div class="settings-card">
-                <h3>🌐 DNS Settings</h3>
+                <h3>&#x1F5A5; Default Server</h3>
                 <div class="form-group">
-                    <label>DNS Provider</label>
-                    <select>
-                        <option value="truevault">TrueVault DNS (Recommended)</option>
-                        <option value="cloudflare">Cloudflare (1.1.1.1)</option>
-                        <option value="google">Google (8.8.8.8)</option>
-                        <option value="custom">Custom DNS</option>
+                    <label>Preferred Server Region</label>
+                    <select id="defaultServer" onchange="saveSetting('default_server', this.value)">
+                        <option value="auto">Auto (Fastest)</option>
+                        <option value="us-east">US East</option>
+                        <option value="us-central">US Central</option>
+                        <option value="ca-toronto">Canada - Toronto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Protocol</label>
+                    <select id="protocol" onchange="saveSetting('protocol', this.value)">
+                        <option value="wireguard">WireGuard (Recommended)</option>
+                        <option value="openvpn-udp">OpenVPN UDP</option>
+                        <option value="openvpn-tcp">OpenVPN TCP</option>
                     </select>
                 </div>
             </div>
@@ -228,44 +247,44 @@
         <!-- Notifications Section -->
         <div class="settings-section" id="section-notifications">
             <div class="settings-card">
-                <h3>🔔 Email Notifications</h3>
+                <h3>&#x1F514; Email Notifications</h3>
                 <div class="setting-row">
                     <div class="setting-info">
                         <h4>Security Alerts</h4>
-                        <p>New login, password changes, suspicious activity</p>
+                        <p>Get notified about suspicious login attempts</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox" checked>
+                        <input type="checkbox" id="notifySecurityAlerts" onchange="saveSetting('notify_security', this.checked)" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <h4>New Device Logins</h4>
+                        <p>Get notified when a new device logs in</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="notifyNewDevice" onchange="saveSetting('notify_new_device', this.checked)" checked>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <div class="setting-info">
                         <h4>Billing Updates</h4>
-                        <p>Payment confirmations, subscription changes</p>
+                        <p>Get notified about payments and subscription changes</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox" checked>
+                        <input type="checkbox" id="notifyBilling" onchange="saveSetting('notify_billing', this.checked)" checked>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
                 <div class="setting-row">
                     <div class="setting-info">
                         <h4>Product Updates</h4>
-                        <p>New features, improvements, tips</p>
+                        <p>Learn about new features and improvements</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>Marketing Emails</h4>
-                        <p>Special offers, promotions</p>
-                    </div>
-                    <label class="toggle">
-                        <input type="checkbox">
+                        <input type="checkbox" id="notifyUpdates" onchange="saveSetting('notify_updates', this.checked)">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -275,51 +294,39 @@
         <!-- Advanced Section -->
         <div class="settings-section" id="section-advanced">
             <div class="settings-card">
-                <h3>🔧 Advanced Settings</h3>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>Protocol</h4>
-                        <p>Choose VPN protocol</p>
-                    </div>
-                    <select style="width:150px">
-                        <option value="wireguard">WireGuard</option>
-                        <option value="openvpn">OpenVPN</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>MTU Size</h4>
-                        <p>Maximum transmission unit</p>
-                    </div>
-                    <input type="number" value="1420" style="width:100px">
-                </div>
+                <h3>&#x1F527; Advanced Settings</h3>
                 <div class="setting-row">
                     <div class="setting-info">
                         <h4>Debug Logging</h4>
                         <p>Enable detailed logs for troubleshooting</p>
                     </div>
                     <label class="toggle">
-                        <input type="checkbox">
+                        <input type="checkbox" id="debugLogging" onchange="saveSetting('debug_logging', this.checked)">
                         <span class="toggle-slider"></span>
                     </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <h4>Custom DNS</h4>
+                        <p>Use custom DNS servers instead of TrueVault DNS</p>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="customDns" onchange="toggleCustomDns(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="form-group" id="customDnsGroup" style="display:none;margin-top:15px">
+                    <label>Primary DNS</label>
+                    <input type="text" id="primaryDns" placeholder="e.g., 1.1.1.1" onchange="saveSetting('primary_dns', this.value)">
+                    <label style="margin-top:10px">Secondary DNS</label>
+                    <input type="text" id="secondaryDns" placeholder="e.g., 8.8.8.8" onchange="saveSetting('secondary_dns', this.value)">
                 </div>
             </div>
             
             <div class="settings-card">
-                <h3>📥 Export Data</h3>
+                <h3>&#x1F4E6; Data Export</h3>
                 <p class="text-muted" style="margin-bottom:15px">Download a copy of your TrueVault data</p>
-                <button class="btn btn-secondary" onclick="exportData()">📥 Request Data Export</button>
-            </div>
-            
-            <div class="settings-card danger-zone">
-                <h3>⚠️ Danger Zone</h3>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>Delete Account</h4>
-                        <p>Permanently delete your account and all data</p>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteAccount()">Delete Account</button>
-                </div>
+                <button class="btn btn-secondary" onclick="exportData()">&#x1F4E5; Export My Data</button>
             </div>
         </div>
     </main>
@@ -327,52 +334,364 @@
     <script src="/assets/js/theme-loader.js"></script>
     <script src="/assets/js/app.js"></script>
     <script>
-        if (!TrueVault.Auth.requireAuth()) {}
-        
-        const user = TrueVault.Auth.getUser();
-        if (user) {
-            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
-            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
-            document.getElementById('firstName').value = user.first_name;
-            document.getElementById('lastName').value = user.last_name;
-            document.getElementById('email').value = user.email;
+        // Check authentication
+        if (!TrueVault.Auth.requireAuth()) {
+            // Will redirect to login
         }
         
-        // Settings navigation
-        document.querySelectorAll('.settings-nav-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.settings-nav-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+        // State
+        let userSettings = {};
+        let sessions = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadUserInfo();
+            await loadSettings();
+            await loadSessions();
+        });
+        
+        // Load user info
+        async function loadUserInfo() {
+            const user = TrueVault.Auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+                document.getElementById('userPlan').textContent = (user.plan_type || 'personal').charAt(0).toUpperCase() + (user.plan_type || 'personal').slice(1) + ' Plan';
                 
-                this.classList.add('active');
-                document.getElementById('section-' + this.dataset.section).classList.add('active');
-            });
-        });
-        
-        document.getElementById('profileForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            TrueVault.Toast.success('Profile updated!');
-        });
-        
-        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            TrueVault.Toast.success('Password changed!');
-            this.reset();
-        });
-        
-        function setup2FA() { TrueVault.Toast.info('2FA setup coming soon'); }
-        function generateCodes() { TrueVault.Toast.info('Recovery codes generated'); }
-        function revokeSession(id) { TrueVault.Toast.success('Session revoked'); }
-        function revokeAllSessions() { 
-            if (confirm('Revoke all other sessions?')) TrueVault.Toast.success('All sessions revoked'); 
-        }
-        function exportData() { TrueVault.Toast.success('Data export requested. Check your email.'); }
-        function deleteAccount() {
-            if (confirm('Are you sure? This cannot be undone.')) {
-                if (confirm('Really delete your account and all data?')) {
-                    TrueVault.Toast.info('Please contact support to delete your account');
+                // Fill profile form
+                document.getElementById('firstName').value = user.first_name || '';
+                document.getElementById('lastName').value = user.last_name || '';
+                document.getElementById('email').value = user.email || '';
+                
+                // Update avatar with initials
+                const initials = (user.first_name?.charAt(0) || '') + (user.last_name?.charAt(0) || '');
+                if (initials) {
+                    document.getElementById('avatarPreview').textContent = initials.toUpperCase();
                 }
             }
+        }
+        
+        // Load settings from API
+        async function loadSettings() {
+            try {
+                const response = await TrueVault.API.get('/users/settings.php');
+                
+                if (response.success && response.data) {
+                    userSettings = response.data;
+                    applySettings();
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                // Use defaults
+                applySettings();
+            }
+        }
+        
+        // Apply settings to UI
+        function applySettings() {
+            document.getElementById('timezone').value = userSettings.timezone || 'America/Chicago';
+            document.getElementById('autoConnect').checked = userSettings.auto_connect !== false;
+            document.getElementById('killSwitch').checked = userSettings.kill_switch !== false;
+            document.getElementById('dnsLeak').checked = userSettings.dns_leak_protection !== false;
+            document.getElementById('defaultServer').value = userSettings.default_server || 'auto';
+            document.getElementById('protocol').value = userSettings.protocol || 'wireguard';
+            document.getElementById('notifySecurityAlerts').checked = userSettings.notify_security !== false;
+            document.getElementById('notifyNewDevice').checked = userSettings.notify_new_device !== false;
+            document.getElementById('notifyBilling').checked = userSettings.notify_billing !== false;
+            document.getElementById('notifyUpdates').checked = userSettings.notify_updates === true;
+            document.getElementById('debugLogging').checked = userSettings.debug_logging === true;
+            
+            if (userSettings.custom_dns) {
+                document.getElementById('customDns').checked = true;
+                document.getElementById('customDnsGroup').style.display = 'block';
+                document.getElementById('primaryDns').value = userSettings.primary_dns || '';
+                document.getElementById('secondaryDns').value = userSettings.secondary_dns || '';
+            }
+        }
+        
+        // Load active sessions
+        async function loadSessions() {
+            const container = document.getElementById('sessionsContainer');
+            
+            try {
+                const response = await TrueVault.API.get('/users/sessions.php');
+                
+                if (response.success && response.data) {
+                    sessions = response.data;
+                    renderSessions();
+                } else {
+                    // Show current session only
+                    container.innerHTML = `
+                        <div class="session-item">
+                            <div class="session-info">
+                                <span class="session-icon">&#x1F4BB;</span>
+                                <div class="session-details">
+                                    <h4>Current Session</h4>
+                                    <p>This device &#x2022; Active now</p>
+                                </div>
+                            </div>
+                            <span class="badge badge-success">Current</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="session-item">
+                        <div class="session-info">
+                            <span class="session-icon">&#x1F4BB;</span>
+                            <div class="session-details">
+                                <h4>Current Session</h4>
+                                <p>This device &#x2022; Active now</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-success">Current</span>
+                    </div>
+                `;
+            }
+        }
+        
+        // Render sessions
+        function renderSessions() {
+            const container = document.getElementById('sessionsContainer');
+            
+            if (!sessions.length) {
+                container.innerHTML = `<p class="text-muted">No active sessions found</p>`;
+                return;
+            }
+            
+            container.innerHTML = sessions.map(session => {
+                const isCurrent = session.is_current;
+                const icon = session.device_type === 'mobile' ? '&#x1F4F1;' : '&#x1F4BB;';
+                
+                return `
+                    <div class="session-item">
+                        <div class="session-info">
+                            <span class="session-icon">${icon}</span>
+                            <div class="session-details">
+                                <h4>${escapeHtml(session.device_name || 'Unknown Device')} ${isCurrent ? '(Current)' : ''}</h4>
+                                <p>${escapeHtml(session.location || 'Unknown location')} &#x2022; ${session.last_active || 'Unknown'}</p>
+                            </div>
+                        </div>
+                        ${isCurrent ? 
+                            '<span class="badge badge-success">Current</span>' : 
+                            `<button class="btn btn-danger btn-small" onclick="revokeSession('${session.id}')">Revoke</button>`
+                        }
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Show section
+        function showSection(sectionId) {
+            // Update nav buttons
+            document.querySelectorAll('.settings-nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.section === sectionId);
+            });
+            
+            // Show section
+            document.querySelectorAll('.settings-section').forEach(section => {
+                section.classList.toggle('active', section.id === 'section-' + sectionId);
+            });
+        }
+        
+        // Save profile
+        async function saveProfile(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const timezone = document.getElementById('timezone').value;
+            
+            if (!firstName || !lastName) {
+                TrueVault.Toast.error('Name is required');
+                return;
+            }
+            
+            const btn = document.getElementById('saveProfileBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+            
+            try {
+                const response = await TrueVault.API.post('/users/profile.php', {
+                    first_name: firstName,
+                    last_name: lastName,
+                    timezone: timezone
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Profile updated successfully!');
+                    
+                    // Update local storage
+                    const user = TrueVault.Auth.getUser();
+                    if (user) {
+                        user.first_name = firstName;
+                        user.last_name = lastName;
+                        localStorage.setItem('truevault_user', JSON.stringify(user));
+                        
+                        // Update UI
+                        document.getElementById('userName').textContent = firstName + ' ' + lastName;
+                        document.getElementById('avatarPreview').textContent = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+                    }
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to update profile');
+                }
+            } catch (error) {
+                TrueVault.Toast.error(error.message || 'Failed to update profile');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '&#x1F4BE; Save Changes';
+            }
+        }
+        
+        // Change password
+        async function changePassword(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword.length < 8) {
+                TrueVault.Toast.error('Password must be at least 8 characters');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                TrueVault.Toast.error('Passwords do not match');
+                return;
+            }
+            
+            const btn = document.getElementById('changePasswordBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Updating...';
+            
+            try {
+                const response = await TrueVault.API.post('/users/change-password.php', {
+                    current_password: currentPassword,
+                    new_password: newPassword
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Password updated successfully!');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to update password');
+                }
+            } catch (error) {
+                TrueVault.Toast.error(error.message || 'Failed to update password');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '&#x1F511; Update Password';
+            }
+        }
+        
+        // Save individual setting
+        async function saveSetting(key, value) {
+            userSettings[key] = value;
+            
+            try {
+                await TrueVault.API.post('/users/settings.php', {
+                    [key]: value
+                });
+                TrueVault.Toast.success('Setting saved');
+            } catch (error) {
+                TrueVault.Toast.error('Failed to save setting');
+            }
+        }
+        
+        // Toggle custom DNS
+        function toggleCustomDns(enabled) {
+            document.getElementById('customDnsGroup').style.display = enabled ? 'block' : 'none';
+            saveSetting('custom_dns', enabled);
+        }
+        
+        // Revoke session
+        async function revokeSession(sessionId) {
+            if (!confirm('Revoke this session? The device will be logged out.')) {
+                return;
+            }
+            
+            try {
+                const response = await TrueVault.API.post('/users/sessions.php', {
+                    action: 'revoke',
+                    session_id: sessionId
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Session revoked');
+                    await loadSessions();
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to revoke session');
+                }
+            } catch (error) {
+                TrueVault.Toast.error(error.message || 'Failed to revoke session');
+            }
+        }
+        
+        // Logout all devices
+        async function logoutAllDevices() {
+            if (!confirm('Log out of all other devices? You will remain logged in on this device.')) {
+                return;
+            }
+            
+            try {
+                const response = await TrueVault.API.post('/users/sessions.php', {
+                    action: 'revoke_all'
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('All other sessions have been logged out');
+                    await loadSessions();
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to logout devices');
+                }
+            } catch (error) {
+                TrueVault.Toast.error(error.message || 'Failed to logout devices');
+            }
+        }
+        
+        // Request account deletion
+        function requestAccountDeletion() {
+            if (!confirm('Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.')) {
+                return;
+            }
+            
+            if (!confirm('This is your final warning. All your identities, certificates, devices, and data will be permanently deleted. Continue?')) {
+                return;
+            }
+            
+            TrueVault.Toast.info('Please contact support@truevaultvpn.com to complete account deletion.');
+        }
+        
+        // Export data
+        async function exportData() {
+            TrueVault.Toast.info('Preparing your data export...');
+            
+            try {
+                const response = await TrueVault.API.get('/users/export.php');
+                
+                if (response.success && response.data) {
+                    // Create and download JSON file
+                    const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'truevault-export-' + new Date().toISOString().split('T')[0] + '.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    TrueVault.Toast.success('Data exported successfully!');
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to export data');
+                }
+            } catch (error) {
+                TrueVault.Toast.error(error.message || 'Failed to export data');
+            }
+        }
+        
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>

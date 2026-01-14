@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TrueVault VPN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🔐</span>
+                    <span class="logo-text">TrueVault</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item active" data-page="home">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="connect.html" class="nav-item" data-page="connect">
+                    <span class="nav-icon">🔌</span>
+                    <span class="nav-text">Connect</span>
+                </a>
+                <a href="servers.html" class="nav-item" data-page="servers">
+                    <span class="nav-icon">🖥️</span>
+                    <span class="nav-text">Servers</span>
+                </a>
+                <a href="devices.html" class="nav-item" data-page="devices">
+                    <span class="nav-icon">📱</span>
+                    <span class="nav-text">Devices</span>
+                </a>
+                <a href="cameras.html" class="nav-item" data-page="cameras">
+                    <span class="nav-icon">📷</span>
+                    <span class="nav-text">Cameras</span>
+                </a>
+                <a href="scanner.html" class="nav-item" data-page="scanner">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-text">Scanner</span>
+                </a>
+                <a href="certificates.html" class="nav-item" data-page="certificates">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">Certificates</span>
+                </a>
+                <a href="settings.html" class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span class="user-avatar" id="userAvatar">U</span>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-plan" id="userPlan">Free</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h1 class="page-title">Dashboard</h1>
+                <div class="top-bar-actions">
+                    <span class="connection-status" id="connectionStatus">
+                        <span class="status-dot disconnected"></span>
+                        Disconnected
+                    </span>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🔌</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="connectionStatusText">Disconnected</span>
+                            <span class="stat-label">VPN Status</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="deviceCount">0</span>
+                            <span class="stat-label">Devices</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📷</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="cameraCount">0</span>
+                            <span class="stat-label">Cameras</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💳</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="planName">-</span>
+                            <span class="stat-label">Plan</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="action-grid">
+                        <a href="connect.html" class="action-card">
+                            <span class="action-icon">🚀</span>
+                            <span class="action-title">Quick Connect</span>
+                            <span class="action-desc">Connect to fastest server</span>
+                        </a>
+                        <a href="servers.html" class="action-card">
+                            <span class="action-icon">🗺️</span>
+                            <span class="action-title">Choose Server</span>
+                            <span class="action-desc">Select specific location</span>
+                        </a>
+                        <a href="scanner.html" class="action-card">
+                            <span class="action-icon">🔍</span>
+                            <span class="action-title">Scan Network</span>
+                            <span class="action-desc">Discover devices</span>
+                        </a>
+                        <a href="cameras.html" class="action-card">
+                            <span class="action-icon">👁️</span>
+                            <span class="action-title">View Cameras</span>
+                            <span class="action-desc">Monitor your cameras</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Subscription Info -->
+                <div class="section" id="subscriptionSection">
+                    <h2 class="section-title">Your Subscription</h2>
+                    <div class="subscription-card">
+                        <div class="sub-header">
+                            <span class="sub-plan" id="subPlanName">Loading...</span>
+                            <span class="sub-badge" id="subStatus">Active</span>
+                        </div>
+                        <div class="sub-details">
+                            <div class="sub-detail">
+                                <span class="sub-label">Devices Allowed</span>
+                                <span class="sub-value" id="subDevices">-</span>
+                            </div>
+                            <div class="sub-detail">
+                                <span class="sub-label">Cameras Allowed</span>
+                                <span class="sub-value" id="subCameras">-</span>
+                            </div>
+                            <div class="sub-detail">
+                                <span class="sub-label">Expires</span>
+                                <span class="sub-value" id="subExpires">-</span>
+                            </div>
+                        </div>
+                        <div class="sub-actions">
+                            <a href="pricing.html" class="btn btn-secondary" id="upgradeBtn">Upgrade Plan</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIP Badge (hidden by default) -->
+                <div class="section vip-section" id="vipSection" style="display: none;">
+                    <div class="vip-card">
+                        <span class="vip-icon">⭐</span>
+                        <div class="vip-info">
+                            <span class="vip-title">VIP Member</span>
+                            <span class="vip-desc">You have lifetime access to all features</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

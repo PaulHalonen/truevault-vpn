@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Devices - TrueVault VPN</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <!-- TweetNaCl for client-side key generation -->
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><span class="logo-icon">🔐</span><span class="logo-text">TrueVault</span></div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-text">Dashboard</span></a>
+                <a href="devices.html" class="nav-item active"><span class="nav-icon">📱</span><span class="nav-text">My Devices</span></a>
+                <a href="servers.html" class="nav-item"><span class="nav-icon">🖥️</span><span class="nav-text">Servers</span></a>
+                <a href="account.html" class="nav-item"><span class="nav-icon">👤</span><span class="nav-text">Account</span></a>
+                <a href="billing.html" class="nav-item"><span class="nav-icon">💳</span><span class="nav-text">Billing</span></a>
+                <a href="help.html" class="nav-item"><span class="nav-icon">❓</span><span class="nav-text">Help</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span class="user-avatar" id="userAvatar">U</span>
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="user-plan" id="userPlan">Trial</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h1 class="page-title">My Devices</h1>
+                <div class="device-count">
+                    <span id="deviceCount">0</span> / <span id="maxDevices">3</span> devices
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Empty State (shown when no devices) -->
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">📱</div>
+                    <h2>No devices connected yet</h2>
+                    <p>Add your first device to start using TrueVault VPN</p>
+                    <button class="btn btn-primary btn-large" onclick="showAddDevice()">
+                        + Add Your First Device
+                    </button>
+                </div>
+
+                <!-- Device List (shown when devices exist) -->
+                <div id="deviceList" class="device-grid" style="display: none;">
+                    <!-- Devices will be inserted here -->
+                </div>
+
+                <!-- Add Device Button (when devices exist) -->
+                <div id="addDeviceButton" style="display: none; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" onclick="showAddDevice()">
+                        + Add Another Device
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Device Modal -->
+    <div class="modal" id="addDeviceModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <button class="modal-close" onclick="closeModal('addDeviceModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>What do you want to call this device?</label>
+                    <input type="text" id="deviceName" placeholder="e.g., My iPhone, Work Laptop">
+                    <div class="form-hint">Choose a name you'll recognize</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Which server do you want to connect to?</label>
+                    <div class="server-selection" id="serverSelection">
+                        <!-- Servers will be loaded here -->
+                        <div class="loading">Loading servers...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addDeviceModal')">Cancel</button>
+                <button class="btn btn-primary" id="addDeviceButton" onclick="addDevice()">
+                    Add Device & Download Config
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Config Modal -->
+    <div class="modal" id="downloadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✅ Device Added Successfully!</h3>
+            </div>
+            <div class="modal-body">
+                <div class="success-message">
+                    <div class="success-icon">🎉</div>
+                    <h3 id="deviceNameDisplay"></h3>
+                    <p>Your device is ready to connect</p>
+                </div>
+
+                <div class="download-section">
+                    <h4>Step 1: Download your configuration file</h4>
+                    <button class="btn btn-primary btn-block" id="downloadConfigButton">
+                        ⬇️ Download Config File
+                    </button>
+                </div>
+
+                <div class="download-section">
+                    <h4>Step 2: Install WireGuard (if you haven't already)</h4>
+                    <div class="download-links">
+                        <a href="https://apps.apple.com/us/app/wireguard/id1441195209" target="_blank" class="download-link">
+                            <span class="link-icon">📱</span>
+                            <span>iOS</span>
+                        </a>
+                        <a href="https://play.google.com/store/apps/details?id=com.wireguard.android" target="_blank" class="download-link">
+                            <span class="link-icon">🤖</span>
+                            <span>Android</span>
+                        </a>
+                        <a href="https://apps.apple.com/us/app/wireguard/id1451685025" target="_blank" class="download-link">
+                            <span class="link-icon">💻</span>
+                            <span>macOS</span>
+                        </a>
+                        <a href="https://download.wireguard.com/windows-client/" target="_blank" class="download-link">
+                            <span class="link-icon">🪟</span>
+                            <span>Windows</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="download-section">
+                    <h4>Step 3: Import the config file into WireGuard</h4>
+                    <p class="instruction-text">
+                        Open WireGuard → Tap "+" or "Add Tunnel" → Select the downloaded .conf file
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('downloadModal'); loadDevices();">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Switch Server Modal -->
+    <div class="modal" id="switchServerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Switch Server</h3>
+                <button class="modal-close" onclick="closeModal('switchServerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Choose a new server for <strong id="switchDeviceName"></strong></p>
+                <div class="server-selection" id="switchServerSelection">
+                    <div class="loading">Loading servers...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('switchServerModal')">Cancel</button>
+                <button class="btn btn-primary" id="switchServerButton" onclick="switchServer()">
+                    Switch & Download New Config
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let token = localStorage.getItem('truevault_token');
+        let user = JSON.parse(localStorage.getItem('truevault_user') || '{}');
+        let devices = [];
+        let servers = [];
+        let selectedServerId = null;
+        let currentDeviceId = null;
+        let generatedPrivateKey = null;
+
+        // Redirect if not logged in
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        // Load user info
+        document.getElementById('userName').textContent = user.first_name || user.email || 'User';
+        document.getElementById('userPlan').textContent = user.subscription_status || 'Trial';
+        document.getElementById('userAvatar').textContent = (user.first_name || user.email || 'U')[0].toUpperCase();
+
+        // Load devices and servers on page load
+        async function init() {
+            await loadServers();
+            await loadDevices();
+        }
+
+        // Load available servers
+        async function loadServers() {
+            try {
+                const res = await fetch(`${API_BASE}/servers/list.php`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success && data.servers) {
+                    servers = data.servers;
+                }
+            } catch (err) {
+                console.error('Failed to load servers:', err);
+                showError('Failed to load servers. Please refresh the page.');
+            }
+        }
+
+        // Load user's devices
+        async function loadDevices() {
+            try {
+                const res = await fetch(`${API_BASE}/devices/list.php`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    devices = data.devices || [];
+                    renderDevices();
+                }
+            } catch (err) {
+                console.error('Failed to load devices:', err);
+            }
+        }
+
+        // Render devices on the page
+        function renderDevices() {
+            const emptyState = document.getElementById('emptyState');
+            const deviceList = document.getElementById('deviceList');
+            const addButton = document.getElementById('addDeviceButton');
+            const deviceCount = document.getElementById('deviceCount');
+            const maxDevices = document.getElementById('maxDevices');
+
+            // Update device count
+            deviceCount.textContent = devices.length;
+            maxDevices.textContent = user.max_devices || 3;
+
+            if (devices.length === 0) {
+                emptyState.style.display = 'block';
+                deviceList.style.display = 'none';
+                addButton.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                deviceList.style.display = 'grid';
+                addButton.style.display = 'block';
+
+                deviceList.innerHTML = devices.map(device => {
+                    const server = servers.find(s => s.id === device.server_id);
+                    const serverName = server ? server.display_name || server.location : 'Unknown';
+                    const serverFlag = server ? server.country_flag || '🌐' : '🌐';
+
+                    return `
+                        <div class="device-card">
+                            <div class="device-header">
+                                <div class="device-icon">📱</div>
+                                <div class="device-title">
+                                    <h3>${escapeHtml(device.name)}</h3>
+                                    <span class="device-status ${device.status}">${device.status}</span>
+                                </div>
+                            </div>
+                            <div class="device-info">
+                                <div class="info-row">
+                                    <span class="info-label">Server:</span>
+                                    <span class="info-value">${serverFlag} ${serverName}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Added:</span>
+                                    <span class="info-value">${formatDate(device.created_at)}</span>
+                                </div>
+                            </div>
+                            <div class="device-actions">
+                                <button class="btn btn-secondary btn-small" onclick="showSwitchServer(${device.id}, '${escapeHtml(device.name)}')">
+                                    Switch Server
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="removeDevice(${device.id}, '${escapeHtml(device.name)}')">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Show add device modal
+        function showAddDevice() {
+            if (devices.length >= (user.max_devices || 3)) {
+                showError(`You've reached your device limit (${user.max_devices || 3} devices). Upgrade your plan to add more.`);
+                return;
+            }
+
+            // Suggest device name based on browser
+            const suggestedName = suggestDeviceName();
+            document.getElementById('deviceName').value = suggestedName;
+
+            // Render server selection
+            renderServerSelection('serverSelection');
+
+            // Show modal
+            document.getElementById('addDeviceModal').classList.add('show');
+        }
+
+        // Suggest device name based on user agent
+        function suggestDeviceName() {
+            const ua = navigator.userAgent;
+            if (/iPhone/.test(ua)) return 'My iPhone';
+            if (/iPad/.test(ua)) return 'My iPad';
+            if (/Android/.test(ua)) return 'My Android Phone';
+            if (/Mac/.test(ua)) return 'My Mac';
+            if (/Windows/.test(ua)) return 'My Windows PC';
+            if (/Linux/.test(ua)) return 'My Linux Computer';
+            return 'My Device';
+        }
+
+        // Render server selection interface
+        function renderServerSelection(containerId) {
+            const container = document.getElementById(containerId);
+            
+            if (servers.length === 0) {
+                container.innerHTML = '<div class="error">No servers available. Please contact support.</div>';
+                return;
+            }
+
+            container.innerHTML = servers.map(server => {
+                const flag = server.country_flag || '🌐';
+                const name = server.display_name || server.location;
+                const latency = server.latency || '?';
+                const load = server.cpu_load || 0;
+                const loadClass = load < 30 ? 'low' : load < 70 ? 'medium' : 'high';
+
+                return `
+                    <div class="server-option ${selectedServerId === server.id ? 'selected' : ''}" 
+                         onclick="selectServer(${server.id})">
+                        <div class="server-flag">${flag}</div>
+                        <div class="server-details">
+                            <div class="server-name">${name}</div>
+                            <div class="server-stats">
+                                <span class="server-latency">⚡ ${latency}ms</span>
+                                <span class="server-load load-${loadClass}">📊 ${load}%</span>
+                            </div>
+                        </div>
+                        <div class="server-check">✓</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Auto-select first server
+            if (!selectedServerId && servers.length > 0) {
+                selectServer(servers[0].id);
+            }
+        }
+
+        // Select a server
+        function selectServer(serverId) {
+            selectedServerId = serverId;
+            
+            // Update UI for both add and switch modals
+            document.querySelectorAll('.server-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+
+        // Generate WireGuard keypair using TweetNaCl
+        function generateKeyPair() {
+            // Generate X25519 keypair (same as WireGuard uses)
+            const keypair = nacl.box.keyPair();
+            
+            // Convert to base64
+            const privateKey = nacl.util.encodeBase64(keypair.secretKey);
+            const publicKey = nacl.util.encodeBase64(keypair.publicKey);
+            
+            return { privateKey, publicKey };
+        }
+
+        // Add device (2-click workflow)
+        async function addDevice() {
+            const deviceName = document.getElementById('deviceName').value.trim();
+            
+            if (!deviceName) {
+                showError('Please enter a device name');
+                return;
+            }
+
+            if (!selectedServerId) {
+                showError('Please select a server');
+                return;
+            }
+
+            const addButton = document.getElementById('addDeviceButton');
+            addButton.disabled = true;
+            addButton.textContent = 'Generating keys...';
+
+            try {
+                // Step 1: Generate keypair in browser
+                const { privateKey, publicKey } = generateKeyPair();
+                generatedPrivateKey = privateKey; // Save for config file generation
+
+                addButton.textContent = 'Registering device...';
+
+                // Step 2: Send ONLY public key to server
+                const res = await fetch(`${API_BASE}/devices/add.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: deviceName,
+                        public_key: publicKey,
+                        server_id: selectedServerId
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Close add modal
+                    closeModal('addDeviceModal');
+
+                    // Show success/download modal
+                    showDownloadModal(data.device, data.config);
+                } else {
+                    showError(data.error || 'Failed to add device');
+                    addButton.disabled = false;
+                    addButton.textContent = 'Add Device & Download Config';
+                }
+            } catch (err) {
+                console.error('Add device error:', err);
+                showError('Error adding device. Please try again.');
+                addButton.disabled = false;
+                addButton.textContent = 'Add Device & Download Config';
+            }
+        }
+
+        // Show download modal with config file
+        function showDownloadModal(device, configData) {
+            document.getElementById('deviceNameDisplay').textContent = device.name;
+
+            // Create download button handler
+            const downloadButton = document.getElementById('downloadConfigButton');
+            downloadButton.onclick = () => downloadConfig(device, configData);
+
+            // Show modal
+            document.getElementById('downloadModal').classList.add('show');
+        }
+
+        // Download configuration file
+        function downloadConfig(device, configData) {
+            // Build complete WireGuard config file
+            const config = buildConfigFile(device, configData);
+
+            // Create blob and download
+            const blob = new Blob([config], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `truevault-${device.name.replace(/\s+/g, '-').toLowerCase()}.conf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Build WireGuard config file content
+        function buildConfigFile(device, configData) {
+            return `[Interface]
+PrivateKey = ${generatedPrivateKey}
+Address = ${configData.client_ip}
+DNS = ${configData.dns || '1.1.1.1, 1.0.0.1'}
+
+[Peer]
+PublicKey = ${configData.server_public_key}
+Endpoint = ${configData.server_endpoint}
+AllowedIPs = ${configData.allowed_ips || '0.0.0.0/0, ::/0'}
+PersistentKeepalive = 25`;
+        }
+
+        // Show switch server modal
+        function showSwitchServer(deviceId, deviceName) {
+            currentDeviceId = deviceId;
+            document.getElementById('switchDeviceName').textContent = deviceName;
+            
+            // Reset selection
+            selectedServerId = null;
+            
+            // Render server selection
+            renderServerSelection('switchServerSelection');
+            
+            // Show modal
+            document.getElementById('switchServerModal').classList.add('show');
+        }
+
+        // Switch server for existing device
+        async function switchServer() {
+            if (!selectedServerId) {
+                showError('Please select a server');
+                return;
+            }
+
+            const switchButton = document.getElementById('switchServerButton');
+            switchButton.disabled = true;
+            switchButton.textContent = 'Switching...';
+
+            try {
+                // Generate new keypair
+                const { privateKey, publicKey } = generateKeyPair();
+                generatedPrivateKey = privateKey;
+
+                // Call API to switch server
+                const res = await fetch(`${API_BASE}/devices/switch-server.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        device_id: currentDeviceId,
+                        server_id: selectedServerId,
+                        public_key: publicKey
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Close switch modal
+                    closeModal('switchServerModal');
+
+                    // Show success/download modal
+                    showDownloadModal(data.device, data.config);
+
+                    // Reload devices
+                    await loadDevices();
+                } else {
+                    showError(data.error || 'Failed to switch server');
+                }
+            } catch (err) {
+                console.error('Switch server error:', err);
+                showError('Error switching server. Please try again.');
+            } finally {
+                switchButton.disabled = false;
+                switchButton.textContent = 'Switch & Download New Config';
+            }
+        }
+
+        // Remove device
+        async function removeDevice(deviceId, deviceName) {
+            if (!confirm(`Are you sure you want to remove "${deviceName}"?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/devices/remove.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ device_id: deviceId })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    await loadDevices();
+                    showSuccess(`"${deviceName}" removed successfully`);
+                } else {
+                    showError(data.error || 'Failed to remove device');
+                }
+            } catch (err) {
+                console.error('Remove device error:', err);
+                showError('Error removing device');
+            }
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            
+            // Reset form if add device modal
+            if (modalId === 'addDeviceModal') {
+                document.getElementById('deviceName').value = '';
+                selectedServerId = null;
+            }
+        }
+
+        // Helper functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+        }
+
+        function showError(message) {
+            // Simple alert for now - could be replaced with toast notification
+            alert(message);
+        }
+
+        function showSuccess(message) {
+            // Simple alert for now - could be replaced with toast notification
+            alert(message);
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+
+        // Initialize page
+        init();
+    </script>
+
+    <style>
+        /* Additional styles for new elements */
+        .device-count {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .empty-state p {
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .device-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .device-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .device-icon {
+            font-size: 2.5rem;
+        }
+
+        .device-title h3 {
+            margin-bottom: 0.25rem;
+            font-size: 1.1rem;
+        }
+
+        .device-status {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .device-status.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .device-status.inactive {
+            background: rgba(255, 80, 80, 0.2);
+            color: #ff5050;
+        }
+
+        .device-info {
+            margin-bottom: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-weight: 500;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .server-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .server-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .server-option:hover {
+            border-color: rgba(0, 217, 255, 0.5);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .server-option.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.08);
+        }
+
+        .server-flag {
+            font-size: 2rem;
+        }
+
+        .server-details {
+            flex: 1;
+        }
+
+        .server-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .server-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .server-latency {
+            color: #00d9ff;
+        }
+
+        .server-load {
+            font-weight: 500;
+        }
+
+        .server-load.load-low {
+            color: #00ff88;
+        }
+
+        .server-load.load-medium {
+            color: #ffd700;
+        }
+
+        .server-load.load-high {
+            color: #ff5050;
+        }
+
+        .server-check {
+            font-size: 1.5rem;
+            color: #00ff88;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .server-option.selected .server-check {
+            opacity: 1;
+        }
+
+        .modal-large {
+            max-width: 600px;
+        }
+
+        .form-hint {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .success-message {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-message h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .download-section {
+            margin-bottom: 2rem;
+        }
+
+        .download-section h4 {
+            margin-bottom: 1rem;
+            color: #00d9ff;
+        }
+
+        .btn-block {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .download-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .download-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.2s;
+        }
+
+        .download-link:hover {
+            border-color: #00d9ff;
+            background: rgba(0, 217, 255, 0.08);
+        }
+
+        .link-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .instruction-text {
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ff5050;
+        }
+    </style>
+</body>
+</html>

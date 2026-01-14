@@ -2,6 +2,8 @@
 /**
  * TrueVault VPN - User Settings
  * GET/PUT /api/users/settings.php
+ * 
+ * FIXED: January 14, 2026 - Changed DatabaseManager to Database class
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -16,14 +18,13 @@ $user = Auth::requireAuth();
 $method = Response::getMethod();
 
 try {
-    $db = DatabaseManager::getInstance()->users();
-    
     switch ($method) {
         case 'GET':
             // Get all settings
-            $stmt = $db->prepare("SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?");
-            $stmt->execute([$user['id']]);
-            $settings = $stmt->fetchAll();
+            $settings = Database::query('users', 
+                "SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?", 
+                [$user['id']]
+            );
             
             // Convert to key-value object
             $settingsObject = [];
@@ -58,8 +59,6 @@ try {
                 'timezone'
             ];
             
-            $db->beginTransaction();
-            
             foreach ($input as $key => $value) {
                 if (!in_array($key, $allowedSettings)) {
                     continue;
@@ -68,22 +67,32 @@ try {
                 // Encode arrays/objects to JSON
                 $valueToStore = is_array($value) || is_object($value) ? json_encode($value) : $value;
                 
-                // Upsert setting
-                $stmt = $db->prepare("
-                    INSERT INTO user_settings (user_id, setting_key, setting_value) 
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(user_id, setting_key) 
-                    DO UPDATE SET setting_value = ?, updated_at = datetime('now')
-                ");
-                $stmt->execute([$user['id'], $key, $valueToStore, $valueToStore]);
+                // Check if setting exists
+                $existing = Database::queryOne('users', 
+                    "SELECT id FROM user_settings WHERE user_id = ? AND setting_key = ?", 
+                    [$user['id'], $key]
+                );
+                
+                if ($existing) {
+                    // Update
+                    Database::execute('users', 
+                        "UPDATE user_settings SET setting_value = ?, updated_at = datetime('now') WHERE user_id = ? AND setting_key = ?", 
+                        [$valueToStore, $user['id'], $key]
+                    );
+                } else {
+                    // Insert
+                    Database::execute('users', 
+                        "INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, ?, ?)", 
+                        [$user['id'], $key, $valueToStore]
+                    );
+                }
             }
             
-            $db->commit();
-            
             // Get updated settings
-            $stmt = $db->prepare("SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?");
-            $stmt->execute([$user['id']]);
-            $settings = $stmt->fetchAll();
+            $settings = Database::query('users', 
+                "SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?", 
+                [$user['id']]
+            );
             
             $settingsObject = [];
             foreach ($settings as $setting) {

@@ -7,79 +7,82 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
-require_once __DIR__ . '/../helpers/logger.php';
 
 // Only allow GET
 Response::requireMethod('GET');
 
 // Require authentication
 $user = Auth::requireAuth();
+if (!$user) exit;
 
 try {
-    $certsDb = DatabaseManager::getInstance()->certificates();
-    
     // Get filter parameters
-    $type = $_GET['type'] ?? null; // root, device, regional, mesh
+    $type = $_GET['type'] ?? null;
     $includeRevoked = ($_GET['include_revoked'] ?? '0') === '1';
     
-    // Build query
+    // Build query using actual column names
     $sql = "
-        SELECT uc.id, uc.certificate_type, uc.certificate_name, uc.serial_number, 
-               uc.issued_at, uc.expires_at, uc.is_revoked, uc.revoked_at, 
-               uc.device_id, uc.region_code, uc.mesh_network_id
-        FROM user_certificates uc
-        WHERE uc.user_id = ?
+        SELECT id, user_id, name, type, fingerprint, status, expires_at, created_at
+        FROM user_certificates
+        WHERE user_id = ?
     ";
     $params = [$user['id']];
     
     if ($type) {
-        $sql .= " AND uc.certificate_type = ?";
+        $sql .= " AND type = ?";
         $params[] = $type;
     }
     
     if (!$includeRevoked) {
-        $sql .= " AND uc.is_revoked = 0";
+        $sql .= " AND status != 'revoked'";
     }
     
-    $sql .= " ORDER BY uc.issued_at DESC";
+    $sql .= " ORDER BY created_at DESC";
     
-    $stmt = $certsDb->prepare($sql);
-    $stmt->execute($params);
-    $certificates = $stmt->fetchAll();
+    $certificates = Database::query('certificates', $sql, $params);
     
     // Add status and expiration info
     $now = time();
     foreach ($certificates as &$cert) {
-        $expiresAt = strtotime($cert['expires_at']);
-        $daysUntilExpiry = floor(($expiresAt - $now) / 86400);
+        $expiresAt = $cert['expires_at'] ? strtotime($cert['expires_at']) : null;
+        $daysUntilExpiry = $expiresAt ? floor(($expiresAt - $now) / 86400) : 365;
         
-        if ($cert['is_revoked']) {
-            $cert['status'] = 'revoked';
+        if ($cert['status'] === 'revoked') {
+            $cert['status_display'] = 'revoked';
             $cert['status_color'] = 'red';
-        } elseif ($daysUntilExpiry < 0) {
-            $cert['status'] = 'expired';
+        } elseif ($expiresAt && $daysUntilExpiry < 0) {
+            $cert['status_display'] = 'expired';
             $cert['status_color'] = 'red';
-        } elseif ($daysUntilExpiry < 30) {
-            $cert['status'] = 'expiring_soon';
+        } elseif ($expiresAt && $daysUntilExpiry < 30) {
+            $cert['status_display'] = 'expiring_soon';
             $cert['status_color'] = 'yellow';
         } else {
-            $cert['status'] = 'valid';
+            $cert['status_display'] = 'valid';
             $cert['status_color'] = 'green';
         }
         
         $cert['days_until_expiry'] = max(0, $daysUntilExpiry);
+        
+        // Map to expected frontend fields
+        $cert['device_name'] = $cert['name'];
+        $cert['certificate_type'] = $cert['type'];
     }
     
     // Group by type
     $grouped = [
-        'root' => [],
         'device' => [],
         'regional' => [],
-        'mesh' => []
+        'mesh' => [],
+        'root' => []
     ];
     
     foreach ($certificates as $cert) {
-        $grouped[$cert['certificate_type']][] = $cert;
+        $certType = $cert['type'] ?? 'device';
+        if (!isset($grouped[$certType])) {
+            $grouped['device'][] = $cert;
+        } else {
+            $grouped[$certType][] = $cert;
+        }
     }
     
     Response::success([
@@ -87,14 +90,14 @@ try {
         'grouped' => $grouped,
         'counts' => [
             'total' => count($certificates),
-            'root' => count($grouped['root']),
             'device' => count($grouped['device']),
             'regional' => count($grouped['regional']),
-            'mesh' => count($grouped['mesh'])
+            'mesh' => count($grouped['mesh']),
+            'root' => count($grouped['root'])
         ]
     ]);
     
 } catch (Exception $e) {
-    Logger::error('Certificate list failed: ' . $e->getMessage());
-    Response::serverError('Failed to get certificates');
+    error_log('Certificate list error: ' . $e->getMessage());
+    Response::error('Failed to get certificates', 500);
 }

@@ -13,7 +13,7 @@
         .devices-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;flex-wrap:wrap;gap:15px}
         .device-limit{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:10px;padding:15px 20px;display:flex;align-items:center;gap:15px}
         .device-limit-bar{width:120px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden}
-        .device-limit-fill{height:100%;background:var(--gradients-primary);border-radius:4px}
+        .device-limit-fill{height:100%;background:var(--gradients-primary);border-radius:4px;transition:width 0.3s}
         .devices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
         .device-card{background:rgba(255,255,255,0.03);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:20px;transition:all 0.2s}
         .device-card:hover{border-color:var(--colors-primary)}
@@ -42,28 +42,32 @@
         .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
         .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
         .config-box{background:rgba(0,0,0,0.3);border:1px solid var(--colors-border);border-radius:8px;padding:15px;font-family:monospace;font-size:0.85rem;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto}
-        .qr-placeholder{width:200px;height:200px;background:rgba(255,255,255,0.1);border-radius:8px;margin:20px auto;display:flex;align-items:center;justify-content:center;font-size:4rem}
+        .qr-container{width:200px;height:200px;background:rgba(255,255,255,0.9);border-radius:8px;margin:20px auto;display:flex;align-items:center;justify-content:center}
+        .qr-container img{max-width:180px;max-height:180px}
+        .empty-state{text-align:center;padding:60px 20px}
+        .empty-state .icon{font-size:4rem;margin-bottom:20px;opacity:0.5}
+        .loading-state{text-align:center;padding:40px}
     </style>
 </head>
 <body class="dashboard-body">
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <div class="sidebar-header"><span class="logo-icon">&#x1F6E1;</span><h1>TrueVault</h1></div>
         <nav class="sidebar-nav">
-            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
-            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
-            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
-            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
-            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">📜</span><span>Certificates</span></a>
-            <a href="/dashboard/devices.html" class="nav-item active"><span class="nav-icon">📱</span><span>Devices</span></a>
-            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
-            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">&#x1F4CA;</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">&#x26A1;</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">&#x1F5A5;</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">&#x1F464;</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item"><span class="nav-icon">&#x1F4DC;</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item active"><span class="nav-icon">&#x1F4F1;</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">&#x1F4F7;</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">&#x1F578;</span><span>Mesh Network</span></a>
             <div class="nav-divider"></div>
-            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
-            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
-            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">&#x1F4E1;</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#x2699;</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">&#x1F4B3;</span><span>Billing</span></a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <div class="user-info"><div class="user-avatar">&#x1F464;</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
             <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
         </div>
     </aside>
@@ -71,7 +75,7 @@
     <main class="main-content">
         <header class="dashboard-header">
             <div>
-                <h1>📱 My Devices</h1>
+                <h1>&#x1F4F1; My Devices</h1>
                 <p class="text-muted">Manage devices connected to your TrueVault account</p>
             </div>
         </header>
@@ -81,144 +85,51 @@
             <div class="device-limit">
                 <span>Device Limit:</span>
                 <div class="device-limit-bar">
-                    <div class="device-limit-fill" id="limitFill" style="width:60%"></div>
+                    <div class="device-limit-fill" id="limitFill" style="width:0%"></div>
                 </div>
-                <span id="limitText">3 / 5 devices</span>
+                <span id="limitText">0 / 0 devices</span>
             </div>
-            <button class="btn btn-primary" onclick="showSetupModal()">➕ Add Device</button>
+            <button class="btn btn-primary" onclick="showAddDeviceModal()">&#x2795; Add Device</button>
         </div>
         
-        <!-- Devices Grid -->
+        <!-- Devices Grid - DYNAMICALLY LOADED -->
         <div class="devices-grid" id="devicesGrid">
-            <!-- Current Device -->
-            <div class="device-card current">
-                <div class="device-header">
-                    <span class="device-icon">💻</span>
-                    <div class="device-info">
-                        <h3>Windows PC</h3>
-                        <div class="type">Desktop • Windows 11</div>
-                    </div>
-                    <span class="badge badge-success">This Device</span>
-                </div>
-                <div class="device-details">
-                    <div class="device-detail">
-                        <span class="device-detail-label">Last Active</span>
-                        <span>Now</span>
-                    </div>
-                    <div class="device-detail">
-                        <span class="device-detail-label">IP Address</span>
-                        <span>192.168.1.100</span>
-                    </div>
-                    <div class="device-detail">
-                        <span class="device-detail-label">Added</span>
-                        <span>Dec 15, 2025</span>
-                    </div>
-                </div>
-                <div class="device-actions">
-                    <button class="btn btn-secondary btn-small" onclick="viewConfig(1)">📋 Config</button>
-                    <button class="btn btn-secondary btn-small" onclick="renameDevice(1)">✏️ Rename</button>
-                </div>
-            </div>
-            
-            <!-- iPhone -->
-            <div class="device-card">
-                <div class="device-header">
-                    <span class="device-icon">📱</span>
-                    <div class="device-info">
-                        <h3>iPhone 15 Pro</h3>
-                        <div class="type">Mobile • iOS 17</div>
-                    </div>
-                </div>
-                <div class="device-details">
-                    <div class="device-detail">
-                        <span class="device-detail-label">Last Active</span>
-                        <span>2 hours ago</span>
-                    </div>
-                    <div class="device-detail">
-                        <span class="device-detail-label">Location</span>
-                        <span>US East Server</span>
-                    </div>
-                    <div class="device-detail">
-                        <span class="device-detail-label">Added</span>
-                        <span>Dec 18, 2025</span>
-                    </div>
-                </div>
-                <div class="device-actions">
-                    <button class="btn btn-secondary btn-small" onclick="viewConfig(2)">📋 Config</button>
-                    <button class="btn btn-secondary btn-small" onclick="renameDevice(2)">✏️ Rename</button>
-                    <button class="btn btn-danger btn-small" onclick="removeDevice(2)">🗑️</button>
-                </div>
-            </div>
-            
-            <!-- MacBook -->
-            <div class="device-card">
-                <div class="device-header">
-                    <span class="device-icon">💻</span>
-                    <div class="device-info">
-                        <h3>MacBook Air</h3>
-                        <div class="type">Laptop • macOS Sonoma</div>
-                    </div>
-                </div>
-                <div class="device-details">
-                    <div class="device-detail">
-                        <span class="device-detail-label">Last Active</span>
-                        <span>Yesterday</span>
-                    </div>
-                    <div class="device-detail">
-                        <span class="device-detail-label">Location</span>
-                        <span>Canada Server</span>
-                    </div>
-                    <div class="device-detail">
-                        <span class="device-detail-label">Added</span>
-                        <span>Dec 20, 2025</span>
-                    </div>
-                </div>
-                <div class="device-actions">
-                    <button class="btn btn-secondary btn-small" onclick="viewConfig(3)">📋 Config</button>
-                    <button class="btn btn-secondary btn-small" onclick="renameDevice(3)">✏️ Rename</button>
-                    <button class="btn btn-danger btn-small" onclick="removeDevice(3)">🗑️</button>
-                </div>
-            </div>
-            
-            <!-- Add Device Card -->
-            <div class="add-device-card" onclick="showSetupModal()">
-                <div class="icon">➕</div>
-                <h3>Add New Device</h3>
-                <p class="text-muted">Connect another device to TrueVault</p>
+            <div class="loading-state">
+                <p>Loading devices...</p>
             </div>
         </div>
         
         <!-- Setup Instructions -->
         <div class="setup-section">
-            <h3>📲 Quick Setup</h3>
+            <h3>&#x1F4E6; Quick Setup</h3>
             <div class="setup-options">
                 <div class="setup-option" onclick="showSetupModal('windows')">
-                    <div class="icon">🪟</div>
+                    <div class="icon">&#x1F5A5;</div>
                     <h4>Windows</h4>
                     <p>Download WireGuard app</p>
                 </div>
                 <div class="setup-option" onclick="showSetupModal('mac')">
-                    <div class="icon">🍎</div>
+                    <div class="icon">&#x1F4BB;</div>
                     <h4>macOS</h4>
                     <p>App Store or direct download</p>
                 </div>
                 <div class="setup-option" onclick="showSetupModal('ios')">
-                    <div class="icon">📱</div>
+                    <div class="icon">&#x1F4F1;</div>
                     <h4>iOS</h4>
                     <p>Scan QR code</p>
                 </div>
                 <div class="setup-option" onclick="showSetupModal('android')">
-                    <div class="icon">🤖</div>
+                    <div class="icon">&#x1F4F2;</div>
                     <h4>Android</h4>
                     <p>Scan QR code</p>
                 </div>
                 <div class="setup-option" onclick="showSetupModal('linux')">
-                    <div class="icon">🐧</div>
+                    <div class="icon">&#x1F427;</div>
                     <h4>Linux</h4>
                     <p>Command line setup</p>
                 </div>
                 <div class="setup-option" onclick="showSetupModal('router')">
-                    <div class="icon">📡</div>
+                    <div class="icon">&#x1F4F6;</div>
                     <h4>Router</h4>
                     <p>Whole-network VPN</p>
                 </div>
@@ -226,45 +137,72 @@
         </div>
     </main>
     
-    <!-- Setup Modal -->
-    <div class="modal" id="setupModal">
+    <!-- Add Device Modal -->
+    <div class="modal" id="addDeviceModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="setupTitle">➕ Add Device</h2>
-                <button class="modal-close" onclick="hideModal()">&times;</button>
+                <h2 id="modalTitle">&#x2795; Add New Device</h2>
+                <button class="modal-close" onclick="hideModal('addDeviceModal')">&times;</button>
             </div>
             
-            <div id="setupContent">
+            <form id="addDeviceForm" onsubmit="addDevice(event)">
                 <div class="form-group">
-                    <label>Device Name</label>
-                    <input type="text" id="deviceName" placeholder="e.g., My iPhone, Work Laptop">
+                    <label>Device Name *</label>
+                    <input type="text" id="deviceName" required placeholder="e.g., My iPhone, Work Laptop">
                 </div>
                 
-                <h4 style="margin:20px 0 10px">📱 For Mobile (iOS/Android)</h4>
-                <p class="text-muted" style="margin-bottom:15px">Scan this QR code with the WireGuard app:</p>
-                <div class="qr-placeholder">📱</div>
+                <div class="form-group">
+                    <label>Device Type</label>
+                    <select id="deviceType">
+                        <option value="desktop">Desktop</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="mobile">Mobile</option>
+                        <option value="tablet">Tablet</option>
+                        <option value="router">Router</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
                 
-                <h4 style="margin:20px 0 10px">💻 For Desktop</h4>
+                <div class="form-group">
+                    <label>Platform</label>
+                    <select id="devicePlatform">
+                        <option value="windows">Windows</option>
+                        <option value="macos">macOS</option>
+                        <option value="linux">Linux</option>
+                        <option value="ios">iOS</option>
+                        <option value="android">Android</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">&#x2795; Add Device</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Config Modal -->
+    <div class="modal" id="configModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="configTitle">&#x2699; Device Configuration</h2>
+                <button class="modal-close" onclick="hideModal('configModal')">&times;</button>
+            </div>
+            
+            <div id="configContent">
+                <h4 style="margin:0 0 10px">&#x1F4F1; For Mobile (iOS/Android)</h4>
+                <p class="text-muted" style="margin-bottom:15px">Scan this QR code with the WireGuard app:</p>
+                <div class="qr-container" id="qrContainer">
+                    <span style="color:#333">QR Loading...</span>
+                </div>
+                
+                <h4 style="margin:20px 0 10px">&#x1F4BB; For Desktop</h4>
                 <p class="text-muted" style="margin-bottom:15px">Copy this configuration to WireGuard:</p>
-                <div class="config-box" id="configBox">[Interface]
-PrivateKey = YOUR_PRIVATE_KEY
-Address = 10.0.0.2/32
-DNS = 1.1.1.1
-
-[Peer]
-PublicKey = SERVER_PUBLIC_KEY
-AllowedIPs = 0.0.0.0/0
-Endpoint = 66.94.103.91:51820
-PersistentKeepalive = 25</div>
+                <div class="config-box" id="configBox">Loading configuration...</div>
                 
                 <div style="display:flex;gap:10px;margin-top:20px">
-                    <button class="btn btn-secondary" onclick="copyConfig()">📋 Copy Config</button>
-                    <button class="btn btn-secondary" onclick="downloadConfig()">📥 Download .conf</button>
+                    <button class="btn btn-secondary" onclick="copyConfig()">&#x1F4CB; Copy Config</button>
+                    <button class="btn btn-secondary" onclick="downloadConfig()">&#x1F4E5; Download .conf</button>
                 </div>
-            </div>
-            
-            <div style="margin-top:25px">
-                <button class="btn btn-primary btn-block" onclick="confirmAddDevice()">✅ Device Added</button>
             </div>
         </div>
     </div>
@@ -272,72 +210,352 @@ PersistentKeepalive = 25</div>
     <script src="/assets/js/theme-loader.js"></script>
     <script src="/assets/js/app.js"></script>
     <script>
-        if (!TrueVault.Auth.requireAuth()) {}
+        // ============================================
+        // DEVICES PAGE - DATABASE DRIVEN
+        // ============================================
         
-        const user = TrueVault.Auth.getUser();
-        if (user) {
-            document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
-            document.getElementById('userPlan').textContent = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) + ' Plan';
+        let devices = [];
+        let deviceLimit = 3; // Will be loaded from user plan
+        let currentConfig = '';
+        
+        // Device type icons mapping
+        const deviceIcons = {
+            'desktop': '&#x1F5A5;',
+            'laptop': '&#x1F4BB;',
+            'mobile': '&#x1F4F1;',
+            'tablet': '&#x1F4F2;',
+            'router': '&#x1F4F6;',
+            'other': '&#x1F4BB;'
+        };
+        
+        // Platform display names
+        const platformNames = {
+            'windows': 'Windows',
+            'macos': 'macOS',
+            'linux': 'Linux',
+            'ios': 'iOS',
+            'android': 'Android',
+            'other': 'Other'
+        };
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!TrueVault.Auth.requireAuth()) return;
+            loadUserInfo();
+            loadDevices();
+        });
+        
+        // Load user info
+        function loadUserInfo() {
+            const user = TrueVault.Auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.first_name + ' ' + user.last_name;
+                const planName = user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1);
+                document.getElementById('userPlan').textContent = planName + ' Plan';
+                
+                // Set device limit based on plan
+                const limits = {
+                    'trial': 1,
+                    'personal': 3,
+                    'family': 10,
+                    'business': 999,
+                    'vip': 999
+                };
+                deviceLimit = limits[user.plan_type] || 3;
+            }
         }
         
-        function showSetupModal(platform) {
-            const titles = {
-                'windows': '🪟 Windows Setup',
-                'mac': '🍎 macOS Setup',
-                'ios': '📱 iOS Setup',
-                'android': '🤖 Android Setup',
-                'linux': '🐧 Linux Setup',
-                'router': '📡 Router Setup'
-            };
-            document.getElementById('setupTitle').textContent = titles[platform] || '➕ Add Device';
-            document.getElementById('setupModal').classList.add('active');
+        // Load devices from API
+        async function loadDevices() {
+            try {
+                const response = await TrueVault.API.get('/devices/list.php');
+                if (response.success) {
+                    devices = response.data.devices || [];
+                    renderDevices();
+                } else {
+                    // No devices yet - show empty state
+                    devices = [];
+                    renderDevices();
+                }
+            } catch (error) {
+                console.error('Error loading devices:', error);
+                document.getElementById('devicesGrid').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">&#x26A0;</div>
+                        <h3>Error Loading Devices</h3>
+                        <p class="text-muted">Please try refreshing the page.</p>
+                    </div>
+                `;
+            }
         }
         
-        function hideModal() {
-            document.getElementById('setupModal').classList.remove('active');
+        // Render devices grid
+        function renderDevices() {
+            const grid = document.getElementById('devicesGrid');
+            
+            // Update limit display
+            const percentage = deviceLimit > 0 ? Math.min((devices.length / deviceLimit) * 100, 100) : 0;
+            document.getElementById('limitFill').style.width = percentage + '%';
+            document.getElementById('limitText').textContent = devices.length + ' / ' + (deviceLimit === 999 ? '∞' : deviceLimit) + ' devices';
+            
+            if (devices.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1">
+                        <div class="icon">&#x1F4F1;</div>
+                        <h3>No Devices Yet</h3>
+                        <p class="text-muted">Add your first device to get started with TrueVault VPN.</p>
+                        <button class="btn btn-primary" onclick="showAddDeviceModal()" style="margin-top:20px">&#x2795; Add Your First Device</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            devices.forEach((device, index) => {
+                const isCurrentDevice = device.is_current || false;
+                const icon = deviceIcons[device.device_type] || deviceIcons.other;
+                const platform = platformNames[device.platform] || device.platform;
+                const lastActive = device.last_active ? formatDate(device.last_active) : 'Never';
+                const addedDate = device.created_at ? formatDate(device.created_at) : 'Unknown';
+                
+                html += `
+                    <div class="device-card ${isCurrentDevice ? 'current' : ''}">
+                        <div class="device-header">
+                            <span class="device-icon">${icon}</span>
+                            <div class="device-info">
+                                <h3>${escapeHtml(device.name)}</h3>
+                                <div class="type">${device.device_type} • ${platform}</div>
+                            </div>
+                            ${isCurrentDevice ? '<span class="badge badge-success">This Device</span>' : ''}
+                        </div>
+                        <div class="device-details">
+                            <div class="device-detail">
+                                <span class="device-detail-label">Last Active</span>
+                                <span>${lastActive}</span>
+                            </div>
+                            <div class="device-detail">
+                                <span class="device-detail-label">Status</span>
+                                <span class="badge badge-${device.status === 'active' ? 'success' : 'secondary'}">${device.status || 'inactive'}</span>
+                            </div>
+                            <div class="device-detail">
+                                <span class="device-detail-label">Added</span>
+                                <span>${addedDate}</span>
+                            </div>
+                        </div>
+                        <div class="device-actions">
+                            <button class="btn btn-secondary btn-small" onclick="viewConfig(${device.id})">&#x2699; Config</button>
+                            <button class="btn btn-secondary btn-small" onclick="renameDevice(${device.id}, '${escapeHtml(device.name)}')">&#x270F; Rename</button>
+                            ${!isCurrentDevice ? `<button class="btn btn-danger btn-small" onclick="removeDevice(${device.id})">&#x1F5D1;</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Add "Add Device" card if under limit
+            if (devices.length < deviceLimit) {
+                html += `
+                    <div class="add-device-card" onclick="showAddDeviceModal()">
+                        <div class="icon">&#x2795;</div>
+                        <h3>Add New Device</h3>
+                        <p class="text-muted">Connect another device to TrueVault</p>
+                    </div>
+                `;
+            }
+            
+            grid.innerHTML = html;
         }
         
+        // Add new device
+        async function addDevice(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('deviceName').value.trim();
+            const type = document.getElementById('deviceType').value;
+            const platform = document.getElementById('devicePlatform').value;
+            
+            if (!name) {
+                TrueVault.Toast.error('Please enter a device name');
+                return;
+            }
+            
+            if (devices.length >= deviceLimit) {
+                TrueVault.Toast.error('Device limit reached. Upgrade your plan for more devices.');
+                return;
+            }
+            
+            try {
+                const response = await TrueVault.API.post('/devices/index.php', {
+                    action: 'add',
+                    name: name,
+                    device_type: type,
+                    platform: platform
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Device added successfully!');
+                    hideModal('addDeviceModal');
+                    document.getElementById('addDeviceForm').reset();
+                    loadDevices(); // Reload list
+                    
+                    // Show config for new device
+                    if (response.data && response.data.device_id) {
+                        setTimeout(() => viewConfig(response.data.device_id), 500);
+                    }
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to add device');
+                }
+            } catch (error) {
+                console.error('Error adding device:', error);
+                TrueVault.Toast.error('Error adding device. Please try again.');
+            }
+        }
+        
+        // Remove device
+        async function removeDevice(deviceId) {
+            if (!confirm('Remove this device? It will need to be set up again.')) return;
+            
+            try {
+                const response = await TrueVault.API.post('/devices/index.php', {
+                    action: 'remove',
+                    device_id: deviceId
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Device removed');
+                    loadDevices(); // Reload list
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to remove device');
+                }
+            } catch (error) {
+                console.error('Error removing device:', error);
+                TrueVault.Toast.error('Error removing device');
+            }
+        }
+        
+        // Rename device
+        async function renameDevice(deviceId, currentName) {
+            const newName = prompt('Enter new device name:', currentName);
+            if (!newName || newName === currentName) return;
+            
+            try {
+                const response = await TrueVault.API.post('/devices/index.php', {
+                    action: 'rename',
+                    device_id: deviceId,
+                    name: newName
+                });
+                
+                if (response.success) {
+                    TrueVault.Toast.success('Device renamed!');
+                    loadDevices();
+                } else {
+                    TrueVault.Toast.error(response.error || 'Failed to rename device');
+                }
+            } catch (error) {
+                TrueVault.Toast.error('Error renaming device');
+            }
+        }
+        
+        // View device configuration
+        async function viewConfig(deviceId) {
+            document.getElementById('configModal').classList.add('active');
+            document.getElementById('configBox').textContent = 'Loading configuration...';
+            
+            try {
+                const response = await TrueVault.API.get('/devices/index.php?action=config&device_id=' + deviceId);
+                
+                if (response.success && response.data.config) {
+                    currentConfig = response.data.config;
+                    document.getElementById('configBox').textContent = currentConfig;
+                    
+                    // Generate QR code if available
+                    if (response.data.qr_code) {
+                        document.getElementById('qrContainer').innerHTML = `<img src="${response.data.qr_code}" alt="QR Code">`;
+                    }
+                } else {
+                    document.getElementById('configBox').textContent = 'Configuration not available. Please regenerate.';
+                }
+            } catch (error) {
+                document.getElementById('configBox').textContent = 'Error loading configuration.';
+            }
+        }
+        
+        // Copy configuration
         function copyConfig() {
-            const config = document.getElementById('configBox').textContent;
-            navigator.clipboard.writeText(config);
+            if (!currentConfig) {
+                TrueVault.Toast.error('No configuration to copy');
+                return;
+            }
+            navigator.clipboard.writeText(currentConfig);
             TrueVault.Toast.success('Configuration copied!');
         }
         
+        // Download configuration
         function downloadConfig() {
-            const config = document.getElementById('configBox').textContent;
-            const blob = new Blob([config], { type: 'text/plain' });
+            if (!currentConfig) {
+                TrueVault.Toast.error('No configuration to download');
+                return;
+            }
+            const blob = new Blob([currentConfig], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = 'truevault.conf';
             a.click();
+            URL.revokeObjectURL(url);
             TrueVault.Toast.success('Configuration downloaded!');
         }
         
-        function confirmAddDevice() {
-            const name = document.getElementById('deviceName').value || 'New Device';
-            TrueVault.Toast.success(`${name} added successfully!`);
-            hideModal();
+        // Show modals
+        function showAddDeviceModal() {
+            if (devices.length >= deviceLimit) {
+                TrueVault.Toast.error('Device limit reached. Upgrade your plan for more devices.');
+                return;
+            }
+            document.getElementById('addDeviceModal').classList.add('active');
         }
         
-        function viewConfig(id) {
-            showSetupModal();
-        }
-        
-        function renameDevice(id) {
-            const name = prompt('Enter new device name:');
-            if (name) {
-                TrueVault.Toast.success('Device renamed!');
+        function showSetupModal(platform) {
+            showAddDeviceModal();
+            if (platform) {
+                document.getElementById('devicePlatform').value = platform;
             }
         }
         
-        function removeDevice(id) {
-            if (!confirm('Remove this device? It will need to be set up again.')) return;
-            TrueVault.Toast.success('Device removed');
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
         
-        document.getElementById('setupModal').addEventListener('click', function(e) {
-            if (e.target === this) hideModal();
+        // Utility functions
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Now';
+            if (diffMins < 60) return diffMins + ' minutes ago';
+            if (diffHours < 24) return diffHours + ' hours ago';
+            if (diffDays < 7) return diffDays + ' days ago';
+            
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
         });
     </script>
 </body>

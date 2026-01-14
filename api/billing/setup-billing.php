@@ -1,175 +1,131 @@
 <?php
 /**
  * TrueVault VPN - Billing Database Setup
- * Run once to create billing tables
- * 
- * URL: /api/billing/setup-billing.php
+ * Creates all billing-related tables
  */
 
 require_once __DIR__ . '/../config/database.php';
 
-header('Content-Type: application/json');
-
-$results = [];
+echo "<pre>";
+echo "=== TrueVault Billing Database Setup ===\n\n";
 
 try {
-    // ==================== BILLING DATABASE ====================
+    $db = Database::getConnection('billing');
     
     // Subscriptions table
-    Database::execute('billing', "CREATE TABLE IF NOT EXISTS subscriptions (
+    $db->exec("CREATE TABLE IF NOT EXISTS subscriptions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        plan_type TEXT NOT NULL DEFAULT 'basic',
-        status TEXT NOT NULL DEFAULT 'active',
+        plan_type TEXT NOT NULL,
+        status TEXT DEFAULT 'active',
         payment_id TEXT,
-        paypal_subscription_id TEXT,
         max_devices INTEGER DEFAULT 3,
         max_cameras INTEGER DEFAULT 1,
-        start_date TEXT,
-        end_date TEXT,
-        cancelled_at TEXT,
+        start_date DATETIME,
+        end_date DATETIME,
+        cancelled_at DATETIME,
         cancel_reason TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT
+        expiry_warned INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $results[] = "✓ Created subscriptions table";
+    echo "✓ Created subscriptions table\n";
     
     // Pending orders table
-    Database::execute('billing', "CREATE TABLE IF NOT EXISTS pending_orders (
+    $db->exec("CREATE TABLE IF NOT EXISTS pending_orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        order_id TEXT NOT NULL UNIQUE,
+        order_id TEXT UNIQUE NOT NULL,
         plan_id TEXT NOT NULL,
         amount REAL NOT NULL,
         status TEXT DEFAULT 'pending',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        completed_at TEXT
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME
     )");
-    $results[] = "✓ Created pending_orders table";
+    echo "✓ Created pending_orders table\n";
     
     // Invoices table
-    Database::execute('billing', "CREATE TABLE IF NOT EXISTS invoices (
+    $db->exec("CREATE TABLE IF NOT EXISTS invoices (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        invoice_number TEXT NOT NULL UNIQUE,
+        invoice_number TEXT UNIQUE NOT NULL,
         plan_id TEXT,
         amount REAL NOT NULL,
+        tax REAL DEFAULT 0,
+        total REAL NOT NULL,
         payment_id TEXT,
         status TEXT DEFAULT 'pending',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        due_date DATETIME,
+        paid_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $results[] = "✓ Created invoices table";
+    echo "✓ Created invoices table\n";
     
-    // Scheduled revocations table
-    Database::execute('billing', "CREATE TABLE IF NOT EXISTS scheduled_revocations (
+    // Payments table
+    $db->exec("CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL UNIQUE,
-        revoke_at TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        completed_at TEXT
+        user_id INTEGER NOT NULL,
+        invoice_id INTEGER,
+        payment_method TEXT,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'USD',
+        paypal_order_id TEXT,
+        paypal_capture_id TEXT,
+        status TEXT DEFAULT 'completed',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $results[] = "✓ Created scheduled_revocations table";
+    echo "✓ Created payments table\n";
+    
+    // Payment events table (webhook log)
+    $db->exec("CREATE TABLE IF NOT EXISTS payment_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        event_id TEXT,
+        resource_id TEXT,
+        payload TEXT,
+        processed INTEGER DEFAULT 0,
+        processed_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    echo "✓ Created payment_events table\n";
     
     // Payment failures table
-    Database::execute('billing', "CREATE TABLE IF NOT EXISTS payment_failures (
+    $db->exec("CREATE TABLE IF NOT EXISTS payment_failures (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        failure_date TEXT NOT NULL,
-        grace_end_date TEXT,
+        failure_date DATETIME NOT NULL,
+        grace_end_date DATETIME NOT NULL,
+        retry_count INTEGER DEFAULT 0,
+        last_retry DATETIME,
         notified INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $results[] = "✓ Created payment_failures table";
+    echo "✓ Created payment_failures table\n";
     
-    // Disputes table
-    Database::execute('billing', "CREATE TABLE IF NOT EXISTS disputes (
+    // Scheduled revocations table
+    $db->exec("CREATE TABLE IF NOT EXISTS scheduled_revocations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        dispute_id TEXT NOT NULL UNIQUE,
-        user_id INTEGER,
-        amount REAL,
-        status TEXT DEFAULT 'open',
-        outcome TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        resolved_at TEXT
-    )");
-    $results[] = "✓ Created disputes table";
-    
-    // ==================== VPN DATABASE ====================
-    
-    // User peers table (tracks which servers user has access to)
-    Database::execute('vpn', "CREATE TABLE IF NOT EXISTS user_peers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        server_id INTEGER NOT NULL,
-        public_key TEXT NOT NULL,
-        assigned_ip TEXT,
-        status TEXT DEFAULT 'active',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        revoked_at TEXT,
-        UNIQUE(user_id, server_id)
-    )");
-    $results[] = "✓ Created user_peers table";
-    
-    // VPN connections log
-    Database::execute('vpn', "CREATE TABLE IF NOT EXISTS vpn_connections (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        server_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL UNIQUE,
+        revoke_at DATETIME NOT NULL,
         status TEXT DEFAULT 'pending',
-        assigned_ip TEXT,
-        connected_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        disconnected_at TEXT,
-        bytes_sent INTEGER DEFAULT 0,
-        bytes_received INTEGER DEFAULT 0
+        completed_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $results[] = "✓ Created vpn_connections table";
-    
-    // ==================== LOGS DATABASE ====================
-    
-    // Webhook log
-    Database::execute('logs', "CREATE TABLE IF NOT EXISTS webhook_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        source TEXT NOT NULL,
-        headers TEXT,
-        payload TEXT,
-        received_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )");
-    $results[] = "✓ Created webhook_log table";
-    
-    // ==================== CERTIFICATES DATABASE ====================
-    
-    // User certificates table
-    Database::execute('certificates', "CREATE TABLE IF NOT EXISTS user_certificates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        name TEXT DEFAULT 'WireGuard Key',
-        type TEXT DEFAULT 'wireguard',
-        public_key TEXT NOT NULL,
-        private_key TEXT NOT NULL,
-        status TEXT DEFAULT 'active',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        revoked_at TEXT
-    )");
-    $results[] = "✓ Created user_certificates table";
+    echo "✓ Created scheduled_revocations table\n";
     
     // Create indexes
-    Database::execute('billing', "CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)");
-    Database::execute('billing', "CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)");
-    Database::execute('billing', "CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id)");
-    Database::execute('vpn', "CREATE INDEX IF NOT EXISTS idx_peers_user ON user_peers(user_id)");
-    Database::execute('vpn', "CREATE INDEX IF NOT EXISTS idx_peers_status ON user_peers(status)");
-    $results[] = "✓ Created indexes";
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_pending_orders_order ON pending_orders(order_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_revocations_date ON scheduled_revocations(revoke_at)");
+    echo "✓ Created indexes\n";
     
-    echo json_encode([
-        'success' => true,
-        'message' => 'Billing database setup complete',
-        'results' => $results
-    ], JSON_PRETTY_PRINT);
+    echo "\n=== Billing Database Setup Complete ===\n";
     
 } catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage(),
-        'results' => $results
-    ], JSON_PRETTY_PRINT);
+    echo "ERROR: " . $e->getMessage() . "\n";
 }
+
+echo "</pre>";

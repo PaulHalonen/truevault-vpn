@@ -2,6 +2,8 @@
 /**
  * TrueVault VPN - VPN Status
  * GET /api/vpn/status.php
+ * 
+ * FIXED: January 14, 2026 - Changed DatabaseManager to Database class
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -16,18 +18,13 @@ Response::requireMethod('GET');
 $user = Auth::requireAuth();
 
 try {
-    $connectionsDb = DatabaseManager::getInstance()->connections();
-    $serversDb = DatabaseManager::getInstance()->servers();
-    
-    // Get active connections
-    $stmt = $connectionsDb->prepare("
+    // Get active connections using correct Database class
+    $activeConnections = Database::query('vpn', "
         SELECT ac.*, vs.server_name, vs.region, vs.country, vs.ip_address as server_ip
         FROM active_connections ac
         JOIN vpn_servers vs ON ac.server_id = vs.id
         WHERE ac.user_id = ?
-    ");
-    $stmt->execute([$user['id']]);
-    $activeConnections = $stmt->fetchAll();
+    ", [$user['id']]);
     
     // Format connections
     $connections = [];
@@ -48,29 +45,27 @@ try {
             'connected_at' => $conn['connected_at'],
             'duration_seconds' => $duration,
             'duration_formatted' => formatDuration($duration),
-            'bytes_sent' => (int) $conn['bytes_sent'],
-            'bytes_received' => (int) $conn['bytes_received'],
-            'last_handshake' => $conn['last_handshake']
+            'bytes_sent' => (int) ($conn['bytes_sent'] ?? 0),
+            'bytes_received' => (int) ($conn['bytes_received'] ?? 0),
+            'last_handshake' => $conn['last_handshake'] ?? null
         ];
     }
     
-    // Get today's usage
-    $usageDb = DatabaseManager::getInstance()->usage();
+    // Get today's usage from logs database
     $today = date('Y-m-d');
-    $stmt = $usageDb->prepare("SELECT * FROM daily_usage WHERE user_id = ? AND date = ?");
-    $stmt->execute([$user['id'], $today]);
-    $todayUsage = $stmt->fetch();
+    $todayUsage = Database::queryOne('logs', 
+        "SELECT * FROM daily_usage WHERE user_id = ? AND date = ?", 
+        [$user['id'], $today]
+    );
     
     // Get monthly usage
     $monthStart = date('Y-m-01');
-    $stmt = $usageDb->prepare("
+    $monthlyUsage = Database::queryOne('logs', "
         SELECT SUM(bytes_sent) as total_sent, SUM(bytes_received) as total_received, 
                SUM(total_duration_seconds) as total_duration, COUNT(DISTINCT date) as active_days
         FROM daily_usage 
         WHERE user_id = ? AND date >= ?
-    ");
-    $stmt->execute([$user['id'], $monthStart]);
-    $monthlyUsage = $stmt->fetch();
+    ", [$user['id'], $monthStart]);
     
     Response::success([
         'is_connected' => count($connections) > 0,

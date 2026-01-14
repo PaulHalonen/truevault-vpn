@@ -2,6 +2,8 @@
 /**
  * TrueVault VPN - Devices List/Sync
  * GET/POST /api/devices/list.php
+ * 
+ * FIXED: January 14, 2026 - Changed DatabaseManager to Database class
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -14,13 +16,12 @@ $user = Auth::requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        $db = DatabaseManager::getInstance()->discovered();
-        
         $type = $_GET['type'] ?? null;
         $page = max(1, intval($_GET['page'] ?? 1));
         $limit = min(100, max(10, intval($_GET['limit'] ?? 50)));
         $offset = ($page - 1) * $limit;
         
+        // Build WHERE clause
         $where = "WHERE user_id = ?";
         $params = [$user['id']];
         
@@ -30,41 +31,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
         
         // Get total count
-        $stmt = $db->prepare("SELECT COUNT(*) as total FROM discovered_devices $where");
-        $stmt->execute($params);
-        $total = $stmt->fetch()['total'];
+        $countResult = Database::queryOne('devices', 
+            "SELECT COUNT(*) as total FROM discovered_devices $where", 
+            $params
+        );
+        $total = $countResult['total'] ?? 0;
         
-        // Get devices with ports
-        $stmt = $db->prepare("
-            SELECT d.*, GROUP_CONCAT(p.port_number || ':' || p.service_name) as ports
-            FROM discovered_devices d
-            LEFT JOIN device_ports p ON d.id = p.device_id
+        // Get devices with ports - use separate queries since GROUP_CONCAT may differ
+        $devicesParams = array_merge($params, [$limit, $offset]);
+        $devices = Database::query('devices', "
+            SELECT * FROM discovered_devices 
             $where
-            GROUP BY d.id
-            ORDER BY d.device_type, d.ip_address
+            ORDER BY device_type, ip_address
             LIMIT ? OFFSET ?
-        ");
-        $params[] = $limit;
-        $params[] = $offset;
-        $stmt->execute($params);
-        $devices = $stmt->fetchAll();
+        ", $devicesParams);
         
-        // Parse ports
+        // Get ports for each device
         foreach ($devices as &$device) {
             $device['open_ports'] = [];
-            if ($device['ports']) {
-                foreach (explode(',', $device['ports']) as $port) {
-                    list($num, $svc) = explode(':', $port);
-                    $device['open_ports'][] = ['port' => intval($num), 'service' => $svc];
-                }
+            $ports = Database::query('devices', 
+                "SELECT port_number, service_name FROM device_ports WHERE device_id = ?", 
+                [$device['id']]
+            );
+            foreach ($ports as $port) {
+                $device['open_ports'][] = [
+                    'port' => (int) $port['port_number'], 
+                    'service' => $port['service_name']
+                ];
             }
-            unset($device['ports']);
         }
         
-        Response::paginated($devices, $page, $limit, $total);
+        Response::success([
+            'devices' => $devices,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int) $total,
+                'total_pages' => ceil($total / $limit)
+            ]
+        ]);
         
     } catch (Exception $e) {
-        Response::serverError('Failed to get devices');
+        Response::serverError('Failed to get devices: ' . $e->getMessage());
     }
 }
 
@@ -78,9 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     try {
-        $db = DatabaseManager::getInstance()->discovered();
-        $camerasDb = DatabaseManager::getInstance()->cameras();
-        
         $added = 0;
         $updated = 0;
         $cameras = 0;
@@ -91,40 +96,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (!$ipAddress) continue;
             
-            // Check if exists
-            $stmt = $db->prepare("SELECT id FROM discovered_devices WHERE user_id = ? AND (mac_address = ? OR ip_address = ?)");
-            $stmt->execute([$user['id'], $macAddress, $ipAddress]);
-            $existing = $stmt->fetch();
+            // Check if device exists
+            $existing = Database::queryOne('devices', 
+                "SELECT id FROM discovered_devices WHERE user_id = ? AND (mac_address = ? OR ip_address = ?)", 
+                [$user['id'], $macAddress, $ipAddress]
+            );
             
             if ($existing) {
-                // Update
-                $stmt = $db->prepare("
+                // Update existing device
+                Database::execute('devices', "
                     UPDATE discovered_devices SET
                         ip_address = ?, hostname = ?, vendor = ?, device_type = ?,
                         device_icon = ?, type_name = ?, is_online = 1,
                         last_seen = datetime('now'), updated_at = datetime('now')
                     WHERE id = ?
-                ");
-                $stmt->execute([
+                ", [
                     $ipAddress,
                     $device['hostname'] ?? null,
                     $device['vendor'] ?? null,
                     $device['type'] ?? 'unknown',
-                    $device['icon'] ?? '❓',
+                    $device['icon'] ?? '?',
                     $device['type_name'] ?? 'Unknown',
                     $existing['id']
                 ]);
                 $updated++;
                 $deviceId = $existing['id'];
             } else {
-                // Insert
+                // Insert new device
                 $deviceUuid = $device['id'] ?? uniqid('dev_');
-                $stmt = $db->prepare("
+                $result = Database::execute('devices', "
                     INSERT INTO discovered_devices 
                     (user_id, device_id, ip_address, mac_address, hostname, vendor, device_type, device_icon, type_name, is_online, last_seen)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))
-                ");
-                $stmt->execute([
+                ", [
                     $user['id'],
                     $deviceUuid,
                     $ipAddress,
@@ -132,11 +136,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $device['hostname'] ?? null,
                     $device['vendor'] ?? null,
                     $device['type'] ?? 'unknown',
-                    $device['icon'] ?? '❓',
+                    $device['icon'] ?? '?',
                     $device['type_name'] ?? 'Unknown'
                 ]);
                 $added++;
-                $deviceId = $db->lastInsertId();
+                $deviceId = $result['lastInsertId'];
             }
             
             // Sync ports
@@ -145,29 +149,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $portNum = $port['port'] ?? $port;
                     $service = $port['service'] ?? 'unknown';
                     
-                    $stmt = $db->prepare("
+                    Database::execute('devices', "
                         INSERT OR REPLACE INTO device_ports (device_id, port_number, service_name, is_open)
                         VALUES (?, ?, ?, 1)
-                    ");
-                    $stmt->execute([$deviceId, $portNum, $service]);
+                    ", [$deviceId, $portNum, $service]);
                 }
             }
             
-            // Check if camera
+            // Check if camera - add to cameras database
             if ($device['type'] === 'ip_camera') {
                 $cameras++;
                 
-                // Add to cameras table
-                $stmt = $camerasDb->prepare("SELECT id FROM discovered_cameras WHERE user_id = ? AND mac_address = ?");
-                $stmt->execute([$user['id'], $macAddress]);
+                $existingCam = Database::queryOne('cameras', 
+                    "SELECT id FROM discovered_cameras WHERE user_id = ? AND mac_address = ?", 
+                    [$user['id'], $macAddress]
+                );
                 
-                if (!$stmt->fetch()) {
-                    $stmt = $camerasDb->prepare("
+                if (!$existingCam) {
+                    Database::execute('cameras', "
                         INSERT INTO discovered_cameras 
                         (user_id, device_id, camera_name, ip_address, mac_address, vendor, is_online, last_seen)
                         VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'))
-                    ");
-                    $stmt->execute([
+                    ", [
                         $user['id'],
                         $deviceUuid ?? uniqid('cam_'),
                         $device['hostname'] ?? $device['type_name'] ?? 'Camera',

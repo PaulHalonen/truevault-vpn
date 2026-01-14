@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Cancelled - TrueVault VPN</title>
+    <style>
+        :root {
+            --primary: #00d9ff;
+            --secondary: #00ff88;
+            --warning: #ffbb00;
+            --bg: #0f0f1a;
+            --card-bg: rgba(255,255,255,0.04);
+            --text: #ffffff;
+            --text-muted: #888888;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg), #1a1a2e);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            text-align: center;
+        }
+        .cancel-icon {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,187,0,0.15);
+            border: 2px solid var(--warning);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+        .cancel-icon svg {
+            width: 60px;
+            height: 60px;
+            stroke: var(--warning);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--warning);
+        }
+        .message {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        .features {
+            text-align: left;
+            list-style: none;
+        }
+        .features li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .features li:last-child { border-bottom: none; }
+        .features li::before {
+            content: '✓';
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 10px 30px rgba(0,217,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="cancel-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v4M12 16h.01"/>
+            </svg>
+        </div>
+        
+        <h1>Payment Cancelled</h1>
+        <p class="message">No worries! Your payment was not processed. You can try again whenever you're ready.</p>
+        
+        <div class="card">
+            <h3>What you're missing:</h3>
+            <ul class="features">
+                <li>256-bit encrypted VPN connection</li>
+                <li>Access to 4 server locations</li>
+                <li>IP camera remote viewing</li>
+                <li>Network device scanner</li>
+                <li>Regional identity management</li>
+                <li>24/7 customer support</li>
+            </ul>
+        </div>
+        
+        <div class="buttons">
+            <a href="/dashboard/pricing.html" class="btn btn-primary">Try Again</a>
+            <a href="/" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

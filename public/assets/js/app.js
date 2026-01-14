@@ -208,15 +208,19 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-                const data = await response.json();
+                const result = await response.json();
                 
-                if (data.success && data.token) {
-                    TokenManager.set(data.token);
-                    if (data.refresh_token) TokenManager.setRefresh(data.refresh_token);
-                    if (data.user) UserManager.set(data.user);
+                // API returns { success, message, data: { user, token, refresh_token, ... } }
+                if (result.success && result.data && result.data.token) {
+                    TokenManager.set(result.data.token);
+                    if (result.data.refresh_token) TokenManager.setRefresh(result.data.refresh_token);
+                    if (result.data.user) UserManager.set(result.data.user);
+                    // Store servers and subscription for dashboard use
+                    if (result.data.servers) localStorage.setItem('truevault_servers', JSON.stringify(result.data.servers));
+                    if (result.data.subscription) localStorage.setItem('truevault_subscription', JSON.stringify(result.data.subscription));
                     return { success: true };
                 }
-                return { success: false, error: data.error || 'Login failed' };
+                return { success: false, error: result.message || 'Login failed' };
             } catch (error) {
                 console.error('Login error:', error);
                 return { success: false, error: 'Network error. Please try again.' };
@@ -230,15 +234,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName })
                 });
-                const data = await response.json();
+                const result = await response.json();
                 
-                if (data.success && data.token) {
-                    TokenManager.set(data.token);
-                    if (data.refresh_token) TokenManager.setRefresh(data.refresh_token);
-                    if (data.user) UserManager.set(data.user);
+                // API returns { success, message, data: { user, token, refresh_token, ... } }
+                if (result.success && result.data && result.data.token) {
+                    TokenManager.set(result.data.token);
+                    if (result.data.refresh_token) TokenManager.setRefresh(result.data.refresh_token);
+                    if (result.data.user) UserManager.set(result.data.user);
+                    if (result.data.servers) localStorage.setItem('truevault_servers', JSON.stringify(result.data.servers));
+                    if (result.data.subscription) localStorage.setItem('truevault_subscription', JSON.stringify(result.data.subscription));
                     return { success: true };
                 }
-                return { success: false, error: data.error || 'Registration failed' };
+                return { success: false, error: result.message || 'Registration failed' };
             } catch (error) {
                 console.error('Register error:', error);
                 return { success: false, error: 'Network error. Please try again.' };

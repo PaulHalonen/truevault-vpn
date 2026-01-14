@@ -1,645 +1,405 @@
 <?php
 /**
- * TrueVault VPN - Database Setup Script (SQLite3 version)
- * Creates all 21 SQLite databases with their tables
+ * TrueVault VPN - Master Database Setup
+ * Creates ALL database tables and seeds initial data
+ * 
+ * Run once: /api/config/setup-databases.php
+ * Or with key: /api/config/setup-databases.php?key=TrueVault2026Setup
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once __DIR__ . '/database.php';
 
-echo "<h2>TrueVault VPN - Database Setup</h2><pre>\n";
-
-// Database directory
-$dbDir = __DIR__ . '/../../data';
-
-// Create data directory if it doesn't exist
-if (!is_dir($dbDir)) {
-    mkdir($dbDir, 0755, true);
-    echo "✅ Created data directory\n";
+// Optional security - can be run directly for first setup
+$setupKey = 'TrueVault2026Setup';
+if (isset($_GET['key']) && $_GET['key'] !== $setupKey) {
+    http_response_code(403);
+    die('Invalid setup key');
 }
 
-// Check if SQLite3 is available
-if (!class_exists('SQLite3')) {
-    die("❌ SQLite3 is not available on this server!\n");
+// Helper to generate UUID
+function generateUUID() {
+    $data = random_bytes(16);
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 }
 
-echo "✅ SQLite3 is available\n\n";
+echo "<pre style='font-family: monospace; background: #1a1a2e; color: #00ff88; padding: 20px; margin: 0; min-height: 100vh;'>";
+echo "╔══════════════════════════════════════════════════════════╗\n";
+echo "║       TrueVault VPN - Master Database Setup              ║\n";
+echo "╚══════════════════════════════════════════════════════════╝\n";
+echo "<span style='color: #888'>Started: " . date('Y-m-d H:i:s') . "</span>\n\n";
 
-// Database schemas
-$schemas = [
-    'users' => [
-        "CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            first_name TEXT,
-            last_name TEXT,
-            plan_type TEXT DEFAULT 'personal',
-            status TEXT DEFAULT 'active',
-            email_verified INTEGER DEFAULT 0,
-            email_verify_token TEXT,
-            password_reset_token TEXT,
-            password_reset_expires TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)"
+// ============ USERS DATABASE ============
+echo "<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  USERS DATABASE                     │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('users');
+
+$db->exec("CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    status TEXT DEFAULT 'active',
+    is_vip INTEGER DEFAULT 0,
+    email_verified INTEGER DEFAULT 0,
+    two_factor_enabled INTEGER DEFAULT 0,
+    two_factor_secret TEXT,
+    last_login DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ users table created\n";
+
+$db->exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
+$db->exec("CREATE INDEX IF NOT EXISTS idx_users_uuid ON users(uuid)");
+
+// Create VIP users table (database-driven VIP list)
+$db->exec("CREATE TABLE IF NOT EXISTS vip_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    type TEXT NOT NULL DEFAULT 'vip_basic',
+    plan TEXT NOT NULL DEFAULT 'family',
+    dedicated_server_id INTEGER,
+    description TEXT,
+    added_by TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ vip_users table created\n";
+$db->exec("CREATE INDEX IF NOT EXISTS idx_vip_email ON vip_users(email)");
+
+// ============ SEED VIP USERS ============
+echo "\n<span style='color: #ffd700'>--- Seeding VIP Users ---</span>\n";
+
+$initialVIPs = [
+    [
+        'email' => 'paulhalonen@gmail.com',
+        'type' => 'owner',
+        'plan' => 'dedicated',
+        'dedicated_server_id' => null,
+        'description' => 'System Owner'
     ],
-    
-    'admin_users' => [
-        "CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            first_name TEXT,
-            last_name TEXT,
-            role TEXT DEFAULT 'admin',
-            status TEXT DEFAULT 'active',
-            last_login TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'subscriptions' => [
-        "CREATE TABLE IF NOT EXISTS subscriptions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            plan_type TEXT NOT NULL,
-            status TEXT DEFAULT 'active',
-            amount REAL,
-            currency TEXT DEFAULT 'USD',
-            billing_cycle TEXT DEFAULT 'monthly',
-            next_billing_date TEXT,
-            cancelled_at TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'payments' => [
-        "CREATE TABLE IF NOT EXISTS payments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            amount REAL NOT NULL,
-            currency TEXT DEFAULT 'USD',
-            status TEXT DEFAULT 'pending',
-            payment_method TEXT,
-            transaction_id TEXT,
-            invoice_number TEXT,
-            description TEXT,
-            refunded_amount REAL,
-            refunded_at TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS payment_methods (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            payment_method TEXT,
-            card_last_four TEXT,
-            card_brand TEXT,
-            is_default INTEGER DEFAULT 0,
-            is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'vpn' => [
-        "CREATE TABLE IF NOT EXISTS vpn_servers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            ip_address TEXT NOT NULL,
-            location TEXT,
-            region TEXT,
-            country_code TEXT,
-            port INTEGER DEFAULT 51820,
-            public_key TEXT,
-            max_connections INTEGER DEFAULT 50,
-            current_load REAL DEFAULT 0,
-            is_vip INTEGER DEFAULT 0,
-            vip_user_email TEXT,
-            status TEXT DEFAULT 'online',
-            provider TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS vpn_connections (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            server_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'connected',
-            assigned_ip TEXT,
-            data_transfer INTEGER DEFAULT 0,
-            connected_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            disconnected_at TEXT
-        )"
-    ],
-    
-    'certificates' => [
-        "CREATE TABLE IF NOT EXISTS user_certificates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT,
-            type TEXT DEFAULT 'device',
-            public_key TEXT,
-            private_key TEXT,
-            certificate TEXT,
-            fingerprint TEXT,
-            status TEXT DEFAULT 'active',
-            expires_at TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS ca_certificates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            public_key TEXT NOT NULL,
-            private_key TEXT NOT NULL,
-            certificate TEXT NOT NULL,
-            is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'devices' => [
-        "CREATE TABLE IF NOT EXISTS user_devices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            type TEXT DEFAULT 'desktop',
-            os TEXT,
-            public_key TEXT,
-            ip_address TEXT,
-            last_active TEXT,
-            is_current INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'identities' => [
-        "CREATE TABLE IF NOT EXISTS regional_identities (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            region TEXT NOT NULL,
-            persistent_ip TEXT,
-            timezone TEXT,
-            fingerprint_hash TEXT,
-            is_active INTEGER DEFAULT 0,
-            last_used TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'mesh' => [
-        "CREATE TABLE IF NOT EXISTS mesh_networks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            owner_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            max_members INTEGER DEFAULT 6,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS mesh_members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            network_id INTEGER NOT NULL,
-            user_id INTEGER,
-            email TEXT,
-            nickname TEXT,
-            role TEXT DEFAULT 'member',
-            permissions TEXT DEFAULT 'full',
-            status TEXT DEFAULT 'pending',
-            joined_at TEXT
-        )",
-        "CREATE TABLE IF NOT EXISTS mesh_invitations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            network_id INTEGER NOT NULL,
-            email TEXT NOT NULL,
-            invite_code TEXT NOT NULL,
-            permissions TEXT DEFAULT 'full',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            expires_at TEXT
-        )",
-        "CREATE TABLE IF NOT EXISTS shared_resources (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            network_id INTEGER NOT NULL,
-            owner_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            type TEXT NOT NULL,
-            local_ip TEXT,
-            access_level TEXT DEFAULT 'view',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'cameras' => [
-        "CREATE TABLE IF NOT EXISTS ip_cameras (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            local_ip TEXT,
-            mac_address TEXT,
-            brand TEXT,
-            model TEXT,
-            stream_url TEXT,
-            port_forward_enabled INTEGER DEFAULT 0,
-            port_forward_external INTEGER,
-            status TEXT DEFAULT 'offline',
-            last_seen TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'themes' => [
-        "CREATE TABLE IF NOT EXISTS themes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            is_active INTEGER DEFAULT 0,
-            variables TEXT NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'pages' => [
-        "CREATE TABLE IF NOT EXISTS pages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            slug TEXT UNIQUE NOT NULL,
-            content TEXT,
-            html TEXT,
-            css TEXT,
-            js TEXT,
-            status TEXT DEFAULT 'draft',
-            template TEXT DEFAULT 'default',
-            meta_title TEXT,
-            meta_description TEXT,
-            view_count INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'emails' => [
-        "CREATE TABLE IF NOT EXISTS email_templates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            slug TEXT UNIQUE NOT NULL,
-            subject TEXT NOT NULL,
-            body TEXT NOT NULL,
-            category TEXT DEFAULT 'general',
-            variables TEXT,
-            sent_count INTEGER DEFAULT 0,
-            open_rate REAL DEFAULT 0,
-            is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS email_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            template_id INTEGER,
-            to_email TEXT NOT NULL,
-            subject TEXT,
-            status TEXT DEFAULT 'sent',
-            opened_at TEXT,
-            clicked_at TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'media' => [
-        "CREATE TABLE IF NOT EXISTS media_files (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT NOT NULL,
-            original_name TEXT,
-            mime_type TEXT,
-            size INTEGER,
-            path TEXT NOT NULL,
-            width INTEGER,
-            height INTEGER,
-            uploaded_by INTEGER,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'logs' => [
-        "CREATE TABLE IF NOT EXISTS system_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            level TEXT DEFAULT 'info',
-            category TEXT DEFAULT 'system',
-            message TEXT NOT NULL,
-            details TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS activity_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            action TEXT NOT NULL,
-            details TEXT,
-            ip_address TEXT,
-            user_agent TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS admin_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            admin_id INTEGER NOT NULL,
-            action TEXT NOT NULL,
-            target_type TEXT,
-            target_id INTEGER,
-            details TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'settings' => [
-        "CREATE TABLE IF NOT EXISTS settings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            key TEXT UNIQUE NOT NULL,
-            value TEXT,
-            type TEXT DEFAULT 'string',
-            category TEXT DEFAULT 'general',
-            description TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'automation' => [
-        "CREATE TABLE IF NOT EXISTS workflows (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            slug TEXT UNIQUE NOT NULL,
-            trigger_type TEXT NOT NULL,
-            trigger_config TEXT,
-            steps TEXT NOT NULL,
-            is_active INTEGER DEFAULT 1,
-            run_count INTEGER DEFAULT 0,
-            success_rate REAL DEFAULT 100,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS workflow_runs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            workflow_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'running',
-            context TEXT,
-            result TEXT,
-            started_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            completed_at TEXT
-        )",
-        "CREATE TABLE IF NOT EXISTS scheduled_tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            workflow_id INTEGER,
-            step_index INTEGER,
-            context TEXT,
-            execute_at TEXT NOT NULL,
-            status TEXT DEFAULT 'pending',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'notifications' => [
-        "CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            type TEXT DEFAULT 'info',
-            title TEXT NOT NULL,
-            message TEXT,
-            is_read INTEGER DEFAULT 0,
-            action_url TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'analytics' => [
-        "CREATE TABLE IF NOT EXISTS page_views (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            page_path TEXT NOT NULL,
-            user_id INTEGER,
-            session_id TEXT,
-            referrer TEXT,
-            ip_address TEXT,
-            user_agent TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            event_name TEXT NOT NULL,
-            event_data TEXT,
-            user_id INTEGER,
-            session_id TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'bandwidth' => [
-        "CREATE TABLE IF NOT EXISTS bandwidth_usage (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            server_id INTEGER NOT NULL,
-            bytes_in INTEGER DEFAULT 0,
-            bytes_out INTEGER DEFAULT 0,
-            period_start TEXT NOT NULL,
-            period_end TEXT NOT NULL
-        )",
-        "CREATE TABLE IF NOT EXISTS bandwidth_credits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            amount INTEGER NOT NULL,
-            reason TEXT,
-            expires_at TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
-    ],
-    
-    'support' => [
-        "CREATE TABLE IF NOT EXISTS support_tickets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            subject TEXT NOT NULL,
-            category TEXT DEFAULT 'general',
-            priority TEXT DEFAULT 'normal',
-            status TEXT DEFAULT 'open',
-            assigned_to INTEGER,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS ticket_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ticket_id INTEGER NOT NULL,
-            user_id INTEGER,
-            admin_id INTEGER,
-            message TEXT NOT NULL,
-            attachments TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS knowledge_base (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            slug TEXT UNIQUE NOT NULL,
-            content TEXT NOT NULL,
-            category TEXT,
-            tags TEXT,
-            view_count INTEGER DEFAULT 0,
-            is_published INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )"
+    [
+        'email' => 'seige235@yahoo.com',
+        'type' => 'vip_dedicated',
+        'plan' => 'dedicated',
+        'dedicated_server_id' => 2,
+        'description' => 'VIP Dedicated - St. Louis Server'
     ]
 ];
 
-// Create databases
-$success = 0;
-$errors = 0;
-
-foreach ($schemas as $dbName => $tables) {
-    $dbPath = "$dbDir/$dbName.db";
+foreach ($initialVIPs as $vip) {
+    // Check if VIP exists
+    $existing = Database::queryOne('users', 
+        "SELECT id FROM vip_users WHERE LOWER(email) = ?", 
+        [strtolower($vip['email'])]
+    );
     
-    try {
-        $db = new SQLite3($dbPath);
-        
-        foreach ($tables as $sql) {
-            $db->exec($sql);
-        }
-        
-        echo "✅ Created: $dbName.db\n";
-        $success++;
-        $db->close();
-        
-    } catch (Exception $e) {
-        echo "❌ Error creating $dbName.db: " . $e->getMessage() . "\n";
-        $errors++;
+    if (!$existing) {
+        Database::execute('users',
+            "INSERT INTO vip_users (email, type, plan, dedicated_server_id, description, added_by, created_at)
+             VALUES (?, ?, ?, ?, ?, 'system_setup', datetime('now'))",
+            [$vip['email'], $vip['type'], $vip['plan'], $vip['dedicated_server_id'], $vip['description']]
+        );
+        echo "✓ Added VIP: {$vip['email']} ({$vip['type']})\n";
+    } else {
+        echo "✓ VIP exists: {$vip['email']}\n";
     }
 }
 
-// Insert default data
-echo "\n--- Inserting default data ---\n";
+// ============ BILLING DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  BILLING DATABASE                   │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('billing');
 
-// Default theme
-try {
-    $db = new SQLite3("$dbDir/themes.db");
-    $themeVars = json_encode([
-        'colors' => [
-            'primary' => '#00d9ff',
-            'secondary' => '#00ff88',
-            'accent' => '#ff6b6b',
-            'background' => '#0f0f1a',
-            'backgroundSecondary' => '#1a1a2e',
-            'text' => '#ffffff',
-            'textMuted' => '#888888',
-            'success' => '#00ff88',
-            'warning' => '#ffbb00',
-            'error' => '#ff5050',
-            'border' => 'rgba(255,255,255,0.08)'
-        ],
-        'gradients' => [
-            'primary' => 'linear-gradient(90deg, #00d9ff, #00ff88)',
-            'background' => 'linear-gradient(135deg, #0f0f1a, #1a1a2e)'
-        ],
-        'typography' => [
-            'fontFamily' => 'Inter, -apple-system, sans-serif',
-            'fontSizeBase' => '16px'
-        ],
-        'buttons' => [
-            'borderRadius' => '8px',
-            'padding' => '10px 20px'
-        ],
-        'cards' => [
-            'borderRadius' => '14px',
-            'padding' => '20px'
-        ]
-    ]);
-    $stmt = $db->prepare("INSERT OR REPLACE INTO themes (id, name, is_active, variables) VALUES (1, 'Default Dark', 1, :vars)");
-    $stmt->bindValue(':vars', $themeVars, SQLITE3_TEXT);
-    $stmt->execute();
-    echo "✅ Default theme inserted\n";
-    $db->close();
-} catch (Exception $e) {
-    echo "❌ Theme error: " . $e->getMessage() . "\n";
+$db->exec("CREATE TABLE IF NOT EXISTS subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    plan_type TEXT NOT NULL,
+    status TEXT DEFAULT 'active',
+    payment_id TEXT,
+    max_devices INTEGER DEFAULT 3,
+    start_date DATETIME,
+    end_date DATETIME,
+    cancelled_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ subscriptions table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS pending_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    order_id TEXT UNIQUE NOT NULL,
+    plan_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ pending_orders table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS invoices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    invoice_number TEXT UNIQUE NOT NULL,
+    plan_id TEXT,
+    amount REAL NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ invoices table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS payment_failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    failure_date DATETIME NOT NULL,
+    grace_end_date DATETIME NOT NULL,
+    retry_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ payment_failures table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS scheduled_revocations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL UNIQUE,
+    revoke_at DATETIME NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ scheduled_revocations table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS webhook_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT,
+    event_id TEXT,
+    payload TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ webhook_log table\n";
+
+// ============ VPN DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  VPN DATABASE                       │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('vpn');
+
+$db->exec("CREATE TABLE IF NOT EXISTS user_peers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    server_id INTEGER NOT NULL,
+    public_key TEXT NOT NULL,
+    assigned_ip TEXT NOT NULL,
+    status TEXT DEFAULT 'active',
+    provisioned_at DATETIME,
+    revoked_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, server_id)
+)");
+echo "✓ user_peers table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS vpn_servers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    location TEXT NOT NULL,
+    ip_address TEXT NOT NULL,
+    port INTEGER DEFAULT 51820,
+    public_key TEXT,
+    network TEXT,
+    status TEXT DEFAULT 'online',
+    is_vip INTEGER DEFAULT 0,
+    vip_user_email TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ vpn_servers table\n";
+
+// Insert/Update servers
+$servers = [
+    [1, 'US-East', 'New York', '66.94.103.91', 51820, 'lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s=', '10.0.0', 0, null],
+    [2, 'US-Central VIP', 'St. Louis', '144.126.133.253', 51820, 'qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM=', '10.0.1', 1, 'seige235@yahoo.com'],
+    [3, 'US-South', 'Dallas', '66.241.124.4', 51820, 'dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk=', '10.10.1', 0, null],
+    [4, 'Canada', 'Toronto', '66.241.125.247', 51820, 'O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=', '10.10.0', 0, null]
+];
+
+$stmt = $db->prepare("INSERT OR REPLACE INTO vpn_servers (id, name, location, ip_address, port, public_key, network, is_vip, vip_user_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+foreach ($servers as $s) { 
+    $stmt->execute($s); 
+}
+echo "✓ Inserted/Updated 4 VPN servers\n";
+
+// ============ DEVICES DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  DEVICES DATABASE                   │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('devices');
+
+$db->exec("CREATE TABLE IF NOT EXISTS user_devices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT DEFAULT 'other',
+    platform TEXT,
+    identifier TEXT,
+    public_key TEXT,
+    last_seen DATETIME,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ user_devices table\n";
+
+// ============ CAMERAS DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  CAMERAS DATABASE                   │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('cameras');
+
+$db->exec("CREATE TABLE IF NOT EXISTS user_cameras (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    local_ip TEXT,
+    port INTEGER DEFAULT 554,
+    brand TEXT,
+    model TEXT,
+    rtsp_path TEXT,
+    username TEXT,
+    password TEXT,
+    forwarding_enabled INTEGER DEFAULT 0,
+    forwarding_port INTEGER,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ user_cameras table\n";
+
+// ============ CERTIFICATES DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  CERTIFICATES DATABASE              │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('certificates');
+
+$db->exec("CREATE TABLE IF NOT EXISTS user_certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT,
+    type TEXT NOT NULL,
+    public_key TEXT,
+    private_key TEXT,
+    fingerprint TEXT,
+    status TEXT DEFAULT 'active',
+    expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ user_certificates table\n";
+
+// ============ LOGS DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  LOGS DATABASE                      │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('logs');
+
+$db->exec("CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    action TEXT NOT NULL,
+    details TEXT,
+    ip_address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ activity_log table\n";
+
+$db->exec("CREATE TABLE IF NOT EXISTS cron_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_name TEXT NOT NULL,
+    results TEXT,
+    duration_ms REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ cron_log table\n";
+
+// ============ ADMIN DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  ADMIN DATABASE                     │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
+$db = Database::getConnection('admin');
+
+$db->exec("CREATE TABLE IF NOT EXISTS admin_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    role TEXT DEFAULT 'admin',
+    status TEXT DEFAULT 'active',
+    last_login DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ admin_users table\n";
+
+// Insert default admin
+$adminEmail = 'paulhalonen@gmail.com';
+$adminPassword = 'Asasasas4!';
+$adminHash = password_hash($adminPassword, PASSWORD_DEFAULT);
+
+$existingAdmin = Database::queryOne('admin', "SELECT id FROM admin_users WHERE email = ?", [$adminEmail]);
+if (!$existingAdmin) {
+    $db->exec("INSERT INTO admin_users (email, password_hash, name, role, status) 
+               VALUES ('$adminEmail', '$adminHash', 'Paul Halonen', 'super_admin', 'active')");
+    echo "✓ Default admin created: $adminEmail\n";
+} else {
+    // Update password hash
+    Database::execute('admin', "UPDATE admin_users SET password_hash = ? WHERE email = ?", [$adminHash, $adminEmail]);
+    echo "✓ Admin password updated: $adminEmail\n";
 }
 
-// Default admin user (password: password)
-try {
-    $db = new SQLite3("$dbDir/admin_users.db");
-    $passwordHash = password_hash('password', PASSWORD_DEFAULT);
-    $stmt = $db->prepare("INSERT OR REPLACE INTO admin_users (id, email, password, first_name, last_name, role) VALUES (1, :email, :pass, 'Kah-Len', 'Halonen', 'super_admin')");
-    $stmt->bindValue(':email', 'kahlen@truthvault.com', SQLITE3_TEXT);
-    $stmt->bindValue(':pass', $passwordHash, SQLITE3_TEXT);
-    $stmt->execute();
-    echo "✅ Default admin user created\n";
-    $db->close();
-} catch (Exception $e) {
-    echo "❌ Admin error: " . $e->getMessage() . "\n";
-}
+// ============ SCANNER DATABASE ============
+echo "\n<span style='color: #00d9ff'>┌─────────────────────────────────────┐</span>\n";
+echo "<span style='color: #00d9ff'>│  SCANNER DATABASE                   │</span>\n";
+echo "<span style='color: #00d9ff'>└─────────────────────────────────────┘</span>\n";
 
-// Default VPN servers with public keys
-try {
-    $db = new SQLite3("$dbDir/vpn.db");
-    // [id, name, ip_address, location, region, country_code, port, is_vip, vip_user_email, status, provider, public_key]
-    $servers = [
-        [1, 'US-East', '66.94.103.91', 'New York', 'US-East', 'US', 51820, 0, NULL, 'online', 'Contabo', 'lbriy+env0wv6VmEJscnjoREswmiQdn7D+1KGai9n3s='],
-        [2, 'US-Central VIP', '144.126.133.253', 'St. Louis', 'US-Central', 'US', 51820, 1, 'seige235@yahoo.com', 'online', 'Contabo', 'qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM='],
-        [3, 'Dallas', '66.241.124.4', 'Dallas', 'US-South', 'US', 51820, 0, NULL, 'online', 'Fly.io', 'dFEz/d9TKfddkOZ6aMNO3uO+jOGgQwXSR/+Ay+IXXmk='],
-        [4, 'Canada', '66.241.125.247', 'Toronto', 'CA-East', 'CA', 51820, 0, NULL, 'online', 'Fly.io', 'O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=']
-    ];
-    
-    foreach ($servers as $s) {
-        $stmt = $db->prepare("INSERT OR REPLACE INTO vpn_servers (id, name, ip_address, location, region, country_code, port, is_vip, vip_user_email, status, provider, public_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bindValue(1, $s[0], SQLITE3_INTEGER);
-        $stmt->bindValue(2, $s[1], SQLITE3_TEXT);
-        $stmt->bindValue(3, $s[2], SQLITE3_TEXT);
-        $stmt->bindValue(4, $s[3], SQLITE3_TEXT);
-        $stmt->bindValue(5, $s[4], SQLITE3_TEXT);
-        $stmt->bindValue(6, $s[5], SQLITE3_TEXT);
-        $stmt->bindValue(7, $s[6], SQLITE3_INTEGER);
-        $stmt->bindValue(8, $s[7], SQLITE3_INTEGER);
-        $stmt->bindValue(9, $s[8], SQLITE3_TEXT);
-        $stmt->bindValue(10, $s[9], SQLITE3_TEXT);
-        $stmt->bindValue(11, $s[10], SQLITE3_TEXT);
-        $stmt->bindValue(12, $s[11], SQLITE3_TEXT);
-        $stmt->execute();
-    }
-    echo "✅ VPN servers inserted (4 servers, 1 VIP) with public keys\n";
-    $db->close();
-} catch (Exception $e) {
-    echo "❌ Servers error: " . $e->getMessage() . "\n";
-}
+// Scanner tokens table in users database
+$db = Database::getConnection('users');
+$db->exec("CREATE TABLE IF NOT EXISTS scanner_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+echo "✓ scanner_tokens table\n";
 
-// Default settings
-try {
-    $db = new SQLite3("$dbDir/settings.db");
-    $settings = [
-        ['site_name', 'TrueVault VPN', 'general'],
-        ['support_email', 'paulhalonen@gmail.com', 'general'],
-        ['timezone', 'America/Chicago', 'general'],
-        ['maintenance_mode', '0', 'general'],
-        ['vip_server_id', '2', 'vip'],
-        ['vip_server_ip', '144.126.133.253', 'vip'],
-        ['vip_authorized_email', 'seige235@yahoo.com', 'vip'],
-        ['paypal_mode', 'live', 'paypal'],
-        ['paypal_client_id', 'ActD2XQKe8EkUNI8eZakmhR8964d2kAdh7rcpbkm2rbr8rrtEOoOdmoj50FtXmy1XLYzALL5ogvxcagk', 'paypal'],
-        ['jwt_secret', 'truevault_jwt_secret_change_this', 'security']
-    ];
-    
-    foreach ($settings as $s) {
-        $stmt = $db->prepare("INSERT OR REPLACE INTO settings (key, value, category) VALUES (?, ?, ?)");
-        $stmt->bindValue(1, $s[0], SQLITE3_TEXT);
-        $stmt->bindValue(2, $s[1], SQLITE3_TEXT);
-        $stmt->bindValue(3, $s[2], SQLITE3_TEXT);
-        $stmt->execute();
-    }
-    echo "✅ Default settings inserted\n";
-    $db->close();
-} catch (Exception $e) {
-    echo "❌ Settings error: " . $e->getMessage() . "\n";
-}
+$db->exec("CREATE TABLE IF NOT EXISTS scanned_devices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    mac_address TEXT NOT NULL,
+    ip_address TEXT,
+    hostname TEXT,
+    vendor TEXT,
+    device_type TEXT,
+    open_ports TEXT,
+    last_seen DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, mac_address)
+)");
+echo "✓ scanned_devices table\n";
 
-echo "\n========================================\n";
-echo "Total: $success databases created, $errors errors\n";
-echo "========================================\n";
+// ============ SUMMARY ============
+echo "\n<span style='color: #ffd700'>╔══════════════════════════════════════════════════════════╗</span>\n";
+echo "<span style='color: #ffd700'>║                    SETUP COMPLETE!                       ║</span>\n";
+echo "<span style='color: #ffd700'>╚══════════════════════════════════════════════════════════╝</span>\n\n";
 
-if ($errors === 0) {
-    echo "\n✅ ALL DATABASES CREATED SUCCESSFULLY!\n\n";
-    echo "Default admin login:\n";
-    echo "  Email: kahlen@truthvault.com\n";
-    echo "  Password: password\n";
-    echo "\n⚠️  CHANGE THIS PASSWORD IMMEDIATELY!\n";
-    echo "\nNow visit: https://vpn.the-truth-publishing.com/\n";
-}
+echo "<span style='color: #00ff88'>✓ All database tables created</span>\n";
+echo "<span style='color: #00ff88'>✓ VIP users seeded</span>\n";
+echo "<span style='color: #00ff88'>✓ VPN servers configured</span>\n";
+echo "<span style='color: #00ff88'>✓ Admin account ready</span>\n\n";
 
+echo "<span style='color: #888'>Admin Login:</span>\n";
+echo "  Email: $adminEmail\n";
+echo "  Password: $adminPassword\n\n";
+
+echo "<span style='color: #888'>VIP Users:</span>\n";
+echo "  - paulhalonen@gmail.com (Owner)\n";
+echo "  - seige235@yahoo.com (Dedicated VIP)\n\n";
+
+echo "<span style='color: #888'>Finished: " . date('Y-m-d H:i:s') . "</span>\n";
 echo "</pre>";

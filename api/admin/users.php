@@ -1,274 +1,173 @@
 <?php
 /**
- * TrueVault VPN - Admin Users API
- * GET/POST/PUT/DELETE /api/admin/users.php
- * 
- * Manages all user accounts
+ * Admin Users API
+ * TrueVault VPN - User Management
  */
 
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/jwt.php';
-require_once __DIR__ . '/../helpers/response.php';
-require_once __DIR__ . '/../helpers/validator.php';
-require_once __DIR__ . '/../helpers/logger.php';
+require_once __DIR__ . '/../helpers/auth.php';
 
-// Require admin authentication
-$token = JWTManager::getBearerToken();
-if (!$token) {
-    Response::unauthorized('No token provided');
+// Verify admin token
+$user = verifyAdminToken();
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit;
 }
 
-$payload = JWTManager::validateToken($token);
-if (!$payload || !isset($payload['is_admin']) || !$payload['is_admin']) {
-    Response::forbidden('Admin access required');
-}
-
-$method = Response::getMethod();
+$method = $_SERVER['REQUEST_METHOD'];
+$db = getDatabase('users');
 
 try {
-    $usersDb = DatabaseManager::getInstance()->users();
-    $subscriptionsDb = DatabaseManager::getInstance()->subscriptions();
-    
     switch ($method) {
         case 'GET':
-            // Get users list or single user
-            $userId = $_GET['id'] ?? null;
+            // List all users
+            $stmt = $db->query("
+                SELECT u.*, 
+                       (SELECT COUNT(*) FROM devices d WHERE d.user_id = u.id) as device_count
+                FROM users u 
+                ORDER BY u.created_at DESC
+            ");
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            if ($userId) {
-                // Get single user
-                $stmt = $usersDb->prepare("
-                    SELECT id, email, first_name, last_name, plan_type, 
-                           subscription_status, is_vip, email_verified, 
-                           created_at, last_login
-                    FROM users 
-                    WHERE id = ?
-                ");
-                $stmt->execute([$userId]);
-                $user = $stmt->fetch();
-                
-                if (!$user) {
-                    Response::notFound('User not found');
-                }
-                
-                // Get device count
-                $stmt = $usersDb->prepare("SELECT COUNT(*) FROM user_devices WHERE user_id = ?");
-                $stmt->execute([$userId]);
-                $user['device_count'] = (int)$stmt->fetchColumn();
-                
-                Response::success(['user' => $user]);
-            } else {
-                // Get all users with pagination
-                $page = (int)($_GET['page'] ?? 1);
-                $perPage = (int)($_GET['per_page'] ?? 20);
-                $offset = ($page - 1) * $perPage;
-                
-                $search = $_GET['search'] ?? '';
-                $status = $_GET['status'] ?? '';
-                $plan = $_GET['plan'] ?? '';
-                
-                $where = '1=1';
-                $params = [];
-                
-                if ($search) {
-                    $where .= " AND (email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)";
-                    $params[] = "%$search%";
-                    $params[] = "%$search%";
-                    $params[] = "%$search%";
-                }
-                
-                if ($status) {
-                    $where .= " AND subscription_status = ?";
-                    $params[] = $status;
-                }
-                
-                if ($plan) {
-                    $where .= " AND plan_type = ?";
-                    $params[] = $plan;
-                }
-                
-                // Get total count
-                $countStmt = $usersDb->prepare("SELECT COUNT(*) FROM users WHERE $where");
-                $countStmt->execute($params);
-                $total = (int)$countStmt->fetchColumn();
-                
-                // Get users
-                $stmt = $usersDb->prepare("
-                    SELECT id, email, first_name, last_name, plan_type, 
-                           subscription_status, is_vip, created_at, last_login
-                    FROM users 
-                    WHERE $where
-                    ORDER BY created_at DESC
-                    LIMIT ? OFFSET ?
-                ");
-                $allParams = array_merge($params, [$perPage, $offset]);
-                $stmt->execute($allParams);
-                $users = $stmt->fetchAll();
-                
-                // Get device counts
-                foreach ($users as &$user) {
-                    $stmt = $usersDb->prepare("SELECT COUNT(*) FROM user_devices WHERE user_id = ?");
-                    $stmt->execute([$user['id']]);
-                    $user['device_count'] = (int)$stmt->fetchColumn();
-                }
-                
-                Response::success([
-                    'users' => $users,
-                    'pagination' => [
-                        'total' => $total,
-                        'page' => $page,
-                        'per_page' => $perPage,
-                        'total_pages' => ceil($total / $perPage)
-                    ],
-                    'stats' => [
-                        'total' => $total,
-                        'active' => countByStatus($usersDb, 'active'),
-                        'trial' => countByStatus($usersDb, 'trial'),
-                        'vip' => countVip($usersDb)
-                    ]
-                ]);
+            // Remove passwords from response
+            foreach ($users as &$u) {
+                unset($u['password']);
             }
+            
+            echo json_encode(['success' => true, 'data' => $users]);
             break;
             
         case 'POST':
             // Create new user
-            $input = Response::getJsonInput();
+            $input = json_decode(file_get_contents('php://input'), true);
             
-            $required = ['email', 'password', 'first_name', 'last_name'];
-            foreach ($required as $field) {
-                if (empty($input[$field])) {
-                    Response::error("$field is required", 400);
-                }
+            if (empty($input['email'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Email required']);
+                exit;
             }
             
             // Check if email exists
-            $stmt = $usersDb->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
             $stmt->execute([$input['email']]);
             if ($stmt->fetch()) {
-                Response::error('Email already exists', 400);
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Email already exists']);
+                exit;
             }
             
-            $planType = $input['plan_type'] ?? 'personal';
-            $status = $input['subscription_status'] ?? 'trial';
+            $password = !empty($input['password']) ? password_hash($input['password'], PASSWORD_DEFAULT) : password_hash('changeme123', PASSWORD_DEFAULT);
             
-            $stmt = $usersDb->prepare("
-                INSERT INTO users (email, password_hash, first_name, last_name, plan_type, subscription_status, is_vip)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+            $stmt = $db->prepare("
+                INSERT INTO users (email, password, first_name, last_name, plan, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
             ");
             $stmt->execute([
                 $input['email'],
-                password_hash($input['password'], PASSWORD_DEFAULT),
-                $input['first_name'],
-                $input['last_name'],
-                $planType,
-                $status,
-                $input['is_vip'] ?? 0
+                $password,
+                $input['first_name'] ?? '',
+                $input['last_name'] ?? '',
+                $input['plan'] ?? 'basic',
+                $input['status'] ?? 'active'
             ]);
             
-            $userId = $usersDb->lastInsertId();
+            $newId = $db->lastInsertId();
             
-            Logger::info('Admin created user', [
-                'admin_id' => $payload['sub'],
-                'user_id' => $userId,
-                'email' => $input['email']
-            ]);
-            
-            Response::success(['user_id' => $userId], 'User created successfully', 201);
+            echo json_encode(['success' => true, 'message' => 'User created', 'id' => $newId]);
             break;
             
         case 'PUT':
             // Update user
-            $input = Response::getJsonInput();
+            $input = json_decode(file_get_contents('php://input'), true);
             
             if (empty($input['id'])) {
-                Response::error('User ID required', 400);
-            }
-            
-            // Check user exists
-            $stmt = $usersDb->prepare("SELECT id FROM users WHERE id = ?");
-            $stmt->execute([$input['id']]);
-            if (!$stmt->fetch()) {
-                Response::notFound('User not found');
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'User ID required']);
+                exit;
             }
             
             $updates = [];
             $params = [];
             
-            $allowedFields = ['email', 'first_name', 'last_name', 'plan_type', 'subscription_status', 'is_vip'];
-            foreach ($allowedFields as $field) {
-                if (isset($input[$field])) {
-                    $updates[] = "$field = ?";
-                    $params[] = $input[$field];
-                }
+            if (isset($input['first_name'])) {
+                $updates[] = "first_name = ?";
+                $params[] = $input['first_name'];
             }
-            
-            // Handle password update
+            if (isset($input['last_name'])) {
+                $updates[] = "last_name = ?";
+                $params[] = $input['last_name'];
+            }
+            if (isset($input['email'])) {
+                $updates[] = "email = ?";
+                $params[] = $input['email'];
+            }
+            if (isset($input['plan'])) {
+                $updates[] = "plan = ?";
+                $params[] = $input['plan'];
+            }
+            if (isset($input['status'])) {
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+            }
             if (!empty($input['password'])) {
-                $updates[] = "password_hash = ?";
+                $updates[] = "password = ?";
                 $params[] = password_hash($input['password'], PASSWORD_DEFAULT);
             }
             
-            if (empty($updates)) {
-                Response::error('No fields to update', 400);
-            }
-            
+            $updates[] = "updated_at = datetime('now')";
             $params[] = $input['id'];
-            $stmt = $usersDb->prepare("UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?");
+            
+            $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
+            $stmt = $db->prepare($sql);
             $stmt->execute($params);
             
-            Logger::info('Admin updated user', [
-                'admin_id' => $payload['sub'],
-                'user_id' => $input['id']
-            ]);
-            
-            Response::success([], 'User updated successfully');
+            echo json_encode(['success' => true, 'message' => 'User updated']);
             break;
             
         case 'DELETE':
             // Delete user
-            $userId = $_GET['id'] ?? null;
+            $id = $_GET['id'] ?? null;
             
-            if (!$userId) {
-                Response::error('User ID required', 400);
+            if (!$id) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'User ID required']);
+                exit;
             }
             
-            // Check user exists
-            $stmt = $usersDb->prepare("SELECT id, email FROM users WHERE id = ?");
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch();
+            // Don't allow deleting VIP users
+            $stmt = $db->prepare("SELECT is_vip, email FROM users WHERE id = ?");
+            $stmt->execute([$id]);
+            $userToDelete = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if (!$user) {
-                Response::notFound('User not found');
+            if ($userToDelete && $userToDelete['is_vip']) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Cannot delete VIP users']);
+                exit;
             }
             
-            // Delete user (cascade will handle related data)
-            $stmt = $usersDb->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->execute([$userId]);
+            $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$id]);
             
-            Logger::info('Admin deleted user', [
-                'admin_id' => $payload['sub'],
-                'user_id' => $userId,
-                'email' => $user['email']
-            ]);
-            
-            Response::success([], 'User deleted successfully');
+            echo json_encode(['success' => true, 'message' => 'User deleted']);
             break;
             
         default:
-            Response::error('Method not allowed', 405);
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     }
     
 } catch (Exception $e) {
-    Logger::error('Admin users error: ' . $e->getMessage());
-    Response::serverError('Failed to process request');
-}
-
-function countByStatus($db, $status) {
-    $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE subscription_status = ?");
-    $stmt->execute([$status]);
-    return (int)$stmt->fetchColumn();
-}
-
-function countVip($db) {
-    $stmt = $db->query("SELECT COUNT(*) FROM users WHERE is_vip = 1");
-    return (int)$stmt->fetchColumn();
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }

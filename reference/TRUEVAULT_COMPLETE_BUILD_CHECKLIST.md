@@ -1,7 +1,7 @@
 # TrueVault VPN - COMPLETE BUILD CHECKLIST
 ## Every Step Required to Build the Entire System
 **Created:** January 11, 2026
-**Last Updated:** January 11, 2026 - 3:45 PM CST
+**Last Updated:** January 13, 2026 - 10:30 PM CST
 
 ---
 
@@ -12,6 +12,64 @@
 - **Production Server:** `/home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com`
 - **Database Type:** SQLite (Separate files - NOT clumped)
 - **Theme System:** 100% Database-driven (NO HARDCODE anywhere)
+
+---
+
+# ⚠️ CRITICAL BUILD RULES - READ BEFORE ANY WORK
+
+## RULE 1: NO PLACEHOLDERS - REAL CODE ONLY
+- Every file created MUST contain FULLY FUNCTIONAL code
+- NO placeholder text like "TODO", "Coming soon", "Implement later"
+- NO dummy functions that just return mock data
+- NO commented-out code blocks waiting to be finished
+- If a feature can't be built yet, DON'T create the file
+- Every API endpoint must actually connect to the database and work
+- Every frontend page must actually call real APIs
+
+## RULE 2: NO HARDCODED STYLES
+- ALL colors come from themes.db → CSS variables
+- ALL fonts come from themes.db → CSS variables  
+- ALL button styles come from themes.db → CSS variables
+- ALL spacing/layout come from themes.db → CSS variables
+- If you see ANY hex color (#ffffff) in HTML/CSS, it's WRONG
+- If you see ANY font-family in HTML/CSS, it's WRONG
+- ONLY use: var(--colors-primary), var(--typography-font-family), etc.
+
+## RULE 3: DATABASE-DRIVEN EVERYTHING
+- Page content: from database (CMS)
+- Email templates: from database
+- Theme/styling: from database (themes.db)
+- Settings: from database
+- Server configs: from database
+- NOTHING hardcoded that should be configurable
+
+## RULE 4: ALWAYS APPEND TO CHAT LOG
+- Every session: APPEND to chat_log.txt
+- Include: date, time, what was done, what was changed
+- NEVER overwrite - only append
+- This is the project history
+
+## RULE 5: VIP SERVER RULE
+- Server 144.126.133.253 is DEDICATED to seige235@yahoo.com
+- Check VIP status on EVERY VPN connection
+- VIP users bypass payment requirements
+- VIP users get unlimited devices/cameras
+
+---
+
+# PLACEHOLDER AUDIT CHECKLIST (NEW)
+
+## Files to Audit for Placeholders:
+- [ ] Audit all /api/*.php files for placeholder code
+- [ ] Audit all /public/*.html files for hardcoded styles
+- [ ] Audit all /public/dashboard/*.html for hardcoded styles
+- [ ] Audit all /public/admin/*.html for hardcoded styles  
+- [ ] Audit /public/assets/css/*.css for hardcoded colors/fonts
+- [ ] Replace any mock/dummy data with real database calls
+- [ ] Replace any "TODO" comments with working code
+- [ ] Remove any console.log debugging statements
+- [ ] Verify all forms submit to real endpoints
+- [ ] Verify all buttons have real click handlers
 
 ---
 
@@ -1815,13 +1873,93 @@
 
 # PROGRESS SUMMARY
 
-**Total Items:** 487
-**Completed:** 45
-**Remaining:** 442
-**Progress:** 9.2%
+**Total Items:** 497 (added 10 audit items)
+**Completed:** ~150 (needs full audit)
+**Remaining:** ~347
+**Progress:** ~30%
 
-**Last Work Session:** January 11, 2026 - 4:00 PM CST
-**Last Item Completed:** Create reference/chat_log.txt
+**Last Work Session:** January 13, 2026 - 10:30 PM CST
+**Last Item Completed:** Fixed login.php frontend bug (data.data.token)
+
+---
+
+# WORK COMPLETED (Sessions Jan 11-13, 2026)
+
+## Phase 1 - COMPLETE
+- [x] All directory structure
+- [x] All reference docs
+- [x] Server verification (all 4 servers)
+- [x] WireGuard public keys documented
+- [x] peer_api.py created
+
+## Phase 2 - MOSTLY COMPLETE  
+- [x] setup-databases.php created
+- [x] All database schemas defined
+- [x] themes.db with default theme
+- [x] users.db schema
+- [x] vip.db for VIP users
+- [x] vpn_servers in database
+
+## Phase 3 - COMPLETE
+- [x] database.php - Database class
+- [x] jwt.php - JWTManager class
+- [x] settings.php - Settings class
+- [x] constants.php
+- [x] response.php - Response class
+- [x] validator.php - Validator class
+- [x] auth.php - Auth helper
+- [x] vip.php - VIPManager, PlanLimits, ServerRules
+- [x] encryption.php
+- [x] logger.php
+
+## Phase 4 - COMPLETE
+- [x] register.php
+- [x] login.php (fixed Jan 13)
+- [x] logout.php
+- [x] refresh.php
+- [x] verify-email.php
+- [x] forgot-password.php
+- [x] reset-password.php
+
+## Phase 6 - COMPLETE
+- [x] servers.php
+- [x] connect.php
+- [x] config.php
+- [x] status.php
+- [x] provisioner.php
+
+## Phase 11 - COMPLETE
+- [x] subscription.php
+- [x] checkout.php
+- [x] complete.php
+- [x] webhook.php
+- [x] cron.php
+- [x] billing-manager.php
+
+## Phase 15 - HTML PAGES COMPLETE (needs style audit)
+- [x] Landing page (index.html)
+- [x] login.html
+- [x] register.html
+- [x] All 11 dashboard pages
+- [x] All 13 admin pages
+- [x] payment-success.html
+- [x] payment-cancel.html
+- [x] downloads/index.html
+
+## STILL NEEDS WORK:
+- [ ] Phase 5: User API (profile, settings, devices)
+- [ ] Phase 7: Certificate API
+- [ ] Phase 8: Device & Camera API (partial)
+- [ ] Phase 9: Port Forwarding API
+- [ ] Phase 10: Mesh Network API
+- [ ] Phase 12: Admin API (partial)
+- [ ] Phase 13: Scanner API
+- [ ] Phase 14: Automation Engine
+- [ ] Phase 16-17: Management & Business Dashboards
+- [ ] Phase 18: Automation workflows
+- [ ] Phase 19: Scanner enhancement
+- [ ] **CRITICAL: Style audit - remove all hardcoded CSS**
+- [ ] **CRITICAL: Placeholder audit - replace with real code**
 
 ---
 

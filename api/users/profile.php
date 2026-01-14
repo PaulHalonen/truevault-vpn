@@ -2,6 +2,8 @@
 /**
  * TrueVault VPN - User Profile
  * GET/PUT /api/users/profile.php
+ * 
+ * FIXED: January 14, 2026 - Changed DatabaseManager to Database class
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -17,34 +19,41 @@ $method = Response::getMethod();
 
 switch ($method) {
     case 'GET':
-        // Get profile
-        $subscription = Auth::getUserSubscription($user['id']);
-        
-        // Get device count
-        $db = DatabaseManager::getInstance()->users();
-        $stmt = $db->prepare("SELECT COUNT(*) as count FROM user_devices WHERE user_id = ? AND is_active = 1");
-        $stmt->execute([$user['id']]);
-        $deviceCount = $stmt->fetch()['count'];
-        
-        // Get camera count
-        $camerasDb = DatabaseManager::getInstance()->cameras();
-        $stmt = $camerasDb->prepare("SELECT COUNT(*) as count FROM discovered_cameras WHERE user_id = ?");
-        $stmt->execute([$user['id']]);
-        $cameraCount = $stmt->fetch()['count'];
-        
-        // Sanitize user data
-        $userData = Auth::sanitizeUser($user);
-        
-        Response::success([
-            'user' => $userData,
-            'subscription' => $subscription,
-            'stats' => [
-                'device_count' => (int) $deviceCount,
-                'device_limit' => (int) $user['device_limit'],
-                'camera_count' => (int) $cameraCount,
-                'mesh_user_limit' => (int) $user['mesh_user_limit']
-            ]
-        ]);
+        try {
+            // Get subscription info
+            $subscription = Auth::getUserSubscription($user['id']);
+            
+            // Get device count
+            $deviceResult = Database::queryOne('devices', 
+                "SELECT COUNT(*) as count FROM user_devices WHERE user_id = ? AND is_active = 1", 
+                [$user['id']]
+            );
+            $deviceCount = $deviceResult['count'] ?? 0;
+            
+            // Get camera count
+            $cameraResult = Database::queryOne('cameras', 
+                "SELECT COUNT(*) as count FROM discovered_cameras WHERE user_id = ?", 
+                [$user['id']]
+            );
+            $cameraCount = $cameraResult['count'] ?? 0;
+            
+            // Sanitize user data
+            $userData = Auth::sanitizeUser($user);
+            
+            Response::success([
+                'user' => $userData,
+                'subscription' => $subscription,
+                'stats' => [
+                    'device_count' => (int) $deviceCount,
+                    'device_limit' => (int) ($user['device_limit'] ?? 3),
+                    'camera_count' => (int) $cameraCount,
+                    'mesh_user_limit' => (int) ($user['mesh_user_limit'] ?? 0)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Logger::error('Profile fetch failed: ' . $e->getMessage());
+            Response::serverError('Failed to get profile');
+        }
         break;
         
     case 'PUT':
@@ -81,19 +90,19 @@ switch ($method) {
         $params[] = $user['id'];
         
         try {
-            $db = DatabaseManager::getInstance()->users();
             $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
+            Database::execute('users', $sql, $params);
             
             // Get updated user
-            $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$user['id']]);
-            $updatedUser = Auth::sanitizeUser($stmt->fetch());
+            $updatedUser = Database::queryOne('users', 
+                "SELECT * FROM users WHERE id = ?", 
+                [$user['id']]
+            );
+            $userData = Auth::sanitizeUser($updatedUser);
             
             Logger::info('Profile updated', ['user_id' => $user['id']]);
             
-            Response::success(['user' => $updatedUser], 'Profile updated successfully');
+            Response::success(['user' => $userData], 'Profile updated successfully');
             
         } catch (Exception $e) {
             Logger::error('Profile update failed: ' . $e->getMessage());

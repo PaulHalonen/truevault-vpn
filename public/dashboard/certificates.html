@@ -48,27 +48,32 @@
         .modal-content{background:var(--colors-background-secondary);border:1px solid var(--colors-border);border-radius:var(--cards-border-radius);padding:30px;width:100%;max-width:500px}
         .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
         .modal-close{background:none;border:none;color:var(--colors-text-muted);font-size:1.5rem;cursor:pointer}
+        .cert-details-modal{max-width:600px}
+        .cert-detail-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--colors-border)}
+        .cert-detail-row:last-child{border-bottom:none}
+        .cert-detail-label{color:var(--colors-text-muted)}
+        .cert-detail-value{font-family:monospace;text-align:right;max-width:300px;word-break:break-all}
     </style>
 </head>
 <body class="dashboard-body">
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><span class="logo-icon">🛡️</span><h1>TrueVault</h1></div>
+        <div class="sidebar-header"><span class="logo-icon">&#128737;</span><h1>TrueVault</h1></div>
         <nav class="sidebar-nav">
-            <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span><span>Overview</span></a>
-            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">🔌</span><span>Connect</span></a>
-            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">🌐</span><span>Servers</span></a>
-            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">🎭</span><span>Identities</span></a>
-            <a href="/dashboard/certificates.html" class="nav-item active"><span class="nav-icon">📜</span><span>Certificates</span></a>
-            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">📱</span><span>Devices</span></a>
-            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">📷</span><span>Cameras</span></a>
-            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">👨‍👩‍👧‍👦</span><span>Mesh Network</span></a>
+            <a href="/dashboard/" class="nav-item"><span class="nav-icon">&#128200;</span><span>Overview</span></a>
+            <a href="/dashboard/connect.html" class="nav-item"><span class="nav-icon">&#128279;</span><span>Connect</span></a>
+            <a href="/dashboard/servers.html" class="nav-item"><span class="nav-icon">&#127760;</span><span>Servers</span></a>
+            <a href="/dashboard/identities.html" class="nav-item"><span class="nav-icon">&#128100;</span><span>Identities</span></a>
+            <a href="/dashboard/certificates.html" class="nav-item active"><span class="nav-icon">&#128274;</span><span>Certificates</span></a>
+            <a href="/dashboard/devices.html" class="nav-item"><span class="nav-icon">&#128241;</span><span>Devices</span></a>
+            <a href="/dashboard/cameras.html" class="nav-item"><span class="nav-icon">&#128247;</span><span>Cameras</span></a>
+            <a href="/dashboard/mesh.html" class="nav-item"><span class="nav-icon">&#128279;</span><span>Mesh Network</span></a>
             <div class="nav-divider"></div>
-            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">🔍</span><span>Network Scanner</span></a>
-            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
-            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">💳</span><span>Billing</span></a>
+            <a href="/dashboard/scanner.html" class="nav-item"><span class="nav-icon">&#128269;</span><span>Network Scanner</span></a>
+            <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#9881;</span><span>Settings</span></a>
+            <a href="/dashboard/billing.html" class="nav-item"><span class="nav-icon">&#128179;</span><span>Billing</span></a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-info"><div class="user-avatar">👤</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
+            <div class="user-info"><div class="user-avatar">&#128100;</div><div class="user-details"><span class="user-name" id="userName">Loading...</span><span class="user-plan" id="userPlan">-</span></div></div>
             <button class="btn btn-secondary btn-small" onclick="TrueVault.Auth.logout()">Logout</button>
         </div>
     </aside>
@@ -76,7 +81,7 @@
     <main class="main-content">
         <header class="dashboard-header">
             <div>
-                <h1>📜 Certificates</h1>
+                <h1>&#128274; Certificates</h1>
                 <p class="text-muted">Your personal certificate authority and issued certificates</p>
             </div>
         </header>
@@ -84,7 +89,7 @@
         <!-- CA Status Card -->
         <div class="ca-card" id="caCard">
             <div class="ca-header">
-                <span class="ca-icon" id="caIcon">🔐</span>
+                <span class="ca-icon" id="caIcon">&#128274;</span>
                 <div class="ca-info">
                     <h2 id="caTitle">Loading...</h2>
                     <p class="text-muted" id="caSubtitle">Checking your certificate authority...</p>
@@ -95,27 +100,27 @@
         </div>
         
         <!-- Certificates Grid -->
-        <h3 style="margin-bottom:20px">📋 Your Certificates</h3>
+        <h3 style="margin-bottom:20px">&#128196; Your Certificates</h3>
         <div class="certs-grid" id="certsGrid">
             <div class="loading">Loading certificates...</div>
         </div>
         
         <!-- Generate New Certificate -->
         <div class="generate-section">
-            <h3>➕ Generate New Certificate</h3>
+            <h3>&#10133; Generate New Certificate</h3>
             <div class="generate-options">
                 <div class="generate-option" onclick="showGenerateModal('device')">
-                    <div class="icon">📱</div>
+                    <div class="icon">&#128241;</div>
                     <h4>Device Certificate</h4>
                     <p>Secure a new device</p>
                 </div>
                 <div class="generate-option" onclick="showGenerateModal('regional')">
-                    <div class="icon">🌍</div>
+                    <div class="icon">&#127760;</div>
                     <h4>Regional Identity</h4>
                     <p>Create regional persona</p>
                 </div>
                 <div class="generate-option" onclick="showGenerateModal('mesh')">
-                    <div class="icon">🔗</div>
+                    <div class="icon">&#128279;</div>
                     <h4>Mesh Certificate</h4>
                     <p>For family mesh network</p>
                 </div>
@@ -128,7 +133,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Generate Certificate</h2>
-                <button class="modal-close" onclick="hideModal()">&times;</button>
+                <button class="modal-close" onclick="hideModal('generateModal')">&times;</button>
             </div>
             <form id="generateForm">
                 <input type="hidden" name="type" id="certType">
@@ -141,21 +146,36 @@
                 <div class="form-group" id="regionGroup" style="display:none">
                     <label>Region</label>
                     <select name="region_code" id="regionCode">
-                        <option value="US">🇺🇸 United States</option>
-                        <option value="CA">🇨🇦 Canada</option>
-                        <option value="UK">🇬🇧 United Kingdom</option>
-                        <option value="DE">🇩🇪 Germany</option>
-                        <option value="FR">🇫🇷 France</option>
-                        <option value="AU">🇦🇺 Australia</option>
-                        <option value="JP">🇯🇵 Japan</option>
+                        <option value="US">&#127482;&#127480; United States</option>
+                        <option value="CA">&#127464;&#127462; Canada</option>
+                        <option value="UK">&#127468;&#127463; United Kingdom</option>
+                        <option value="DE">&#127465;&#127466; Germany</option>
+                        <option value="FR">&#127467;&#127479; France</option>
+                        <option value="AU">&#127462;&#127482; Australia</option>
+                        <option value="JP">&#127471;&#127477; Japan</option>
                     </select>
                 </div>
                 
                 <div style="display:flex;gap:10px;margin-top:25px">
-                    <button type="button" class="btn btn-secondary" onclick="hideModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1">🔐 Generate</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideModal('generateModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1">&#128274; Generate</button>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    <!-- View Certificate Modal -->
+    <div class="modal" id="viewModal">
+        <div class="modal-content cert-details-modal">
+            <div class="modal-header">
+                <h2>Certificate Details</h2>
+                <button class="modal-close" onclick="hideModal('viewModal')">&times;</button>
+            </div>
+            <div id="certDetailsContent"></div>
+            <div style="margin-top:20px;display:flex;gap:10px">
+                <button class="btn btn-secondary" onclick="hideModal('viewModal')">Close</button>
+                <button class="btn btn-primary" id="downloadFromViewBtn">&#128229; Download</button>
+            </div>
         </div>
     </div>
     
@@ -166,6 +186,7 @@
         
         let certificates = [];
         let hasCA = false;
+        let caInfo = null;
         
         const user = TrueVault.Auth.getUser();
         if (user) {
@@ -178,16 +199,17 @@
             
             if (result.success) {
                 hasCA = result.data.has_ca;
+                caInfo = result.data.ca_info;
                 certificates = result.data.certificates || [];
                 
-                renderCA(result.data.ca_info);
+                renderCA(caInfo);
                 renderCertificates();
             } else {
                 document.getElementById('caCard').innerHTML = '<p class="text-error">Failed to load certificates</p>';
             }
         }
         
-        function renderCA(caInfo) {
+        function renderCA(info) {
             const card = document.getElementById('caCard');
             const icon = document.getElementById('caIcon');
             const title = document.getElementById('caTitle');
@@ -195,24 +217,24 @@
             const details = document.getElementById('caDetails');
             const actions = document.getElementById('caActions');
             
-            if (hasCA && caInfo) {
+            if (hasCA && info) {
                 card.classList.remove('no-ca');
-                icon.textContent = '🔐';
+                icon.innerHTML = '&#128274;';
                 title.textContent = 'Your Personal CA';
                 subtitle.textContent = 'Your cryptographic identity is active and secure';
                 
                 details.innerHTML = `
                     <div class="ca-detail">
                         <div class="ca-detail-label">Serial Number</div>
-                        <div class="ca-detail-value">${caInfo.serial_number}</div>
+                        <div class="ca-detail-value">${info.serial_number || 'N/A'}</div>
                     </div>
                     <div class="ca-detail">
                         <div class="ca-detail-label">Created</div>
-                        <div class="ca-detail-value">${formatDate(caInfo.created_at)}</div>
+                        <div class="ca-detail-value">${formatDate(info.created_at)}</div>
                     </div>
                     <div class="ca-detail">
                         <div class="ca-detail-label">Expires</div>
-                        <div class="ca-detail-value">${formatDate(caInfo.expires_at)}</div>
+                        <div class="ca-detail-value">${formatDate(info.expires_at)}</div>
                     </div>
                     <div class="ca-detail">
                         <div class="ca-detail-label">Certificates Issued</div>
@@ -221,16 +243,17 @@
                 `;
                 
                 actions.innerHTML = `
-                    <button class="btn btn-secondary" onclick="backupCA()">📥 Backup CA</button>
+                    <button class="btn btn-secondary" onclick="backupCA()">&#128229; Backup CA</button>
+                    <button class="btn btn-secondary" onclick="exportCAPublicKey()" style="margin-left:10px">&#128273; Export Public Key</button>
                 `;
             } else {
                 card.classList.add('no-ca');
-                icon.textContent = '⚠️';
+                icon.innerHTML = '&#9888;';
                 title.textContent = 'No Certificate Authority';
                 subtitle.textContent = 'Create your personal CA to start issuing certificates';
                 details.innerHTML = '';
                 actions.innerHTML = `
-                    <button class="btn btn-primary btn-large" onclick="createCA()">🔐 Create Your Certificate Authority</button>
+                    <button class="btn btn-primary btn-large" onclick="createCA()">&#128274; Create Your Certificate Authority</button>
                 `;
             }
         }
@@ -256,12 +279,12 @@
                             <span class="cert-type ${cert.certificate_type}">${cert.certificate_type}</span>
                             <span class="badge badge-${status.badge}">${status.text}</span>
                         </div>
-                        <div class="cert-name">${cert.certificate_name}</div>
-                        <div class="cert-serial">Serial: ${cert.serial_number}</div>
+                        <div class="cert-name">${escapeHtml(cert.certificate_name)}</div>
+                        <div class="cert-serial">Serial: ${cert.serial_number || 'N/A'}</div>
                         <div class="cert-dates">
                             <div class="cert-date">
                                 <div class="cert-date-label">Issued</div>
-                                <div class="cert-date-value">${formatDate(cert.issued_at)}</div>
+                                <div class="cert-date-value">${formatDate(cert.issued_at || cert.created_at)}</div>
                             </div>
                             <div class="cert-date">
                                 <div class="cert-date-label">Expires</div>
@@ -269,9 +292,9 @@
                             </div>
                         </div>
                         <div class="cert-actions">
-                            <button class="btn btn-secondary btn-small" onclick="downloadCert(${cert.id})">📥 Download</button>
-                            <button class="btn btn-secondary btn-small" onclick="viewCert(${cert.id})">👁️ View</button>
-                            <button class="btn btn-danger btn-small" onclick="revokeCert(${cert.id})">🗑️ Revoke</button>
+                            <button class="btn btn-secondary btn-small" onclick="downloadCert(${cert.id})">&#128229; Download</button>
+                            <button class="btn btn-secondary btn-small" onclick="viewCert(${cert.id})">&#128065; View</button>
+                            ${cert.status !== 'revoked' ? `<button class="btn btn-danger btn-small" onclick="revokeCert(${cert.id})">&#10060; Revoke</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -279,29 +302,42 @@
         }
         
         function getCertStatus(cert) {
+            if (cert.status === 'revoked') return { text: 'Revoked', badge: 'error', class: 'expired' };
+            
             const now = new Date();
             const expires = new Date(cert.expires_at);
             const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
             
-            if (cert.status === 'revoked') return { text: 'Revoked', badge: 'error', class: 'expired' };
             if (daysLeft < 0) return { text: 'Expired', badge: 'error', class: 'expired' };
             if (daysLeft < 30) return { text: `${daysLeft}d left`, badge: 'warning', class: 'expiring' };
             return { text: 'Valid', badge: 'success', class: '' };
         }
         
         function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
             return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
         
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
         async function createCA() {
-            if (!confirm('Create your Personal Certificate Authority? This is a one-time action.')) return;
+            if (!confirm('Create your Personal Certificate Authority? This will be your root of trust for all certificates.')) return;
             
             TrueVault.Toast.info('Creating your Certificate Authority...');
             
-            const result = await TrueVault.API.post('/certificates/index.php', { type: 'root', name: 'Personal Root CA' });
+            const result = await TrueVault.API.post('/certificates/index.php', { 
+                action: 'create_ca',
+                type: 'root', 
+                name: 'Personal Root CA' 
+            });
             
             if (result.success) {
-                TrueVault.Toast.success('Certificate Authority created!');
+                TrueVault.Toast.success('Certificate Authority created successfully!');
                 loadCertificates();
             } else {
                 TrueVault.Toast.error(result.error || 'Failed to create CA');
@@ -317,58 +353,192 @@
             document.getElementById('certType').value = type;
             document.getElementById('certName').value = '';
             
-            const titles = { device: '📱 Device Certificate', regional: '🌍 Regional Identity', mesh: '🔗 Mesh Certificate' };
-            document.getElementById('modalTitle').textContent = titles[type] || 'Generate Certificate';
+            const titles = { 
+                device: '&#128241; Device Certificate', 
+                regional: '&#127760; Regional Identity', 
+                mesh: '&#128279; Mesh Certificate' 
+            };
+            document.getElementById('modalTitle').innerHTML = titles[type] || 'Generate Certificate';
             
             document.getElementById('regionGroup').style.display = type === 'regional' ? 'block' : 'none';
             
             document.getElementById('generateModal').classList.add('active');
         }
         
-        function hideModal() {
-            document.getElementById('generateModal').classList.remove('active');
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
         
         document.getElementById('generateForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const data = TrueVault.Form.serialize(this);
+            const formData = new FormData(this);
+            const data = {
+                action: 'generate',
+                type: formData.get('type'),
+                name: formData.get('name')
+            };
+            
+            if (formData.get('type') === 'regional') {
+                data.region_code = formData.get('region_code');
+            }
+            
             TrueVault.Toast.info('Generating certificate...');
             
             const result = await TrueVault.API.post('/certificates/index.php', data);
             
             if (result.success) {
-                TrueVault.Toast.success('Certificate generated!');
-                hideModal();
+                TrueVault.Toast.success('Certificate generated successfully!');
+                hideModal('generateModal');
                 loadCertificates();
             } else {
                 TrueVault.Toast.error(result.error || 'Failed to generate certificate');
             }
         });
         
-        function downloadCert(id) {
-            TrueVault.Toast.info('Preparing download...');
-            // In production: API call to get certificate file
+        async function downloadCert(id) {
+            TrueVault.Toast.info('Preparing certificate download...');
+            
+            const result = await TrueVault.API.get(`/certificates/index.php?action=download&id=${id}`);
+            
+            if (result.success && result.data.certificate_data) {
+                // Create downloadable file
+                const blob = new Blob([result.data.certificate_data], { type: 'application/x-pem-file' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = result.data.filename || `certificate_${id}.pem`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                TrueVault.Toast.success('Certificate downloaded!');
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to download certificate');
+            }
         }
         
         function viewCert(id) {
-            TrueVault.Toast.info('Certificate details coming soon');
+            const cert = certificates.find(c => c.id === id);
+            if (!cert) {
+                TrueVault.Toast.error('Certificate not found');
+                return;
+            }
+            
+            const status = getCertStatus(cert);
+            
+            document.getElementById('certDetailsContent').innerHTML = `
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Name</span>
+                    <span class="cert-detail-value">${escapeHtml(cert.certificate_name)}</span>
+                </div>
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Type</span>
+                    <span class="cert-detail-value">${cert.certificate_type}</span>
+                </div>
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Serial Number</span>
+                    <span class="cert-detail-value">${cert.serial_number || 'N/A'}</span>
+                </div>
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Status</span>
+                    <span class="cert-detail-value"><span class="badge badge-${status.badge}">${status.text}</span></span>
+                </div>
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Issued</span>
+                    <span class="cert-detail-value">${formatDate(cert.issued_at || cert.created_at)}</span>
+                </div>
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Expires</span>
+                    <span class="cert-detail-value">${formatDate(cert.expires_at)}</span>
+                </div>
+                ${cert.region_code ? `
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Region</span>
+                    <span class="cert-detail-value">${cert.region_code}</span>
+                </div>
+                ` : ''}
+                ${cert.fingerprint ? `
+                <div class="cert-detail-row">
+                    <span class="cert-detail-label">Fingerprint (SHA256)</span>
+                    <span class="cert-detail-value" style="font-size:0.7rem">${cert.fingerprint}</span>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('downloadFromViewBtn').onclick = () => downloadCert(id);
+            document.getElementById('viewModal').classList.add('active');
         }
         
         async function revokeCert(id) {
-            if (!confirm('Revoke this certificate? This cannot be undone.')) return;
-            TrueVault.Toast.success('Certificate revoked');
-            loadCertificates();
+            const cert = certificates.find(c => c.id === id);
+            if (!confirm(`Revoke certificate "${cert?.certificate_name}"? This action cannot be undone.`)) return;
+            
+            TrueVault.Toast.info('Revoking certificate...');
+            
+            const result = await TrueVault.API.post('/certificates/index.php', {
+                action: 'revoke',
+                id: id
+            });
+            
+            if (result.success) {
+                TrueVault.Toast.success('Certificate revoked');
+                loadCertificates();
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to revoke certificate');
+            }
         }
         
-        function backupCA() {
-            TrueVault.Toast.info('Backup feature coming soon');
+        async function backupCA() {
+            TrueVault.Toast.info('Preparing CA backup...');
+            
+            const result = await TrueVault.API.get('/certificates/index.php?action=backup_ca');
+            
+            if (result.success && result.data.backup_data) {
+                const blob = new Blob([JSON.stringify(result.data.backup_data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `truevault_ca_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                TrueVault.Toast.success('CA backup downloaded! Store this file securely.');
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to create backup');
+            }
         }
         
-        document.getElementById('generateModal').addEventListener('click', function(e) {
-            if (e.target === this) hideModal();
+        async function exportCAPublicKey() {
+            TrueVault.Toast.info('Exporting public key...');
+            
+            const result = await TrueVault.API.get('/certificates/index.php?action=export_public');
+            
+            if (result.success && result.data.public_key) {
+                const blob = new Blob([result.data.public_key], { type: 'application/x-pem-file' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'truevault_ca_public.pem';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                TrueVault.Toast.success('Public key exported!');
+            } else {
+                TrueVault.Toast.error(result.error || 'Failed to export public key');
+            }
+        }
+        
+        // Modal click outside to close
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) hideModal(this.id);
+            });
         });
         
+        // Load on page ready
         loadCertificates();
     </script>
 </body>
