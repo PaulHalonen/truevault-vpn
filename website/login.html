@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - TrueVault VPN</title>
+    <style>
+        :root {
+            --primary: #00d9ff;
+            --secondary: #00ff88;
+            --bg: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --text: #ffffff;
+            --text-muted: #888888;
+            --error: #ff6464;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg), var(--bg-secondary));
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 40px 35px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+        .tab.active {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+            font-weight: 600;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,217,255,0.1);
+        }
+        .form-input::placeholder { color: rgba(255,255,255,0.3); }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            color: var(--bg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,217,255,0.3);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .alert-error {
+            background: rgba(255,100,100,0.15);
+            color: var(--error);
+            border: 1px solid rgba(255,100,100,0.3);
+        }
+        .alert-success {
+            background: rgba(0,255,136,0.15);
+            color: var(--secondary);
+            border: 1px solid rgba(0,255,136,0.3);
+        }
+        
+        .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .links a:hover { text-decoration: underline; }
+        
+        .hidden { display: none !important; }
+        
+        .password-toggle {
+            position: relative;
+        }
+        .password-toggle .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <div class="logo-icon">🔐</div>
+                <h1>TrueVault VPN</h1>
+                <p>Secure • Private • Fast</p>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('login')">Login</div>
+                <div class="tab" onclick="showTab('register')">Register</div>
+            </div>
+            
+            <div id="alert"></div>
+            
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="password-toggle">
+                        <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="toggle-btn" onclick="togglePassword(this)">👁️</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="login-btn">Login</button>
+                <div class="links">
+                    <a href="/forgot-password.html">Forgot password?</a>
+                </div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="password-toggle">
+                        <input type="password" name="password" class="form-input" placeholder="Min. 8 characters" required minlength="8">
+                        <button type="button" class="toggle-btn" onclick="togglePassword(this)">👁️</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" name="confirm_password" class="form-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" id="register-btn">Create Account</button>
+                <div class="links">
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-top:15px">
+                        By registering, you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+
+        // Check if already logged in
+        if (localStorage.getItem('auth_token')) {
+            window.location.href = '/dashboard/';
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab:${tab === 'login' ? 'first' : 'last'}-child`).classList.add('active');
+            
+            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('alert').innerHTML = '';
+        }
+
+        function showAlert(message, type = 'error') {
+            document.getElementById('alert').innerHTML = 
+                `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        function togglePassword(btn) {
+            const input = btn.previousElementSibling;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            btn.textContent = isPassword ? '🙈' : '👁️';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('login-btn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+            
+            try {
+                const res = await fetch(`${API}/auth/login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: form.email.value,
+                        password: form.password.value
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success && data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    window.location.href = '/dashboard/';
+                } else {
+                    showAlert(data.error || 'Login failed');
+                }
+            } catch (err) {
+                showAlert('Network error. Please try again.');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Login';
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('register-btn');
+            
+            if (form.password.value !== form.confirm_password.value) {
+                showAlert('Passwords do not match');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+            
+            try {
+                const res = await fetch(`${API}/auth/register.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: form.email.value,
+                        password: form.password.value
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success && data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    window.location.href = '/dashboard/';
+                } else {
+                    showAlert(data.error || 'Registration failed');
+                }
+            } catch (err) {
+                showAlert('Network error. Please try again.');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+        }
+    </script>
+</body>
+</html>
