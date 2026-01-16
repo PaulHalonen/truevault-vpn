@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueVault VPN - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-styles">
+        /* Base styles - will be overridden by database values */
+        :root {
+            --primary: #00d9ff;
+            --secondary: #00ff88;
+            --accent: #ff6b6b;
+            --bg: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --text: #ffffff;
+            --text-muted: #888888;
+            --success: #00ff88;
+            --error: #ff6464;
+            --card-radius: 14px;
+            --btn-radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg), var(--bg-secondary));
+            color: var(--text);
+            min-height: 100vh;
+        }
+        /* Layout */
+        .app { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 250px;
+            background: rgba(255,255,255,0.02);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .main { flex: 1; margin-left: 250px; padding: 25px; }
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+        }
+        .logo h1 {
+            font-size: 1.3rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo small { color: var(--text-muted); font-size: 0.75rem; }
+        /* Navigation */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0,217,255,0.1);
+            color: var(--primary);
+        }
+        .nav-item.active { border-left: 3px solid var(--primary); }
+        .nav-icon { font-size: 1.2rem; }
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .card-title { font-size: 1.1rem; font-weight: 600; }
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; margin-top: 5px; }
+        /* Buttons */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--btn-radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,217,255,0.3); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn-danger { background: rgba(255,100,100,0.15); color: var(--error); }
+        .btn-small { padding: 6px 12px; font-size: 0.8rem; }
+        /* Tables */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        th { color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        /* Badges */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(0,255,136,0.15); color: var(--success); }
+        .badge-warning { background: rgba(255,170,0,0.15); color: #ffaa00; }
+        .badge-danger { background: rgba(255,100,100,0.15); color: var(--error); }
+        .badge-info { background: rgba(0,217,255,0.15); color: var(--primary); }
+        /* Forms */
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.9rem; }
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--btn-radius);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        select.form-input { cursor: pointer; }
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 1.2rem; font-weight: 600; }
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+        /* Tabs */
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.95rem;
+            border-bottom: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Login */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .login-logo { text-align: center; margin-bottom: 30px; }
+        .login-logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .alert {
+            padding: 12px 15px;
+            border-radius: var(--btn-radius);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
+        .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
+        /* Utilities */
+        .hidden { display: none !important; }
+        .text-muted { color: var(--text-muted); }
+        .text-success { color: var(--success); }
+        .text-error { color: var(--error); }
+        .text-right { text-align: right; }
+        .flex { display: flex; }
+        .gap-10 { gap: 10px; }
+        .mt-20 { margin-top: 20px; }
+        .mb-10 { margin-bottom: 10px; }
+        /* Color preview */
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .color-row { display: flex; align-items: center; gap: 12px; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <div class="login-logo">
+                <div style="font-size:3rem;margin-bottom:10px">🔐</div>
+                <h1>TrueVault VPN</h1>
+                <p class="text-muted">Admin Dashboard</p>
+            </div>
+            <div id="login-error" class="alert alert-error hidden"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="login-email" class="form-input" placeholder="admin@truevault.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-top:10px">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-screen" class="app hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🔐 TrueVault</h1>
+                <small>Admin Dashboard</small>
+            </div>
+            <nav>
+                <a class="nav-item active" data-section="dashboard">
+                    <span class="nav-icon">📊</span> Dashboard
+                </a>
+                <a class="nav-item" data-section="users">
+                    <span class="nav-icon">👥</span> Users
+                </a>
+                <a class="nav-item" data-section="servers">
+                    <span class="nav-icon">🖥️</span> Servers
+                </a>
+                <a class="nav-item" data-section="billing">
+                    <span class="nav-icon">💳</span> Billing
+                </a>
+                <a class="nav-item" data-section="settings">
+                    <span class="nav-icon">⚙️</span> Settings
+                </a>
+                <a class="nav-item" data-section="theme">
+                    <span class="nav-icon">🎨</span> Theme
+                </a>
+                <a class="nav-item" data-section="vip">
+                    <span class="nav-icon">⭐</span> VIP Users
+                </a>
+                <div style="padding:20px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
+                    <button id="logout-btn" class="btn btn-secondary" style="width:100%">
+                        🚪 Logout
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Dashboard Section -->
+            <section id="section-dashboard" class="section">
+                <h2 style="margin-bottom:20px">📊 Dashboard Overview</h2>
+                <div id="stats-loading" class="loading">
+                    <div class="spinner"></div> Loading stats...
+                </div>
+                <div id="stats-content" class="hidden">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-users">0</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-active">0</div>
+                            <div class="stat-label">Active Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-devices">0</div>
+                            <div class="stat-label">Devices</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-revenue">$0</div>
+                            <div class="stat-label">Monthly Revenue</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">🖥️ Server Status</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Server</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                        <th>Clients</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="servers-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="section-users" class="section hidden">
+                <div class="card-header">
+                    <h2>👥 User Management</h2>
+                    <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
+                </div>
+                <div class="card">
+                    <div style="display:flex;gap:10px;margin-bottom:15px">
+                        <input type="text" id="user-search" class="form-input" placeholder="Search users..." style="max-width:300px">
+                        <select id="user-status-filter" class="form-input" style="max-width:150px">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="trial">Trial</option>
+                            <option value="suspended">Suspended</option>
+                        </select>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Plan</th>
+                                    <th>Status</th>
+                                    <th>Devices</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table"></tbody>
+                        </table>
+                    </div>
+                    <div id="users-pagination" class="flex gap-10 mt-20"></div>
+                </div>
+            </section>
+
+            <!-- Servers Section -->
+            <section id="section-servers" class="section hidden">
+                <div class="card-header">
+                    <h2>🖥️ Server Management</h2>
+                    <button class="btn btn-primary" onclick="showAddServerModal()">+ Add Server</button>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Location</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                    <th>Clients</th>
+                                    <th>Type</th>
+                                    <th>Provider</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-servers-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Billing Section -->
+            <section id="section-billing" class="section hidden">
+                <h2 style="margin-bottom:20px">💳 Billing Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-subscriptions">0</div>
+                        <div class="stat-label">Active Subscriptions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-monthly-revenue">$0</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-today-revenue">$0</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title mb-10">Plan Distribution</div>
+                    <div id="plan-breakdown"></div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="section-settings" class="section hidden">
+                <h2 style="margin-bottom:20px">⚙️ Site Settings</h2>
+                <div class="card">
+                    <form id="settings-form">
+                        <div id="settings-fields"></div>
+                        <button type="submit" class="btn btn-primary mt-20">Save Settings</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Theme Section -->
+            <section id="section-theme" class="section hidden">
+                <h2 style="margin-bottom:20px">🎨 Theme Customization</h2>
+                <div class="card">
+                    <form id="theme-form">
+                        <div id="theme-fields"></div>
+                        <button type="submit" class="btn btn-primary mt-20">Save Theme</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- VIP Section -->
+            <section id="section-vip" class="section hidden">
+                <div class="card-header">
+                    <h2>⭐ VIP Users</h2>
+                    <button class="btn btn-primary" onclick="showAddVipModal()">+ Add VIP</button>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Notes</th>
+                                    <th>Dedicated Server</th>
+                                    <th>Max Devices</th>
+                                    <th>Added</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vip-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals will be added dynamically -->
+    <div id="modal-container"></div>
+
+    <script>
+        // API Base
+        const API = '/admin/api';
+        let authToken = localStorage.getItem('admin_token');
+        let currentSection = 'dashboard';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (authToken) {
+                verifyToken();
+            }
+            
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const section = item.dataset.section;
+                    if (section) switchSection(section);
+                });
+            });
+            
+            // Search
+            document.getElementById('user-search').addEventListener('input', debounce(loadUsers, 300));
+            document.getElementById('user-status-filter').addEventListener('change', loadUsers);
+        });
+
+        // Auth
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            try {
+                const res = await fetch(`${API}/auth.php?action=login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    localStorage.setItem('admin_token', authToken);
+                    showApp();
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Connection error';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function verifyToken() {
+            try {
+                const res = await fetch(`${API}/auth.php?action=verify`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showApp();
+                } else {
+                    logout();
+                }
+            } catch {
+                logout();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_token');
+            authToken = null;
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            loadDashboard();
+            loadTheme();
+        }
+
+        // Navigation
+        function switchSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${section}`).classList.remove('hidden');
+            
+            // Load section data
+            switch(section) {
+                case 'dashboard': loadDashboard(); break;
+                case 'users': loadUsers(); break;
+                case 'servers': loadServers(); break;
+                case 'billing': loadBilling(); break;
+                case 'settings': loadSettings(); break;
+                case 'theme': loadThemeSettings(); break;
+                case 'vip': loadVipUsers(); break;
+            }
+        }
+
+        // API helper
+        async function api(endpoint, options = {}) {
+            const res = await fetch(endpoint, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
+                }
+            });
+            return res.json();
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            document.getElementById('stats-loading').classList.remove('hidden');
+            document.getElementById('stats-content').classList.add('hidden');
+            
+            const data = await api(`${API}/stats.php`);
+            
+            if (data.success) {
+                const s = data.stats;
+                document.getElementById('stat-users').textContent = s.users.total;
+                document.getElementById('stat-active').textContent = s.users.active;
+                document.getElementById('stat-devices').textContent = s.devices.total;
+                document.getElementById('stat-revenue').textContent = '$' + s.billing.monthly_revenue.toFixed(2);
+                
+                // Servers table
+                const tbody = document.getElementById('servers-table');
+                tbody.innerHTML = s.servers.list.map(srv => `
+                    <tr>
+                        <td>${srv.display_name}</td>
+                        <td>${srv.location}</td>
+                        <td><span class="badge badge-${srv.status === 'active' ? 'success' : 'danger'}">${srv.status}</span></td>
+                        <td>${srv.current_clients}/${srv.max_clients}</td>
+                        <td>${srv.is_vip_only ? '<span class="badge badge-info">VIP</span>' : 'Shared'}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            document.getElementById('stats-loading').classList.add('hidden');
+            document.getElementById('stats-content').classList.remove('hidden');
+        }
+
+        // Users
+        async function loadUsers() {
+            const search = document.getElementById('user-search').value;
+            const status = document.getElementById('user-status-filter').value;
+            const data = await api(`${API}/users.php?search=${encodeURIComponent(search)}&status=${status}`);
+            
+            if (data.success) {
+                const tbody = document.getElementById('users-table');
+                tbody.innerHTML = data.users.map(u => `
+                    <tr>
+                        <td>${u.email}</td>
+                        <td>${u.first_name || ''} ${u.last_name || ''}</td>
+                        <td><span class="badge badge-info">${u.plan}</span></td>
+                        <td><span class="badge badge-${u.status === 'active' ? 'success' : u.status === 'trial' ? 'warning' : 'danger'}">${u.status}</span></td>
+                        <td>${u.device_count}/${u.max_devices}</td>
+                        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-small btn-secondary" onclick="editUser(${u.id})">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteUser(${u.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Servers
+        async function loadServers() {
+            const data = await api(`${API}/servers.php`);
+            
+            if (data.success) {
+                const tbody = document.getElementById('admin-servers-table');
+                tbody.innerHTML = data.servers.map(s => `
+                    <tr>
+                        <td>${s.display_name}</td>
+                        <td>${s.location}</td>
+                        <td><code>${s.ip_address}</code></td>
+                        <td><span class="badge badge-${s.status === 'active' ? 'success' : 'danger'}">${s.status}</span></td>
+                        <td>${s.device_count || 0}/${s.max_clients}</td>
+                        <td>${s.is_vip_only ? '<span class="badge badge-info">VIP</span>' : 'Shared'}</td>
+                        <td>${s.provider || '-'}</td>
+                        <td>
+                            <button class="btn btn-small btn-secondary" onclick="editServer(${s.id})">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Billing
+        async function loadBilling() {
+            const data = await api(`${API}/stats.php`);
+            if (data.success) {
+                const b = data.stats.billing;
+                document.getElementById('stat-subscriptions').textContent = b.active_subscriptions;
+                document.getElementById('stat-monthly-revenue').textContent = '$' + b.monthly_revenue.toFixed(2);
+                document.getElementById('stat-today-revenue').textContent = '$' + b.today_revenue.toFixed(2);
+                
+                // Plan breakdown
+                const breakdown = document.getElementById('plan-breakdown');
+                const plans = b.plans || {};
+                breakdown.innerHTML = Object.entries(plans).map(([plan, count]) => `
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+                        <span>${plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
+                        <span class="badge badge-info">${count}</span>
+                    </div>
+                `).join('') || '<p class="text-muted">No active subscriptions</p>';
+            }
+        }
+
+        // Settings
+        async function loadSettings() {
+            const data = await api(`${API}/settings.php?type=settings`);
+            if (data.success) {
+                const container = document.getElementById('settings-fields');
+                container.innerHTML = Object.entries(data.settings).map(([key, s]) => `
+                    <div class="form-group">
+                        <label class="form-label">${s.description || key}</label>
+                        <input type="${s.type === 'number' ? 'number' : 'text'}" 
+                               name="${key}" 
+                               value="${s.value}" 
+                               class="form-input">
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('settings-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const settings = {};
+                formData.forEach((v, k) => settings[k] = v);
+                
+                const res = await api(`${API}/settings.php?type=settings`, {
+                    method: 'PUT',
+                    body: JSON.stringify(settings)
+                });
+                
+                alert(res.success ? 'Settings saved!' : res.error);
+            };
+        }
+
+        // Theme
+        async function loadThemeSettings() {
+            const data = await api(`${API}/settings.php?type=theme`);
+            if (data.success) {
+                const container = document.getElementById('theme-fields');
+                let html = '';
+                
+                for (const [category, items] of Object.entries(data.theme)) {
+                    html += `<h3 style="margin:20px 0 10px;text-transform:capitalize">${category}</h3>`;
+                    items.forEach(item => {
+                        const isColor = category === 'colors';
+                        html += `
+                            <div class="form-group color-row">
+                                ${isColor ? `<div class="color-preview" style="background:${item.value}"></div>` : ''}
+                                <div style="flex:1">
+                                    <label class="form-label">${item.description || item.name}</label>
+                                    <input type="${isColor ? 'color' : 'text'}" 
+                                           name="${item.name}" 
+                                           value="${item.value}" 
+                                           class="form-input"
+                                           ${isColor ? 'style="height:40px;padding:5px"' : ''}>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                container.innerHTML = html;
+            }
+            
+            document.getElementById('theme-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const theme = {};
+                formData.forEach((v, k) => theme[k] = v);
+                
+                const res = await api(`${API}/settings.php?type=theme`, {
+                    method: 'PUT',
+                    body: JSON.stringify(theme)
+                });
+                
+                if (res.success) {
+                    loadTheme();
+                    alert('Theme saved!');
+                } else {
+                    alert(res.error);
+                }
+            };
+        }
+
+        // Load theme from database
+        async function loadTheme() {
+            try {
+                const data = await api(`${API}/settings.php?type=theme`);
+                if (data.success && data.theme.colors) {
+                    const colors = {};
+                    data.theme.colors.forEach(c => colors[c.name] = c.value);
+                    
+                    const root = document.documentElement;
+                    if (colors.primary_color) root.style.setProperty('--primary', colors.primary_color);
+                    if (colors.secondary_color) root.style.setProperty('--secondary', colors.secondary_color);
+                    if (colors.accent_color) root.style.setProperty('--accent', colors.accent_color);
+                    if (colors.background_color) root.style.setProperty('--bg', colors.background_color);
+                    if (colors.background_secondary) root.style.setProperty('--bg-secondary', colors.background_secondary);
+                    if (colors.text_color) root.style.setProperty('--text', colors.text_color);
+                    if (colors.text_muted) root.style.setProperty('--text-muted', colors.text_muted);
+                    if (colors.success_color) root.style.setProperty('--success', colors.success_color);
+                    if (colors.error_color) root.style.setProperty('--error', colors.error_color);
+                }
+            } catch (e) {
+                console.log('Theme load error:', e);
+            }
+        }
+
+        // VIP Users
+        async function loadVipUsers() {
+            const data = await api(`${API}/settings.php?type=vip`);
+            if (data.success) {
+                const tbody = document.getElementById('vip-table');
+                tbody.innerHTML = data.vip_users.map(v => `
+                    <tr>
+                        <td>${v.email}</td>
+                        <td>${v.notes || '-'}</td>
+                        <td>${v.dedicated_server_id || 'All'}</td>
+                        <td>${v.max_devices || 999}</td>
+                        <td>${new Date(v.added_date).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-small btn-danger" onclick="removeVip(${v.id})">Remove</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Modals
+        function showModal(title, content) {
+            document.getElementById('modal-container').innerHTML = `
+                <div class="modal-overlay show" onclick="closeModal(event)">
+                    <div class="modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <span class="modal-title">${title}</span>
+                            <button class="modal-close" onclick="closeModal()">&times;</button>
+                        </div>
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeModal(e) {
+            if (!e || e.target.classList.contains('modal-overlay')) {
+                document.getElementById('modal-container').innerHTML = '';
+            }
+        }
+
+        function showAddUserModal() {
+            showModal('Add User', `
+                <form onsubmit="createUser(event)">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-input" required minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plan</label>
+                        <select name="plan" class="form-input">
+                            <option value="personal">Personal ($9.97/mo)</option>
+                            <option value="family">Family ($14.97/mo)</option>
+                            <option value="dedicated">Dedicated ($39.97/mo)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%">Create User</button>
+                </form>
+            `);
+        }
+
+        async function createUser(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = Object.fromEntries(new FormData(form));
+            
+            const res = await api(`${API}/users.php`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            
+            if (res.success) {
+                closeModal();
+                loadUsers();
+            } else {
+                alert(res.error);
+            }
+        }
+
+        function showAddVipModal() {
+            showModal('Add VIP User', `
+                <form onsubmit="createVip(event)">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <input type="text" name="notes" class="form-input" placeholder="e.g., Special access reason">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Devices</label>
+                        <input type="number" name="max_devices" class="form-input" value="999">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%">Add VIP</button>
+                </form>
+            `);
+        }
+
+        async function createVip(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = Object.fromEntries(new FormData(form));
+            
+            const res = await api(`${API}/settings.php?type=vip`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            
+            if (res.success) {
+                closeModal();
+                loadVipUsers();
+            } else {
+                alert(res.error);
+            }
+        }
+
+        async function removeVip(id) {
+            if (!confirm('Remove this VIP user?')) return;
+            
+            const res = await api(`${API}/settings.php?type=vip&id=${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.success) {
+                loadVipUsers();
+            } else {
+                alert(res.error);
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Delete this user? This cannot be undone.')) return;
+            
+            const res = await api(`${API}/users.php?id=${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (res.success) {
+                loadUsers();
+            } else {
+                alert(res.error);
+            }
+        }
+
+        // Utilities
+        function debounce(fn, ms) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), ms);
+            };
+        }
+    </script>
+</body>
+</html>

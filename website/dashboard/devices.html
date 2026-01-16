@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Devices - TrueVault VPN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+        
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,217,255,0.3); }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        
+        .btn-danger {
+            background: rgba(255,100,100,0.2);
+            color: #ff6464;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label { font-size: 13px; color: #888; margin-top: 5px; }
+        
+        .devices-grid {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .device-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+        
+        .device-card:hover {
+            border-color: rgba(0,217,255,0.3);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .device-icon {
+            font-size: 40px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+        
+        .device-info { flex: 1; }
+        
+        .device-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
+        
+        .device-meta { font-size: 13px; color: #888; }
+        
+        .device-meta span { margin-right: 15px; }
+        
+        .device-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: rgba(0,255,136,0.15);
+            color: #00ff88;
+        }
+        
+        .status-inactive {
+            background: rgba(255,255,255,0.1);
+            color: #888;
+        }
+        
+        .device-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .device-actions button {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state .icon { font-size: 64px; margin-bottom: 20px; }
+        .empty-state h3 { margin-bottom: 10px; color: #ccc; }
+        .empty-state p { color: #666; margin-bottom: 20px; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show { display: flex; }
+        
+        .modal-content {
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal h3 { margin-bottom: 20px; }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        
+        .server-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .server-option {
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .server-option:hover {
+            border-color: #00d9ff;
+            background: rgba(0,217,255,0.05);
+        }
+        
+        .server-option.selected {
+            border-color: #00ff88;
+            background: rgba(0,255,136,0.1);
+        }
+        
+        .server-name { font-weight: 600; margin-bottom: 5px; }
+        .server-location { font-size: 13px; color: #888; }
+        .server-load { font-size: 12px; color: #00ff88; float: right; }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 My Devices</h1>
+            <a href="/dashboard/setup-device.html" class="btn btn-primary">
+                ➕ Add Device
+            </a>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalDevices">-</div>
+                <div class="stat-label">Total Devices</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="activeDevices">-</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="deviceLimit">-</div>
+                <div class="stat-label">Device Limit</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="availableSlots">-</div>
+                <div class="stat-label">Available Slots</div>
+            </div>
+        </div>
+        
+        <!-- Devices List -->
+        <div class="card">
+            <div id="devicesList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading devices...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Switch Server Modal -->
+    <div id="switchModal" class="modal">
+        <div class="modal-content">
+            <h3>🌐 Switch Server</h3>
+            <p style="color: #888; margin-bottom: 15px;">Select a new server for <span id="switchDeviceName"></span></p>
+            <div id="serverList" class="server-list"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="confirmSwitch" onclick="confirmSwitchServer()">Switch Server</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirm Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Delete Device</h3>
+            <p style="color: #888;">Are you sure you want to remove <strong id="deleteDeviceName"></strong>?</p>
+            <p style="color: #ff6464; font-size: 13px; margin-top: 10px;">This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete Device</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let devices = [];
+        let servers = [];
+        let selectedDeviceId = null;
+        let selectedServerId = null;
+        
+        // Get token
+        function getToken() {
+            return localStorage.getItem('truevault_token');
+        }
+        
+        // Load devices on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!getToken()) {
+                window.location.href = '/admin/test-api.php';
+                return;
+            }
+            loadDevices();
+        });
+        
+        // Load devices
+        async function loadDevices() {
+            try {
+                const response = await fetch('/api/devices/list.php', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) throw new Error(data.error);
+                
+                devices = data.devices;
+                
+                // Update stats
+                document.getElementById('totalDevices').textContent = data.count;
+                document.getElementById('activeDevices').textContent = devices.filter(d => d.status === 'active').length;
+                document.getElementById('deviceLimit').textContent = data.limit;
+                document.getElementById('availableSlots').textContent = data.available_slots;
+                
+                renderDevices();
+                
+            } catch (error) {
+                document.getElementById('devicesList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <h3>Error Loading Devices</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Render devices
+        function renderDevices() {
+            if (devices.length === 0) {
+                document.getElementById('devicesList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📱</div>
+                        <h3>No Devices Yet</h3>
+                        <p>Add your first device to start using TrueVault VPN</p>
+                        <a href="/dashboard/setup-device.html" class="btn btn-primary">➕ Add Device</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            const icons = {
+                mobile: '📱',
+                desktop: '💻',
+                tablet: '📲',
+                router: '🌐',
+                other: '📡'
+            };
+            
+            const html = devices.map(device => `
+                <div class="device-card">
+                    <div class="device-icon">${icons[device.type] || '📡'}</div>
+                    <div class="device-info">
+                        <div class="device-name">${device.name}</div>
+                        <div class="device-meta">
+                            <span>🌐 ${device.server.name}</span>
+                            <span>📍 ${device.ip_address}</span>
+                            <span class="device-status ${device.status === 'active' ? 'status-active' : 'status-inactive'}">
+                                ${device.status}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="device-actions">
+                        <button class="btn btn-secondary" onclick="downloadConfig(${device.id}, '${device.name}')">📥</button>
+                        <button class="btn btn-secondary" onclick="showSwitchModal(${device.id}, '${device.name}')">🔄</button>
+                        <button class="btn btn-danger" onclick="showDeleteModal(${device.id}, '${device.name}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('devicesList').innerHTML = `<div class="devices-grid">${html}</div>`;
+        }
+        
+        // Download config
+        async function downloadConfig(deviceId, deviceName) {
+            try {
+                const response = await fetch(`/api/devices/get-config.php?id=${deviceId}`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                
+                // Download file
+                const blob = new Blob([data.config], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `TrueVault_${deviceName.replace(/[^a-z0-9]/gi, '_')}.conf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Show switch server modal
+        async function showSwitchModal(deviceId, deviceName) {
+            selectedDeviceId = deviceId;
+            document.getElementById('switchDeviceName').textContent = deviceName;
+            
+            // Load servers
+            try {
+                const response = await fetch('/api/servers/list.php', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                
+                servers = data.servers;
+                
+                const device = devices.find(d => d.id === deviceId);
+                const currentServerId = device?.server?.id;
+                
+                const html = servers.map(server => `
+                    <div class="server-option ${server.id === currentServerId ? 'selected' : ''} ${!server.available ? 'disabled' : ''}" 
+                         onclick="${server.available ? `selectServer(${server.id})` : ''}"
+                         data-id="${server.id}">
+                        <span class="server-load">${server.load}% load</span>
+                        <div class="server-name">${server.name} ${server.id === currentServerId ? '(current)' : ''}</div>
+                        <div class="server-location">📍 ${server.location}, ${server.country}</div>
+                        ${!server.available ? `<div style="color: #ff6464; font-size: 12px; margin-top: 5px;">${server.reason}</div>` : ''}
+                    </div>
+                `).join('');
+                
+                document.getElementById('serverList').innerHTML = html;
+                document.getElementById('switchModal').classList.add('show');
+                
+            } catch (error) {
+                alert('Error loading servers: ' + error.message);
+            }
+        }
+        
+        // Select server
+        function selectServer(serverId) {
+            selectedServerId = serverId;
+            document.querySelectorAll('.server-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.id == serverId);
+            });
+        }
+        
+        // Confirm switch server
+        async function confirmSwitchServer() {
+            if (!selectedServerId) {
+                alert('Please select a server');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/devices/switch-server.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        device_id: selectedDeviceId,
+                        server_id: selectedServerId
+                    })
+                });
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                
+                // Download new config
+                const blob = new Blob([data.config], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `TrueVault_${data.device.name.replace(/[^a-z0-9]/gi, '_')}.conf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                closeModal();
+                loadDevices();
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Show delete modal
+        function showDeleteModal(deviceId, deviceName) {
+            selectedDeviceId = deviceId;
+            document.getElementById('deleteDeviceName').textContent = deviceName;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+        
+        // Confirm delete
+        async function confirmDelete() {
+            try {
+                const response = await fetch(`/api/devices/delete.php?id=${selectedDeviceId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                
+                closeModal();
+                loadDevices();
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+            selectedDeviceId = null;
+            selectedServerId = null;
+        }
+        
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        });
+    </script>
+</body>
+</html>

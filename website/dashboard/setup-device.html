@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Device - TrueVault VPN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+        
+        /* Card */
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        /* Steps */
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .step {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .step.active .step-circle {
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+        
+        .step.completed .step-circle {
+            background: #00ff88;
+            color: #1a1a2e;
+        }
+        
+        .step.completed .step-circle::after {
+            content: '✓';
+        }
+        
+        .step-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .step.active .step-label,
+        .step.completed .step-label {
+            color: #fff;
+        }
+        
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ccc;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #00d9ff;
+            background: rgba(0,217,255,0.05);
+        }
+        
+        input::placeholder {
+            color: #555;
+        }
+        
+        select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+        
+        .help-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
+        }
+        
+        /* Server Cards */
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .server-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .server-card:hover {
+            border-color: rgba(0,217,255,0.3);
+            background: rgba(0,217,255,0.05);
+        }
+        
+        .server-card.selected {
+            border-color: #00ff88;
+            background: rgba(0,255,136,0.1);
+        }
+        
+        .server-card.vip-only {
+            border-color: rgba(255,215,0,0.3);
+        }
+        
+        .server-card .flag {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .server-card .name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .server-card .location {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .server-card .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-top: 8px;
+        }
+        
+        .server-card .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,217,255,0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            margin-top: 15px;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        /* Status */
+        .status {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status.show {
+            display: flex;
+        }
+        
+        .status.success {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.3);
+            color: #00ff88;
+        }
+        
+        .status.error {
+            background: rgba(255,100,100,0.1);
+            border: 1px solid rgba(255,100,100,0.3);
+            color: #ff6464;
+        }
+        
+        .status.info {
+            background: rgba(0,217,255,0.1);
+            border: 1px solid rgba(0,217,255,0.3);
+            color: #00d9ff;
+        }
+        
+        /* Spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Key Display */
+        .key-display {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .key-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .key-value {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            color: #00ff88;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+        
+        .copy-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: rgba(0,217,255,0.2);
+            border: none;
+            border-radius: 4px;
+            color: #00d9ff;
+            cursor: pointer;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(0,217,255,0.3);
+        }
+        
+        /* QR Code */
+        #qrcode {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 16px;
+            display: none;
+        }
+        
+        #qrcode canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .qr-label {
+            color: #1a1a2e;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* Hide sections */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Login required */
+        .login-required {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .login-required h2 {
+            margin-bottom: 15px;
+        }
+        
+        .login-required a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+        
+        /* Success animation */
+        .success-icon {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: bounce 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        /* Device icon selector */
+        .device-icons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .device-icon {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .device-icon:hover {
+            border-color: rgba(0,217,255,0.3);
+        }
+        
+        .device-icon.selected {
+            border-color: #00d9ff;
+            background: rgba(0,217,255,0.1);
+        }
+        
+        .device-icon span {
+            display: block;
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .device-icon small {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        /* Loading servers */
+        .loading-servers {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+        }
+        
+        .loading-servers .spinner {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔐</div>
+            <h1>TrueVault VPN</h1>
+            <p class="subtitle">Setup your device in just 2 clicks!</p>
+        </div>
+        
+        <!-- Login Required Message (hidden by default) -->
+        <div id="loginRequired" class="card login-required hidden">
+            <h2>🔑 Login Required</h2>
+            <p>Please login to setup your device</p>
+            <button class="btn btn-primary" onclick="window.location.href='/admin/test-api.php'" style="margin-top: 20px;">
+                Go to Login
+            </button>
+        </div>
+        
+        <!-- Main Setup Card -->
+        <div id="setupCard" class="card">
+            <!-- Step Indicator -->
+            <div class="steps">
+                <div class="step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Name Device</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Generate Keys</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Download</div>
+                </div>
+            </div>
+            
+            <!-- Status Messages -->
+            <div id="status" class="status"></div>
+            
+            <!-- Spinner -->
+            <div id="spinner" class="spinner"></div>
+            
+            <!-- STEP 1: Device Info -->
+            <div id="step1">
+                <div class="form-group">
+                    <label>Device Type</label>
+                    <div class="device-icons">
+                        <div class="device-icon selected" data-type="mobile" onclick="selectType(this)">
+                            <span>📱</span>
+                            <small>Phone</small>
+                        </div>
+                        <div class="device-icon" data-type="desktop" onclick="selectType(this)">
+                            <span>💻</span>
+                            <small>Computer</small>
+                        </div>
+                        <div class="device-icon" data-type="tablet" onclick="selectType(this)">
+                            <span>📲</span>
+                            <small>Tablet</small>
+                        </div>
+                        <div class="device-icon" data-type="router" onclick="selectType(this)">
+                            <span>🌐</span>
+                            <small>Router</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deviceName">Device Name</label>
+                    <input 
+                        type="text" 
+                        id="deviceName" 
+                        placeholder="e.g., My iPhone, Work Laptop"
+                        maxlength="50"
+                    >
+                    <p class="help-text">Give your device a name so you can identify it later</p>
+                </div>
+                
+                <div class="form-group">
+                    <label>🌍 Select Server Location</label>
+                    <div id="serverList" class="server-grid">
+                        <div class="loading-servers">
+                            <div class="spinner" style="display: inline-block;"></div>
+                            <p>Loading servers...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="generateKeys()" id="continueBtn" disabled>
+                    🔑 Generate Encryption Keys
+                </button>
+            </div>
+            
+            <!-- STEP 2: Keys Generated -->
+            <div id="step2" class="hidden">
+                <div class="success-icon">🔐</div>
+                
+                <div class="status success show">
+                    ✅ Encryption keys generated in your browser!
+                </div>
+                
+                <div class="key-display">
+                    <div class="key-label">
+                        <span>🔑 Public Key (sent to server)</span>
+                        <button class="copy-btn" onclick="copyKey('publicKey')">Copy</button>
+                    </div>
+                    <div class="key-value" id="publicKey"></div>
+                </div>
+                
+                <div class="key-display">
+                    <div class="key-label">
+                        <span>🔒 Private Key (stays on your device)</span>
+                        <button class="copy-btn" onclick="copyKey('privateKey')">Copy</button>
+                    </div>
+                    <div class="key-value" id="privateKey"></div>
+                </div>
+                
+                <p class="help-text" style="margin-top: 15px; text-align: center;">
+                    ⚠️ Your private key never leaves your browser - that's what makes TrueVault secure!
+                </p>
+                
+                <button class="btn btn-primary" onclick="provisionDevice()" style="margin-top: 20px;">
+                    ⬇️ Get My Configuration
+                </button>
+            </div>
+            
+            <!-- STEP 3: Download Ready -->
+            <div id="step3" class="hidden">
+                <div class="success-icon">🎉</div>
+                
+                <div class="status success show">
+                    Your device is ready! Download your configuration below.
+                </div>
+                
+                <button class="btn btn-primary" onclick="downloadConfig()">
+                    📥 Download .conf File
+                </button>
+                
+                <div id="qrcode">
+                    <canvas id="qrCanvas"></canvas>
+                    <p class="qr-label">Scan with WireGuard app</p>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="location.reload()">
+                    ➕ Setup Another Device
+                </button>
+            </div>
+        </div>
+        
+        <!-- Device Info -->
+        <div class="card" id="deviceInfo" style="display: none;">
+            <h3 style="margin-bottom: 15px;">📊 Device Details</h3>
+            <div id="deviceDetails"></div>
+        </div>
+    </div>
+    
+    <!-- TweetNaCl for key generation -->
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+    
+    <!-- QR Code library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <script>
+        // Global state
+        let generatedKeys = null;
+        let configContent = null;
+        let selectedDeviceType = 'mobile';
+        let selectedServerId = null;
+        let servers = [];
+        let userInfo = null;
+        
+        // Country flags mapping
+        const countryFlags = {
+            'US': '🇺🇸',
+            'CA': '🇨🇦',
+            'UK': '🇬🇧',
+            'DE': '🇩🇪',
+            'FR': '🇫🇷',
+            'NL': '🇳🇱',
+            'JP': '🇯🇵',
+            'AU': '🇦🇺',
+            'SG': '🇸🇬',
+            'default': '🌐'
+        };
+        
+        // Check auth on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('truevault_token');
+            if (!token) {
+                document.getElementById('setupCard').classList.add('hidden');
+                document.getElementById('loginRequired').classList.remove('hidden');
+                return;
+            }
+            
+            // Get user info
+            try {
+                const response = await fetch('/api/auth.php?action=me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    userInfo = data.user;
+                }
+            } catch (e) {
+                console.error('Failed to get user info:', e);
+            }
+            
+            // Load servers
+            loadServers();
+        });
+        
+        // Load available servers
+        async function loadServers() {
+            const token = localStorage.getItem('truevault_token');
+            
+            try {
+                const response = await fetch('/api/servers/list.php', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                
+                if (data.success && data.servers) {
+                    servers = data.servers;
+                    renderServers();
+                } else {
+                    document.getElementById('serverList').innerHTML = `
+                        <div class="loading-servers">
+                            <p>❌ Failed to load servers</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('serverList').innerHTML = `
+                    <div class="loading-servers">
+                        <p>❌ Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Render server cards
+        function renderServers() {
+            const container = document.getElementById('serverList');
+            
+            if (servers.length === 0) {
+                container.innerHTML = `
+                    <div class="loading-servers">
+                        <p>No servers available</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const isVIP = userInfo && userInfo.account_type === 'vip';
+            
+            let html = '';
+            servers.forEach(server => {
+                const flag = countryFlags[server.country_code] || countryFlags['default'];
+                const isVIPOnly = server.is_premium === 1 || server.type === 'dedicated';
+                const canSelect = !isVIPOnly || isVIP;
+                
+                html += `
+                    <div class="server-card ${isVIPOnly ? 'vip-only' : ''} ${!canSelect ? 'disabled' : ''}" 
+                         onclick="${canSelect ? `selectServer(${server.id})` : ''}"
+                         data-server-id="${server.id}"
+                         style="${!canSelect ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                        <div class="flag">${flag}</div>
+                        <div class="name">
+                            <span class="status-dot"></span>
+                            ${server.name}
+                        </div>
+                        <div class="location">${server.city}, ${server.country}</div>
+                        ${isVIPOnly ? '<div class="badge">⭐ VIP Only</div>' : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Auto-select first available server
+            const firstAvailable = servers.find(s => {
+                const isVIPOnly = s.is_premium === 1 || s.type === 'dedicated';
+                return !isVIPOnly || isVIP;
+            });
+            if (firstAvailable) {
+                selectServer(firstAvailable.id);
+            }
+        }
+        
+        // Select server
+        function selectServer(serverId) {
+            selectedServerId = serverId;
+            
+            // Update UI
+            document.querySelectorAll('.server-card').forEach(card => {
+                card.classList.remove('selected');
+                if (parseInt(card.dataset.serverId) === serverId) {
+                    card.classList.add('selected');
+                }
+            });
+            
+            // Enable continue button
+            document.getElementById('continueBtn').disabled = false;
+        }
+        
+        // Select device type
+        function selectType(el) {
+            document.querySelectorAll('.device-icon').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedDeviceType = el.dataset.type;
+        }
+        
+        // Update step indicator
+        function updateStep(num) {
+            document.querySelectorAll('.step').forEach((step, i) => {
+                const stepNum = i + 1;
+                step.classList.remove('active', 'completed');
+                if (stepNum < num) step.classList.add('completed');
+                if (stepNum === num) step.classList.add('active');
+            });
+        }
+        
+        // Show status message
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type} show`;
+            status.innerHTML = message;
+            
+            if (type !== 'info') {
+                setTimeout(() => status.classList.remove('show'), 5000);
+            }
+        }
+        
+        // Show/hide spinner
+        function showSpinner(show) {
+            document.getElementById('spinner').style.display = show ? 'block' : 'none';
+        }
+        
+        // STEP 1: Generate keys in browser
+        function generateKeys() {
+            const deviceName = document.getElementById('deviceName').value.trim();
+            
+            if (!deviceName) {
+                showStatus('error', '❌ Please enter a device name');
+                return;
+            }
+            
+            if (!selectedServerId) {
+                showStatus('error', '❌ Please select a server');
+                return;
+            }
+            
+            showSpinner(true);
+            showStatus('info', '🔄 Generating encryption keys...');
+            
+            setTimeout(() => {
+                try {
+                    // Generate Curve25519 keypair using TweetNaCl
+                    const keypair = nacl.box.keyPair();
+                    
+                    // Convert to base64 (WireGuard format)
+                    const privateKey = btoa(String.fromCharCode.apply(null, keypair.secretKey));
+                    const publicKey = btoa(String.fromCharCode.apply(null, keypair.publicKey));
+                    
+                    generatedKeys = { privateKey, publicKey };
+                    
+                    // Display keys
+                    document.getElementById('publicKey').textContent = publicKey;
+                    document.getElementById('privateKey').textContent = privateKey;
+                    
+                    // Update UI
+                    showSpinner(false);
+                    updateStep(2);
+                    document.getElementById('step1').classList.add('hidden');
+                    document.getElementById('step2').classList.remove('hidden');
+                    document.getElementById('status').classList.remove('show');
+                    
+                } catch (error) {
+                    showStatus('error', '❌ Key generation failed: ' + error.message);
+                    showSpinner(false);
+                }
+            }, 500);
+        }
+        
+        // STEP 2: Provision device on server
+        async function provisionDevice() {
+            if (!generatedKeys) {
+                showStatus('error', '❌ No keys generated');
+                return;
+            }
+            
+            const token = localStorage.getItem('truevault_token');
+            if (!token) {
+                showStatus('error', '❌ Not authenticated. Please login.');
+                return;
+            }
+            
+            const deviceName = document.getElementById('deviceName').value.trim();
+            
+            showSpinner(true);
+            showStatus('info', '🔄 Provisioning device on server...');
+            
+            try {
+                const response = await fetch('/api/devices/provision.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        device_name: deviceName,
+                        device_type: selectedDeviceType,
+                        public_key: generatedKeys.publicKey,
+                        server_id: selectedServerId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Provisioning failed');
+                }
+                
+                // Replace placeholder with actual private key
+                configContent = data.config.replace('[YOUR_PRIVATE_KEY]', generatedKeys.privateKey);
+                
+                // Show device info
+                showDeviceInfo(data.device);
+                
+                // Generate QR code for mobile
+                if (selectedDeviceType === 'mobile' || selectedDeviceType === 'tablet') {
+                    generateQRCode(configContent);
+                }
+                
+                // Update UI
+                showSpinner(false);
+                updateStep(3);
+                document.getElementById('step2').classList.add('hidden');
+                document.getElementById('step3').classList.remove('hidden');
+                document.getElementById('status').classList.remove('show');
+                
+            } catch (error) {
+                showStatus('error', '❌ ' + error.message);
+                showSpinner(false);
+            }
+        }
+        
+        // Show device info
+        function showDeviceInfo(device) {
+            const details = `
+                <p><strong>Name:</strong> ${device.name}</p>
+                <p><strong>IP Address:</strong> ${device.ipv4_address}</p>
+                <p><strong>Server:</strong> ${device.server} (${device.server_location})</p>
+            `;
+            document.getElementById('deviceDetails').innerHTML = details;
+            document.getElementById('deviceInfo').style.display = 'block';
+        }
+        
+        // STEP 3: Download config file
+        function downloadConfig() {
+            if (!configContent) {
+                showStatus('error', '❌ No configuration available');
+                return;
+            }
+            
+            const deviceName = document.getElementById('deviceName').value.trim();
+            const filename = `TrueVault_${deviceName.replace(/[^a-z0-9]/gi, '_')}.conf`;
+            
+            const blob = new Blob([configContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('success', '✅ Configuration downloaded! Import it into WireGuard.');
+        }
+        
+        // Generate QR code
+        function generateQRCode(config) {
+            const qrcodeDiv = document.getElementById('qrcode');
+            const canvas = document.getElementById('qrCanvas');
+            
+            QRCode.toCanvas(canvas, config, {
+                width: 256,
+                margin: 2,
+                color: {
+                    dark: '#1a1a2e',
+                    light: '#ffffff'
+                }
+            }, (error) => {
+                if (!error) {
+                    qrcodeDiv.style.display = 'block';
+                }
+            });
+        }
+        
+        // Copy key to clipboard
+        function copyKey(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showStatus('success', '✅ Copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
