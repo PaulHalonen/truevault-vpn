@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - TrueVault VPN</title>
+    <style>
+        :root {
+            --primary: #00d9ff;
+            --secondary: #00ff88;
+            --bg: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --text: #ffffff;
+            --text-muted: #888888;
+            --success: #00ff88;
+            --error: #ff6464;
+            --card-radius: 14px;
+            --btn-radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg), var(--bg-secondary));
+            color: var(--text);
+            min-height: 100vh;
+        }
+        a { color: var(--primary); text-decoration: none; }
+        
+        .app { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 240px;
+            background: rgba(255,255,255,0.02);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+        }
+        .main { flex: 1; margin-left: 240px; padding: 25px; max-width: 800px; }
+        .logo { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
+        .logo h1 {
+            font-size: 1.2rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo small { color: var(--text-muted); font-size: 0.75rem; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 20px; color: var(--text-muted);
+            text-decoration: none; transition: 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0,217,255,0.1); color: var(--primary);
+        }
+        .nav-item.active { border-left: 3px solid var(--primary); }
+        
+        .card {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 25px; margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .card-title {
+            font-size: 1.1rem; font-weight: 600;
+            margin-bottom: 20px; display: flex;
+            align-items: center; gap: 10px;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block; margin-bottom: 8px;
+            color: var(--text-muted); font-size: 0.9rem;
+        }
+        .form-input {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--btn-radius);
+            color: var(--text); font-size: 0.95rem;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        .form-input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .form-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
+        
+        .btn {
+            padding: 10px 18px; border: none;
+            border-radius: var(--btn-radius);
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn-danger { background: rgba(255,100,100,0.15); color: var(--error); }
+        
+        .toggle-group {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .toggle-label { font-size: 0.95rem; }
+        .toggle-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+        .toggle {
+            width: 50px; height: 26px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 13px;
+            position: relative; cursor: pointer;
+            transition: 0.3s;
+        }
+        .toggle.active { background: var(--secondary); }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px; height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px; left: 2px;
+            transition: 0.3s;
+        }
+        .toggle.active::after { left: 26px; }
+        
+        .alert {
+            padding: 12px 15px; border-radius: var(--btn-radius);
+            margin-bottom: 15px; font-size: 0.9rem;
+        }
+        .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
+        .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
+        
+        .danger-zone {
+            border-color: rgba(255,100,100,0.3);
+            background: rgba(255,100,100,0.05);
+        }
+        
+        .hidden { display: none !important; }
+        .text-muted { color: var(--text-muted); }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🔐 TrueVault VPN</h1>
+                <small>Secure • Private • Fast</small>
+            </div>
+            <nav>
+                <a class="nav-item" href="/dashboard/">
+                    <span>🏠</span> Dashboard
+                </a>
+                <a class="nav-item" href="/dashboard/devices.html">
+                    <span>📱</span> My Devices
+                </a>
+                <a class="nav-item" href="/dashboard/billing.html">
+                    <span>💳</span> Billing
+                </a>
+                <a class="nav-item active" href="/dashboard/settings.html">
+                    <span>⚙️</span> Settings
+                </a>
+            </nav>
+            <div style="padding:20px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
+                <button onclick="logout()" class="btn btn-secondary" style="width:100%">🚪 Logout</button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <h1 style="margin-bottom:25px;font-size:1.5rem">⚙️ Account Settings</h1>
+            
+            <div id="alert-container"></div>
+            
+            <!-- Profile Settings -->
+            <div class="card">
+                <h2 class="card-title">👤 Profile Information</h2>
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" id="email" class="form-input" disabled>
+                        <p class="form-hint">Contact support to change your email</p>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" id="first_name" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" id="last_name" class="form-input">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                </form>
+            </div>
+            
+            <!-- Change Password -->
+            <div class="card">
+                <h2 class="card-title">🔒 Change Password</h2>
+                <form id="password-form">
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" id="current_password" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" id="new_password" class="form-input" required minlength="8">
+                        <p class="form-hint">Minimum 8 characters</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" id="confirm_password" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">🔐 Update Password</button>
+                </form>
+            </div>
+            
+            <!-- VPN Preferences -->
+            <div class="card">
+                <h2 class="card-title">🌐 VPN Preferences</h2>
+                
+                <div class="toggle-group">
+                    <div>
+                        <div class="toggle-label">Auto-connect on startup</div>
+                        <div class="toggle-desc">Automatically connect to last used server</div>
+                    </div>
+                    <div class="toggle" id="toggle-autoconnect" onclick="toggleSetting('autoconnect')"></div>
+                </div>
+                
+                <div class="toggle-group">
+                    <div>
+                        <div class="toggle-label">Kill switch</div>
+                        <div class="toggle-desc">Block internet if VPN disconnects</div>
+                    </div>
+                    <div class="toggle" id="toggle-killswitch" onclick="toggleSetting('killswitch')"></div>
+                </div>
+                
+                <div class="toggle-group">
+                    <div>
+                        <div class="toggle-label">Allow local network access</div>
+                        <div class="toggle-desc">Access printers and local devices while connected</div>
+                    </div>
+                    <div class="toggle active" id="toggle-localnet" onclick="toggleSetting('localnet')"></div>
+                </div>
+                
+                <div class="form-group" style="margin-top:20px">
+                    <label class="form-label">Preferred DNS</label>
+                    <select id="dns_preference" class="form-input">
+                        <option value="auto">Auto (TrueVault DNS)</option>
+                        <option value="cloudflare">Cloudflare (1.1.1.1)</option>
+                        <option value="google">Google (8.8.8.8)</option>
+                        <option value="quad9">Quad9 (9.9.9.9)</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" onclick="savePreferences()">💾 Save Preferences</button>
+            </div>
+            
+            <!-- Danger Zone -->
+            <div class="card danger-zone">
+                <h2 class="card-title" style="color:var(--error)">⚠️ Danger Zone</h2>
+                
+                <div class="toggle-group">
+                    <div>
+                        <div class="toggle-label">Delete all devices</div>
+                        <div class="toggle-desc">Remove all registered devices from your account</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteAllDevices()">Delete Devices</button>
+                </div>
+                
+                <div class="toggle-group" style="border:none">
+                    <div>
+                        <div class="toggle-label">Delete account</div>
+                        <div class="toggle-desc">Permanently delete your account and all data</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteAccount()">Delete Account</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API = '/api';
+        let authToken = localStorage.getItem('auth_token');
+        let preferences = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!authToken) {
+                window.location.href = '/login.html';
+                return;
+            }
+            loadProfile();
+            loadPreferences();
+            
+            document.getElementById('profile-form').addEventListener('submit', saveProfile);
+            document.getElementById('password-form').addEventListener('submit', changePassword);
+        });
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            window.location.href = '/login.html';
+        }
+
+        async function api(endpoint, options = {}) {
+            const res = await fetch(endpoint, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                    ...options.headers
+                }
+            });
+            if (res.status === 401) { logout(); return null; }
+            return await res.json();
+        }
+
+        function showAlert(message, type = 'success') {
+            document.getElementById('alert-container').innerHTML = 
+                `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => document.getElementById('alert-container').innerHTML = '', 5000);
+        }
+
+        async function loadProfile() {
+            const res = await api(`${API}/user/profile.php`);
+            if (res && res.success) {
+                document.getElementById('email').value = res.user.email;
+                document.getElementById('first_name').value = res.user.first_name || '';
+                document.getElementById('last_name').value = res.user.last_name || '';
+            }
+        }
+
+        async function saveProfile(e) {
+            e.preventDefault();
+            
+            const res = await api(`${API}/user/profile.php`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    first_name: document.getElementById('first_name').value,
+                    last_name: document.getElementById('last_name').value
+                })
+            });
+            
+            if (res && res.success) {
+                showAlert('Profile updated successfully!');
+            } else {
+                showAlert(res?.error || 'Failed to update profile', 'error');
+            }
+        }
+
+        async function changePassword(e) {
+            e.preventDefault();
+            
+            const newPass = document.getElementById('new_password').value;
+            const confirmPass = document.getElementById('confirm_password').value;
+            
+            if (newPass !== confirmPass) {
+                showAlert('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (newPass.length < 8) {
+                showAlert('Password must be at least 8 characters', 'error');
+                return;
+            }
+            
+            const res = await api(`${API}/user/password.php`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    current_password: document.getElementById('current_password').value,
+                    new_password: newPass
+                })
+            });
+            
+            if (res && res.success) {
+                showAlert('Password changed successfully!');
+                document.getElementById('password-form').reset();
+            } else {
+                showAlert(res?.error || 'Failed to change password', 'error');
+            }
+        }
+
+        function loadPreferences() {
+            // Load from localStorage for now
+            preferences = JSON.parse(localStorage.getItem('vpn_prefs') || '{}');
+            
+            ['autoconnect', 'killswitch', 'localnet'].forEach(key => {
+                const el = document.getElementById(`toggle-${key}`);
+                if (el && preferences[key]) el.classList.add('active');
+            });
+            
+            if (preferences.dns) {
+                document.getElementById('dns_preference').value = preferences.dns;
+            }
+        }
+
+        function toggleSetting(key) {
+            const el = document.getElementById(`toggle-${key}`);
+            el.classList.toggle('active');
+            preferences[key] = el.classList.contains('active');
+        }
+
+        function savePreferences() {
+            preferences.dns = document.getElementById('dns_preference').value;
+            localStorage.setItem('vpn_prefs', JSON.stringify(preferences));
+            showAlert('Preferences saved!');
+        }
+
+        async function deleteAllDevices() {
+            if (!confirm('Delete ALL devices? This cannot be undone.')) return;
+            if (!confirm('Are you absolutely sure?')) return;
+            
+            const res = await api(`${API}/devices/remove-all.php`, { method: 'POST' });
+            
+            if (res && res.success) {
+                showAlert('All devices deleted');
+            } else {
+                showAlert(res?.error || 'Failed to delete devices', 'error');
+            }
+        }
+
+        async function deleteAccount() {
+            if (!confirm('DELETE YOUR ACCOUNT? This is permanent and cannot be undone!')) return;
+            if (!confirm('All your data, devices, and subscription will be lost. Continue?')) return;
+            
+            const password = prompt('Enter your password to confirm:');
+            if (!password) return;
+            
+            const res = await api(`${API}/user/delete.php`, {
+                method: 'POST',
+                body: JSON.stringify({ password })
+            });
+            
+            if (res && res.success) {
+                alert('Account deleted. Goodbye!');
+                logout();
+            } else {
+                showAlert(res?.error || 'Failed to delete account', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

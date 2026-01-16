@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueVault VPN - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="theme-styles">
+        :root {
+            --primary: #00d9ff;
+            --secondary: #00ff88;
+            --accent: #ff6b6b;
+            --bg: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --text: #ffffff;
+            --text-muted: #888888;
+            --success: #00ff88;
+            --error: #ff6464;
+            --card-radius: 14px;
+            --btn-radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg), var(--bg-secondary));
+            color: var(--text);
+            min-height: 100vh;
+        }
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        /* Layout */
+        .app { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 240px;
+            background: rgba(255,255,255,0.02);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .main { flex: 1; margin-left: 240px; padding: 25px; }
+        
+        /* Logo */
+        .logo { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
+        .logo h1 {
+            font-size: 1.2rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo small { color: var(--text-muted); font-size: 0.75rem; }
+        
+        /* Navigation */
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 20px; color: var(--text-muted);
+            text-decoration: none; transition: 0.2s; cursor: pointer;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0,217,255,0.1); color: var(--primary);
+            text-decoration: none;
+        }
+        .nav-item.active { border-left: 3px solid var(--primary); }
+        .nav-icon { font-size: 1.2rem; }
+        
+        /* User info in sidebar */
+        .user-info {
+            padding: 15px 20px; margin: 20px 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--btn-radius);
+        }
+        .user-email { font-size: 0.85rem; color: var(--text); word-break: break-all; }
+        .user-plan {
+            display: inline-block; margin-top: 5px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 600;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+        }
+        .user-plan.vip { background: linear-gradient(90deg, #ffd700, #ff8c00); }
+        
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 20px; margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .card-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 15px;
+        }
+        .card-title { font-size: 1.1rem; font-weight: 600; }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px; margin-bottom: 25px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem; font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; margin-top: 5px; }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 18px; border: none;
+            border-radius: var(--btn-radius);
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,217,255,0.3); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn-danger { background: rgba(255,100,100,0.15); color: var(--error); }
+        .btn-small { padding: 6px 12px; font-size: 0.8rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Server selector */
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .server-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--btn-radius);
+            padding: 15px; cursor: pointer; transition: 0.2s;
+        }
+        .server-card:hover { border-color: var(--primary); background: rgba(0,217,255,0.05); }
+        .server-card.selected { border-color: var(--secondary); background: rgba(0,255,136,0.1); }
+        .server-card.vip { border-color: #ffd700; }
+        .server-name { font-weight: 600; margin-bottom: 5px; }
+        .server-location { color: var(--text-muted); font-size: 0.85rem; }
+        .server-load { margin-top: 8px; }
+        .load-bar {
+            height: 4px; background: rgba(255,255,255,0.1);
+            border-radius: 2px; overflow: hidden;
+        }
+        .load-fill { height: 100%; background: var(--secondary); transition: width 0.3s; }
+        .load-fill.high { background: var(--accent); }
+        
+        /* Device cards */
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .device-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--card-radius);
+            padding: 18px;
+        }
+        .device-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .device-icon { font-size: 2rem; }
+        .device-name { font-weight: 600; }
+        .device-ip { font-family: monospace; color: var(--primary); font-size: 0.85rem; }
+        .device-status {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+        }
+        .device-status.online { background: rgba(0,255,136,0.15); color: var(--success); }
+        .device-status.offline { background: rgba(255,255,255,0.1); color: var(--text-muted); }
+        .device-actions { display: flex; gap: 8px; margin-top: 12px; }
+        
+        /* Badges */
+        .badge {
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .badge-success { background: rgba(0,255,136,0.15); color: var(--success); }
+        .badge-warning { background: rgba(255,170,0,0.15); color: #ffaa00; }
+        .badge-danger { background: rgba(255,100,100,0.15); color: var(--error); }
+        .badge-info { background: rgba(0,217,255,0.15); color: var(--primary); }
+        .badge-vip { background: linear-gradient(90deg, #ffd700, #ff8c00); color: #000; }
+        
+        /* Quick connect */
+        .quick-connect {
+            background: linear-gradient(135deg, rgba(0,217,255,0.1), rgba(0,255,136,0.1));
+            border: 1px solid rgba(0,217,255,0.3);
+            border-radius: var(--card-radius);
+            padding: 25px; text-align: center; margin-bottom: 25px;
+        }
+        .connect-status { font-size: 1.2rem; margin-bottom: 15px; }
+        .connect-btn {
+            padding: 15px 40px; font-size: 1.1rem;
+            border-radius: 30px;
+        }
+        
+        /* Forms */
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.9rem; }
+        .form-input {
+            width: 100%; padding: 10px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--btn-radius);
+            color: var(--text); font-size: 0.95rem;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            padding: 25px; max-width: 500px; width: 90%;
+            max-height: 90vh; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 1.2rem; font-weight: 600; }
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+        
+        /* QR Code */
+        .qr-container { text-align: center; padding: 20px; }
+        .qr-code {
+            background: #fff; padding: 15px;
+            border-radius: 10px; display: inline-block; margin-bottom: 15px;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 12px 15px; border-radius: var(--btn-radius);
+            margin-bottom: 15px; font-size: 0.9rem;
+        }
+        .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
+        .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
+        .alert-info { background: rgba(0,217,255,0.15); color: var(--primary); }
+        
+        /* Loading */
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-muted); }
+        .spinner {
+            width: 30px; height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Utilities */
+        .hidden { display: none !important; }
+        .text-muted { color: var(--text-muted); }
+        .text-center { text-align: center; }
+        .mt-20 { margin-top: 20px; }
+        .mb-15 { margin-bottom: 15px; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main { margin-left: 0; }
+            .app { flex-direction: column; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🔐 TrueVault VPN</h1>
+                <small>Secure • Private • Fast</small>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-email" id="user-email">Loading...</div>
+                <span class="user-plan" id="user-plan">-</span>
+            </div>
+            
+            <nav>
+                <a class="nav-item active" href="/dashboard/">
+                    <span class="nav-icon">🏠</span> Dashboard
+                </a>
+                <a class="nav-item" href="/dashboard/devices.html">
+                    <span class="nav-icon">📱</span> My Devices
+                </a>
+                <a class="nav-item" href="/dashboard/billing.html">
+                    <span class="nav-icon">💳</span> Billing
+                </a>
+                <a class="nav-item" href="/dashboard/settings.html">
+                    <span class="nav-icon">⚙️</span> Settings
+                </a>
+                <a class="nav-item" href="/dashboard/support.html">
+                    <span class="nav-icon">💬</span> Support
+                </a>
+            </nav>
+            
+            <div style="padding:20px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
+                <button id="logout-btn" class="btn btn-secondary" style="width:100%">
+                    🚪 Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div id="loading" class="loading">
+                <div class="spinner"></div> Loading dashboard...
+            </div>
+            
+            <div id="content" class="hidden">
+                <!-- Quick Connect -->
+                <div class="quick-connect">
+                    <div class="connect-status" id="connect-status">
+                        🔒 VPN Status: <span id="vpn-status">Disconnected</span>
+                    </div>
+                    <p class="text-muted mb-15">Select a server below and add a device to connect</p>
+                    <a href="/dashboard/devices.html" class="btn btn-primary connect-btn">
+                        📱 Manage Devices
+                    </a>
+                </div>
+                
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-devices">0</div>
+                        <div class="stat-label">Active Devices</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-max-devices">0</div>
+                        <div class="stat-label">Max Devices</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-servers">0</div>
+                        <div class="stat-label">Available Servers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-subscription">-</div>
+                        <div class="stat-label">Subscription</div>
+                    </div>
+                </div>
+                
+                <!-- Server Selection -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🌍 Select Server</span>
+                        <span class="text-muted" id="server-count">0 servers</span>
+                    </div>
+                    <div class="server-grid" id="servers-grid">
+                        <!-- Servers loaded dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Recent Devices -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📱 Your Devices</span>
+                        <a href="/dashboard/devices.html" class="btn btn-small btn-secondary">View All</a>
+                    </div>
+                    <div class="device-grid" id="devices-grid">
+                        <!-- Devices loaded dynamically -->
+                    </div>
+                    <div id="no-devices" class="text-center text-muted hidden" style="padding:30px">
+                        <p style="font-size:2rem;margin-bottom:10px">📱</p>
+                        <p>No devices yet. Add your first device to get started!</p>
+                        <a href="/dashboard/devices.html" class="btn btn-primary mt-20">+ Add Device</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+
+    <script>
+        const API = '/api';
+        let authToken = localStorage.getItem('auth_token');
+        let userData = null;
+        let selectedServerId = localStorage.getItem('selected_server') || 1;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!authToken) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            loadDashboard();
+            
+            document.getElementById('logout-btn').addEventListener('click', logout);
+        });
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('selected_server');
+            window.location.href = '/login.html';
+        }
+
+        async function api(endpoint, options = {}) {
+            try {
+                const res = await fetch(endpoint, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                        ...options.headers
+                    }
+                });
+                
+                if (res.status === 401) {
+                    logout();
+                    return null;
+                }
+                
+                return await res.json();
+            } catch (err) {
+                console.error('API Error:', err);
+                return null;
+            }
+        }
+
+        async function loadDashboard() {
+            // Load user data
+            const userRes = await api(`${API}/user/profile.php`);
+            if (!userRes || !userRes.success) {
+                logout();
+                return;
+            }
+            
+            userData = userRes.user;
+            
+            // Update user info
+            document.getElementById('user-email').textContent = userData.email;
+            const planEl = document.getElementById('user-plan');
+            if (userData.is_vip) {
+                planEl.textContent = '⭐ VIP';
+                planEl.classList.add('vip');
+            } else {
+                planEl.textContent = userData.plan?.charAt(0).toUpperCase() + userData.plan?.slice(1) || 'Free';
+            }
+            
+            // Load servers
+            const serversRes = await api(`${API}/servers/list.php`);
+            if (serversRes && serversRes.success) {
+                renderServers(serversRes.servers);
+                document.getElementById('stat-servers').textContent = serversRes.servers.length;
+                document.getElementById('server-count').textContent = `${serversRes.servers.length} servers`;
+            }
+            
+            // Load devices
+            const devicesRes = await api(`${API}/devices/list.php`);
+            if (devicesRes && devicesRes.success) {
+                renderDevices(devicesRes.devices);
+                document.getElementById('stat-devices').textContent = devicesRes.devices.length;
+            }
+            
+            // Update stats
+            document.getElementById('stat-max-devices').textContent = userData.max_devices || 3;
+            document.getElementById('stat-subscription').textContent = userData.status === 'active' ? '✓ Active' : userData.status;
+            
+            // Show content
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+        }
+
+        function renderServers(servers) {
+            const grid = document.getElementById('servers-grid');
+            
+            grid.innerHTML = servers.map(srv => {
+                const loadPercent = srv.max_clients > 0 ? Math.round((srv.current_clients / srv.max_clients) * 100) : 0;
+                const isSelected = srv.id == selectedServerId;
+                const isVip = srv.is_vip_only;
+                
+                return `
+                    <div class="server-card ${isSelected ? 'selected' : ''} ${isVip ? 'vip' : ''}" 
+                         onclick="selectServer(${srv.id})" data-server-id="${srv.id}">
+                        <div class="server-name">
+                            ${getCountryFlag(srv.country_code)} ${srv.display_name}
+                            ${isVip ? '<span class="badge badge-vip" style="margin-left:5px">VIP</span>' : ''}
+                        </div>
+                        <div class="server-location">${srv.location}</div>
+                        <div class="server-load">
+                            <div class="load-bar">
+                                <div class="load-fill ${loadPercent > 80 ? 'high' : ''}" style="width:${loadPercent}%"></div>
+                            </div>
+                            <small class="text-muted">${srv.current_clients}/${srv.max_clients} clients</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectServer(serverId) {
+            selectedServerId = serverId;
+            localStorage.setItem('selected_server', serverId);
+            
+            document.querySelectorAll('.server-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.serverId == serverId);
+            });
+        }
+
+        function renderDevices(devices) {
+            const grid = document.getElementById('devices-grid');
+            const noDevices = document.getElementById('no-devices');
+            
+            if (!devices || devices.length === 0) {
+                grid.classList.add('hidden');
+                noDevices.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            noDevices.classList.add('hidden');
+            
+            // Show max 3 devices on dashboard
+            const displayDevices = devices.slice(0, 3);
+            
+            grid.innerHTML = displayDevices.map(dev => `
+                <div class="device-card">
+                    <div class="device-header">
+                        <span class="device-icon">${getDeviceIcon(dev.device_type)}</span>
+                        <div>
+                            <div class="device-name">${dev.device_name}</div>
+                            <div class="device-ip">${dev.assigned_ip}</div>
+                        </div>
+                        <span class="device-status ${dev.is_online ? 'online' : 'offline'}">
+                            ${dev.is_online ? '● Online' : '○ Offline'}
+                        </span>
+                    </div>
+                    <div class="device-actions">
+                        <a href="/dashboard/devices.html?config=${dev.device_id}" class="btn btn-small btn-primary">
+                            📥 Config
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getDeviceIcon(type) {
+            const icons = {
+                'windows': '💻',
+                'mac': '🖥️',
+                'linux': '🐧',
+                'android': '📱',
+                'ios': '📱',
+                'router': '📡',
+                'other': '📟'
+            };
+            return icons[type] || icons.other;
+        }
+
+        function getCountryFlag(code) {
+            if (!code) return '🌍';
+            const flags = {
+                'US': '🇺🇸',
+                'CA': '🇨🇦',
+                'UK': '🇬🇧',
+                'DE': '🇩🇪',
+                'FR': '🇫🇷',
+                'NL': '🇳🇱',
+                'JP': '🇯🇵',
+                'AU': '🇦🇺',
+                'SG': '🇸🇬'
+            };
+            return flags[code] || '🌍';
+        }
+    </script>
+</body>
+</html>

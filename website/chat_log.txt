@@ -1,0 +1,182 @@
+
+=================================================================
+PHASE 5: PAYPAL BILLING - January 16, 2026
+=================================================================
+
+PRICING CORRECTED:
+- Personal:   $9.97/mo  | $99.97/yr   | 3 devices
+- Family:    $14.97/mo  | $140.97/yr  | 6 devices  
+- Dedicated: $39.97/mo  | $399.97/yr  | unlimited devices
+
+FILES CREATED:
+
+1. includes/PayPal.php
+   - Complete PayPal integration class
+   - Order creation and capture
+   - Subscription management
+   - Webhook processing
+   - Invoice generation
+
+2. api/billing/plans.php
+   - GET endpoint for plan pricing
+   - Supports USD and CAD currencies
+   - Returns formatted pricing with savings calculations
+
+3. api/billing/checkout.php
+   - POST endpoint to create checkout session
+   - Validates plan, interval, currency
+   - Creates PayPal order
+   - Stores pending order in database
+   - VIP bypass (free access)
+
+4. api/billing/subscription.php
+   - GET: Current subscription status
+   - POST ?action=capture: Capture approved payment
+   - POST ?action=cancel: Cancel subscription
+   - Invoice generation on payment
+   - User status update
+
+5. api/billing/webhook.php
+   - Receives PayPal webhook events
+   - Logs all webhooks
+   - Processes subscription/payment events
+   - Updates user and subscription status
+
+6. admin/setup-databases.php UPDATED
+   - Added orders table to billing.db
+   - Corrected pricing settings in main.db
+   - Added webhook_logs table to logs.db
+   - IP pool expanded to 253 addresses (10.8.0.2-254)
+   - Family plan: 6 devices (not 10)
+
+DATABASE CHANGES:
+billing.db now includes:
+- orders (pending PayPal orders)
+- subscriptions
+- invoices  
+- payments
+
+logs.db now includes:
+- webhook_logs (PayPal webhook tracking)
+
+=================================================================
+PHASE 6: ADMIN CMS DASHBOARD - January 16, 2026
+=================================================================
+
+ADMIN DASHBOARD COMPLETE!
+
+FILES CREATED:
+
+1. admin/index.html
+   - Full admin dashboard UI
+   - Database-driven theme colors via CSS variables
+   - Login screen with JWT authentication
+   - Navigation sidebar
+   - Dashboard overview with stats
+   - Users management section
+   - Servers management section
+   - Billing overview section
+   - Settings editor
+   - Theme customizer (colors, typography)
+   - VIP users management
+   - Modals for add/edit operations
+   - Responsive design
+
+2. admin/api/auth.php
+   - POST ?action=login - Admin login
+   - POST ?action=logout - Admin logout
+   - GET ?action=verify - Verify admin token
+   - Default password: TrueVault2026!
+   - Admin email: paulhalonen@gmail.com
+
+3. admin/api/stats.php
+   - GET - Dashboard statistics
+   - User counts (total, active, trial, new)
+   - Device counts (total, active, online)
+   - Server status with client counts
+   - Billing stats (subscriptions, revenue)
+   - Recent activity feed
+
+4. admin/api/users.php
+   - GET - List users with pagination/search
+   - GET ?id=X - Get single user with details
+   - POST - Create new user
+   - PUT ?id=X - Update user
+   - DELETE ?id=X - Delete user
+
+5. admin/api/servers.php
+   - GET - List all servers
+   - GET ?id=X - Get server with connected devices
+   - POST - Add new server
+   - PUT ?id=X - Update server
+   - DELETE ?id=X - Delete server
+
+6. admin/api/settings.php
+   - GET ?type=settings - Get all settings
+   - GET ?type=theme - Get theme values
+   - GET ?type=vip - Get VIP users
+   - PUT ?type=settings - Update settings
+   - PUT ?type=theme - Update theme
+   - POST ?type=vip - Add VIP user
+   - DELETE ?type=vip&id=X - Remove VIP
+
+7. admin/api/devices.php
+   - GET - List all devices
+   - GET ?id=X - Get device details
+   - PUT ?id=X - Update device
+   - DELETE ?id=X - Delete device
+
+8. admin/api/logs.php
+   - GET ?type=activity - Activity logs
+   - GET ?type=errors - Error logs
+   - GET ?type=api - API logs
+   - GET ?type=webhooks - Webhook logs
+
+9. admin/api/billing.php
+   - GET ?type=subscriptions - List subscriptions
+   - GET ?type=invoices - List invoices
+   - GET ?type=payments - List payments
+   - GET ?type=summary - Revenue summary
+   - PUT ?type=subscription&id=X - Update subscription
+
+10. admin/.htaccess
+    - Security rules
+    - CORS headers
+    - Protect sensitive files
+
+11. admin/default.php
+    - Entry point redirect
+
+ADMIN ACCESS:
+URL: https://vpn.the-truth-publishing.com/admin/
+Email: paulhalonen@gmail.com
+Password: TrueVault2026!
+
+FEATURES:
+✅ JWT-based admin authentication
+✅ Dashboard with live statistics
+✅ User CRUD operations
+✅ Server management
+✅ Billing overview
+✅ Settings editor (database-driven)
+✅ Theme customizer (colors/fonts saved to DB)
+✅ VIP user management
+✅ Activity/error/webhook logs viewer
+✅ Responsive UI
+✅ All styles database-driven via CSS variables
+
+=================================================================
+PHASE STATUS - January 16, 2026
+=================================================================
+
+✅ Phase 1: Directory Structure & Config - COMPLETE
+✅ Phase 2: Databases (7 SQLite) - COMPLETE  
+✅ Phase 3: Authentication (JWT, VIP) - COMPLETE
+✅ Phase 4: Device Management (WireGuard) - COMPLETE
+✅ Phase 5: PayPal Billing Integration - COMPLETE
+✅ Phase 6: Admin CMS Dashboard - COMPLETE
+
+⏳ Phase 7: User Dashboard - NEXT
+⏳ Phase 8: Public Landing Page - PENDING
+
+=================================================================

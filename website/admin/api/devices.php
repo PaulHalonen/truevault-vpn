@@ -5,6 +5,7 @@
  * GET              - List all devices
  * GET ?id=X        - Get single device
  * DELETE ?id=X     - Delete device
+ * PUT ?id=X        - Update device (status, server)
  * 
  * @created January 2026
  */
@@ -13,7 +14,7 @@ define('TRUEVAULT_INIT', true);
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -88,27 +89,43 @@ switch ($_SERVER['REQUEST_METHOD']) {
             $page = max(1, (int)($_GET['page'] ?? 1));
             $limit = min(100, max(10, (int)($_GET['limit'] ?? 25)));
             $offset = ($page - 1) * $limit;
+            $search = $_GET['search'] ?? '';
+            $status = $_GET['status'] ?? '';
             
+            // Build query
             $where = [];
             $params = [];
             
             if ($userId) {
-                $where[] = "user_id = ?";
+                $where[] = "d.user_id = ?";
                 $params[] = $userId;
+            }
+            
+            if ($search) {
+                $where[] = "(d.device_name LIKE ? OR d.assigned_ip LIKE ?)";
+                $searchTerm = "%{$search}%";
+                $params = array_merge($params, [$searchTerm, $searchTerm]);
+            }
+            
+            if ($status) {
+                $where[] = "d.status = ?";
+                $params[] = $status;
             }
             
             $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
             
+            // Get total count
             $total = $devicesDb->queryValue(
-                "SELECT COUNT(*) FROM devices {$whereClause}",
+                "SELECT COUNT(*) FROM devices d {$whereClause}",
                 $params
             );
             
+            // Get devices with user email
             $devices = $devicesDb->queryAll(
-                "SELECT d.*, 
-                        (SELECT email FROM users WHERE id = d.user_id) as user_email,
-                        (SELECT display_name FROM servers WHERE id = d.current_server_id) as server_name
+                "SELECT d.*, u.email as user_email, s.display_name as server_name
                  FROM devices d
+                 LEFT JOIN (SELECT id, email FROM users) u ON d.user_id = u.id
+                 LEFT JOIN (SELECT id, display_name FROM servers) s ON d.current_server_id = s.id
                  {$whereClause}
                  ORDER BY d.created_at DESC
                  LIMIT {$limit} OFFSET {$offset}",
@@ -128,33 +145,59 @@ switch ($_SERVER['REQUEST_METHOD']) {
         }
         break;
         
-    case 'DELETE':
+    case 'PUT':
+        // Update device
         if (!$deviceId) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Device ID required']);
             exit;
         }
         
-        // Get device to release IP
-        $device = $devicesDb->queryOne("SELECT assigned_ip FROM devices WHERE id = ?", [$deviceId]);
+        $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!$device) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Device not found']);
+        $updateData = ['updated_at' => date('Y-m-d H:i:s')];
+        
+        // Fields that can be updated
+        if (isset($input['status'])) {
+            $updateData['status'] = $input['status'];
+        }
+        if (isset($input['device_name'])) {
+            $updateData['device_name'] = $input['device_name'];
+        }
+        if (isset($input['current_server_id'])) {
+            $updateData['current_server_id'] = $input['current_server_id'];
+        }
+        
+        $devicesDb->update('devices', $updateData, 'id = ?', [$deviceId]);
+        
+        echo json_encode(['success' => true, 'message' => 'Device updated']);
+        break;
+        
+    case 'DELETE':
+        // Delete device
+        if (!$deviceId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Device ID required']);
             exit;
         }
         
-        // Release IP back to pool
-        $devicesDb->query(
-            "UPDATE ip_pool SET is_available = 1, device_id = NULL, assigned_at = NULL WHERE ip_address = ?",
-            [$device['assigned_ip']]
-        );
+        // Get device to free IP
+        $device = $devicesDb->queryOne("SELECT assigned_ip FROM devices WHERE id = ?", [$deviceId]);
         
-        // Delete device configs
-        $devicesDb->query("DELETE FROM device_configs WHERE device_id = ?", [$deviceId]);
-        
-        // Delete device
-        $devicesDb->query("DELETE FROM devices WHERE id = ?", [$deviceId]);
+        if ($device) {
+            // Free the IP
+            $devicesDb->update('ip_pool', 
+                ['is_available' => 1, 'device_id' => null, 'assigned_at' => null],
+                'ip_address = ?',
+                [$device['assigned_ip']]
+            );
+            
+            // Delete device configs
+            $devicesDb->query("DELETE FROM device_configs WHERE device_id = (SELECT device_id FROM devices WHERE id = ?)", [$deviceId]);
+            
+            // Delete device
+            $devicesDb->query("DELETE FROM devices WHERE id = ?", [$deviceId]);
+        }
         
         echo json_encode(['success' => true, 'message' => 'Device deleted']);
         break;
