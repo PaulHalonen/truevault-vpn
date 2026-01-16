@@ -12,7 +12,10 @@
             --bg-secondary: #1a1a2e;
             --text: #ffffff;
             --text-muted: #888888;
+            --success: #00ff88;
             --error: #ff6464;
+            --card-radius: 14px;
+            --btn-radius: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -23,166 +26,166 @@
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 420px;
             padding: 20px;
         }
-        .card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 40px 35px;
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
         }
+        
         .logo {
             text-align: center;
             margin-bottom: 30px;
         }
-        .logo-icon {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
+        .logo-icon { font-size: 3.5rem; margin-bottom: 10px; }
         .logo h1 {
             font-size: 1.8rem;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .logo p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
+        .logo p { color: var(--text-muted); margin-top: 5px; }
         
-        .tabs {
-            display: flex;
-            margin-bottom: 25px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            padding: 4px;
-        }
-        .tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 6px;
-            color: var(--text-muted);
-            transition: 0.2s;
-        }
-        .tab.active {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            color: var(--bg);
-            font-weight: 600;
+        .card {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--card-radius);
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.08);
         }
         
         .form-group { margin-bottom: 20px; }
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
+        .form-label { display: block; margin-bottom: 8px; color: var(--text); font-weight: 500; }
         .form-input {
-            width: 100%;
-            padding: 14px 16px;
+            width: 100%; padding: 14px 16px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 1rem;
-            transition: 0.2s;
+            border-radius: var(--btn-radius);
+            color: var(--text); font-size: 1rem;
+            transition: border-color 0.2s;
         }
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0,217,255,0.1);
+            background: rgba(255,255,255,0.08);
         }
-        .form-input::placeholder { color: rgba(255,255,255,0.3); }
+        .form-input::placeholder { color: var(--text-muted); }
         
         .btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            padding: 14px 20px;
             border: none;
-            border-radius: 8px;
-            color: var(--bg);
+            border-radius: var(--btn-radius);
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
-        .btn:hover {
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
+        }
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(0,217,255,0.3);
         }
-        .btn:disabled {
+        .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
         
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+        .divider span { padding: 0 15px; }
+        
+        .signup-link {
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
         .alert {
             padding: 12px 15px;
-            border-radius: 8px;
+            border-radius: var(--btn-radius);
             margin-bottom: 20px;
             font-size: 0.9rem;
         }
-        .alert-error {
-            background: rgba(255,100,100,0.15);
-            color: var(--error);
-            border: 1px solid rgba(255,100,100,0.3);
+        .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
+        .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
+        
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 30px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
         }
-        .alert-success {
-            background: rgba(0,255,136,0.15);
-            color: var(--secondary);
-            border: 1px solid rgba(0,255,136,0.3);
+        .feature { display: flex; align-items: center; gap: 6px; }
+        
+        .forgot-link {
+            display: block;
+            text-align: right;
+            font-size: 0.9rem;
+            margin-top: 10px;
         }
         
-        .links {
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-radius: var(--btn-radius);
+            overflow: hidden;
+            background: rgba(255,255,255,0.05);
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
             text-align: center;
-            margin-top: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--text-muted);
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: 500;
         }
-        .links a {
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 0.9rem;
+        .tab.active {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--bg);
         }
-        .links a:hover { text-decoration: underline; }
+        .tab:hover:not(.active) { background: rgba(255,255,255,0.08); }
         
         .hidden { display: none !important; }
-        
-        .password-toggle {
-            position: relative;
-        }
-        .password-toggle .toggle-btn {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.1rem;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="login-container">
+        <div class="logo">
+            <div class="logo-icon">🔐</div>
+            <h1>TrueVault VPN</h1>
+            <p>Secure • Private • Fast</p>
+        </div>
+        
         <div class="card">
-            <div class="logo">
-                <div class="logo-icon">🔐</div>
-                <h1>TrueVault VPN</h1>
-                <p>Secure • Private • Fast</p>
-            </div>
-            
             <div class="tabs">
-                <div class="tab active" onclick="showTab('login')">Login</div>
-                <div class="tab" onclick="showTab('register')">Register</div>
+                <button class="tab active" onclick="showTab('login')">Login</button>
+                <button class="tab" onclick="showTab('register')">Sign Up</button>
             </div>
             
-            <div id="alert"></div>
+            <div id="alert-container"></div>
             
             <!-- Login Form -->
             <form id="login-form" onsubmit="handleLogin(event)">
@@ -192,15 +195,12 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <div class="password-toggle">
-                        <input type="password" name="password" class="form-input" placeholder="••••••••" required>
-                        <button type="button" class="toggle-btn" onclick="togglePassword(this)">👁️</button>
-                    </div>
+                    <input type="password" name="password" class="form-input" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn" id="login-btn">Login</button>
-                <div class="links">
-                    <a href="/forgot-password.html">Forgot password?</a>
-                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    🔓 Sign In
+                </button>
+                <a href="#" class="forgot-link">Forgot password?</a>
             </form>
             
             <!-- Register Form -->
@@ -211,22 +211,22 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <div class="password-toggle">
-                        <input type="password" name="password" class="form-input" placeholder="Min. 8 characters" required minlength="8">
-                        <button type="button" class="toggle-btn" onclick="togglePassword(this)">👁️</button>
-                    </div>
+                    <input type="password" name="password" class="form-input" placeholder="Min. 8 characters" required minlength="8">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Confirm Password</label>
-                    <input type="password" name="confirm_password" class="form-input" placeholder="••••••••" required>
+                    <input type="password" name="confirm_password" class="form-input" placeholder="••••••••" required minlength="8">
                 </div>
-                <button type="submit" class="btn" id="register-btn">Create Account</button>
-                <div class="links">
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-top:15px">
-                        By registering, you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>
-                    </p>
-                </div>
+                <button type="submit" class="btn btn-primary" id="register-btn">
+                    🚀 Create Account
+                </button>
             </form>
+        </div>
+        
+        <div class="features">
+            <div class="feature">🔒 256-bit Encryption</div>
+            <div class="feature">🚫 Zero Logs</div>
+            <div class="feature">⚡ Fast Servers</div>
         </div>
     </div>
 
@@ -234,9 +234,19 @@
         const API = '/api';
 
         // Check if already logged in
-        if (localStorage.getItem('auth_token')) {
-            window.location.href = '/dashboard/';
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                // Verify token is still valid
+                fetch(`${API}/auth/verify.php`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        window.location.href = '/dashboard/';
+                    }
+                });
+            }
+        });
 
         function showTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -244,19 +254,12 @@
             
             document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
             document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
-            document.getElementById('alert').innerHTML = '';
+            document.getElementById('alert-container').innerHTML = '';
         }
 
         function showAlert(message, type = 'error') {
-            document.getElementById('alert').innerHTML = 
+            document.getElementById('alert-container').innerHTML = 
                 `<div class="alert alert-${type}">${message}</div>`;
-        }
-
-        function togglePassword(btn) {
-            const input = btn.previousElementSibling;
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            btn.textContent = isPassword ? '🙈' : '👁️';
         }
 
         async function handleLogin(e) {
@@ -265,7 +268,7 @@
             const btn = document.getElementById('login-btn');
             
             btn.disabled = true;
-            btn.textContent = 'Logging in...';
+            btn.textContent = 'Signing in...';
             
             try {
                 const res = await fetch(`${API}/auth/login.php`, {
@@ -279,18 +282,20 @@
                 
                 const data = await res.json();
                 
-                if (data.success && data.token) {
+                if (data.success) {
                     localStorage.setItem('auth_token', data.token);
-                    window.location.href = '/dashboard/';
+                    showAlert('Login successful! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/dashboard/', 1000);
                 } else {
                     showAlert(data.error || 'Login failed');
+                    btn.disabled = false;
+                    btn.textContent = '🔓 Sign In';
                 }
             } catch (err) {
-                showAlert('Network error. Please try again.');
+                showAlert('Connection error. Please try again.');
+                btn.disabled = false;
+                btn.textContent = '🔓 Sign In';
             }
-            
-            btn.disabled = false;
-            btn.textContent = 'Login';
         }
 
         async function handleRegister(e) {
@@ -318,18 +323,20 @@
                 
                 const data = await res.json();
                 
-                if (data.success && data.token) {
+                if (data.success) {
                     localStorage.setItem('auth_token', data.token);
-                    window.location.href = '/dashboard/';
+                    showAlert('Account created! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/dashboard/', 1000);
                 } else {
                     showAlert(data.error || 'Registration failed');
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Create Account';
                 }
             } catch (err) {
-                showAlert('Network error. Please try again.');
+                showAlert('Connection error. Please try again.');
+                btn.disabled = false;
+                btn.textContent = '🚀 Create Account';
             }
-            
-            btn.disabled = false;
-            btn.textContent = 'Create Account';
         }
     </script>
 </body>

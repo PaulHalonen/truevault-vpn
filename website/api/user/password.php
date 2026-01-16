@@ -19,12 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
-}
-
 require_once __DIR__ . '/../../configs/config.php';
 require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/Auth.php';
@@ -51,24 +45,33 @@ if (!$payload) {
     exit;
 }
 
-$userId = $payload['user_id'];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
+
 $input = json_decode(file_get_contents('php://input'), true);
 
-if (empty($input['current_password']) || empty($input['new_password'])) {
+$currentPassword = $input['current_password'] ?? '';
+$newPassword = $input['new_password'] ?? '';
+
+if (!$currentPassword || !$newPassword) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Current and new password required']);
     exit;
 }
 
-if (strlen($input['new_password']) < 8) {
+if (strlen($newPassword) < 8) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'New password must be at least 8 characters']);
+    echo json_encode(['success' => false, 'error' => 'Password must be at least 8 characters']);
     exit;
 }
 
+$userId = $payload['user_id'];
 $usersDb = Database::getInstance('users');
 
-// Get current password hash
+// Get current user
 $user = $usersDb->queryOne("SELECT password FROM users WHERE id = ?", [$userId]);
 
 if (!$user) {
@@ -78,21 +81,20 @@ if (!$user) {
 }
 
 // Verify current password
-if (!password_verify($input['current_password'], $user['password'])) {
+if (!password_verify($currentPassword, $user['password'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Current password is incorrect']);
     exit;
 }
 
 // Update password
-$newHash = password_hash($input['new_password'], PASSWORD_DEFAULT);
-
+$hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 $usersDb->update('users', [
-    'password' => $newHash,
+    'password' => $hashedPassword,
     'updated_at' => date('Y-m-d H:i:s')
 ], 'id = ?', [$userId]);
 
-// Log the activity
+// Log activity
 $logsDb = Database::getInstance('logs');
 $logsDb->insert('activity_logs', [
     'user_id' => $userId,

@@ -60,27 +60,7 @@
             padding: 25px; margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.08);
         }
-        .card-title {
-            font-size: 1.1rem; font-weight: 600;
-            margin-bottom: 20px; display: flex;
-            align-items: center; gap: 10px;
-        }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-label {
-            display: block; margin-bottom: 8px;
-            color: var(--text-muted); font-size: 0.9rem;
-        }
-        .form-input {
-            width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: var(--btn-radius);
-            color: var(--text); font-size: 0.95rem;
-        }
-        .form-input:focus { outline: none; border-color: var(--primary); }
-        .form-input:disabled { opacity: 0.6; cursor: not-allowed; }
-        .form-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
         .btn {
             padding: 10px 18px; border: none;
@@ -101,32 +81,20 @@
         }
         .btn-danger { background: rgba(255,100,100,0.15); color: var(--error); }
         
-        .toggle-group {
-            display: flex; align-items: center;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; color: var(--text); font-weight: 500; }
+        .form-help { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
+        .form-input {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--btn-radius);
+            color: var(--text); font-size: 0.95rem;
         }
-        .toggle-label { font-size: 0.95rem; }
-        .toggle-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
-        .toggle {
-            width: 50px; height: 26px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 13px;
-            position: relative; cursor: pointer;
-            transition: 0.3s;
-        }
-        .toggle.active { background: var(--secondary); }
-        .toggle::after {
-            content: '';
-            position: absolute;
-            width: 22px; height: 22px;
-            background: white;
-            border-radius: 50%;
-            top: 2px; left: 2px;
-            transition: 0.3s;
-        }
-        .toggle.active::after { left: 26px; }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        .form-input:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         .alert {
             padding: 12px 15px; border-radius: var(--btn-radius);
@@ -134,6 +102,12 @@
         }
         .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
         .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
+        
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 25px 0;
+        }
         
         .danger-zone {
             border-color: rgba(255,100,100,0.3);
@@ -146,6 +120,7 @@
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main { margin-left: 0; }
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -176,114 +151,88 @@
         </aside>
 
         <main class="main">
-            <h1 style="margin-bottom:25px;font-size:1.5rem">⚙️ Account Settings</h1>
+            <h1 style="margin-bottom:25px">⚙️ Account Settings</h1>
             
             <div id="alert-container"></div>
             
             <!-- Profile Settings -->
             <div class="card">
                 <h2 class="card-title">👤 Profile Information</h2>
-                <form id="profile-form">
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" id="email" class="form-input" disabled>
-                        <p class="form-hint">Contact support to change your email</p>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                <form id="profile-form" onsubmit="updateProfile(event)">
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">First Name</label>
-                            <input type="text" id="first_name" class="form-input">
+                            <input type="text" name="first_name" class="form-input" id="first_name">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Last Name</label>
-                            <input type="text" id="last_name" class="form-input">
+                            <input type="text" name="last_name" class="form-input" id="last_name">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-input" id="email" disabled>
+                        <p class="form-help">Contact support to change your email address</p>
                     </div>
                     <button type="submit" class="btn btn-primary">💾 Save Changes</button>
                 </form>
             </div>
             
-            <!-- Change Password -->
+            <!-- Password Settings -->
             <div class="card">
                 <h2 class="card-title">🔒 Change Password</h2>
-                <form id="password-form">
+                <form id="password-form" onsubmit="changePassword(event)">
                     <div class="form-group">
                         <label class="form-label">Current Password</label>
-                        <input type="password" id="current_password" class="form-input" required>
+                        <input type="password" name="current_password" class="form-input" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">New Password</label>
-                        <input type="password" id="new_password" class="form-input" required minlength="8">
-                        <p class="form-hint">Minimum 8 characters</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" name="new_password" class="form-input" required minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" name="confirm_password" class="form-input" required minlength="8">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Confirm New Password</label>
-                        <input type="password" id="confirm_password" class="form-input" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">🔐 Update Password</button>
+                    <p class="form-help" style="margin-bottom:15px">Password must be at least 8 characters long</p>
+                    <button type="submit" class="btn btn-secondary">🔑 Update Password</button>
                 </form>
             </div>
             
             <!-- VPN Preferences -->
             <div class="card">
                 <h2 class="card-title">🌐 VPN Preferences</h2>
-                
-                <div class="toggle-group">
-                    <div>
-                        <div class="toggle-label">Auto-connect on startup</div>
-                        <div class="toggle-desc">Automatically connect to last used server</div>
+                <form id="preferences-form" onsubmit="updatePreferences(event)">
+                    <div class="form-group">
+                        <label class="form-label">Preferred Server</label>
+                        <select name="preferred_server" class="form-input" id="preferred_server">
+                            <option value="">Auto (Best Available)</option>
+                        </select>
+                        <p class="form-help">Default server when connecting</p>
                     </div>
-                    <div class="toggle" id="toggle-autoconnect" onclick="toggleSetting('autoconnect')"></div>
-                </div>
-                
-                <div class="toggle-group">
-                    <div>
-                        <div class="toggle-label">Kill switch</div>
-                        <div class="toggle-desc">Block internet if VPN disconnects</div>
+                    <div class="form-group">
+                        <label class="form-label">DNS Servers</label>
+                        <select name="dns_preference" class="form-input" id="dns_preference">
+                            <option value="truevault">TrueVault DNS (Recommended)</option>
+                            <option value="cloudflare">Cloudflare (1.1.1.1)</option>
+                            <option value="google">Google (8.8.8.8)</option>
+                        </select>
                     </div>
-                    <div class="toggle" id="toggle-killswitch" onclick="toggleSetting('killswitch')"></div>
-                </div>
-                
-                <div class="toggle-group">
-                    <div>
-                        <div class="toggle-label">Allow local network access</div>
-                        <div class="toggle-desc">Access printers and local devices while connected</div>
-                    </div>
-                    <div class="toggle active" id="toggle-localnet" onclick="toggleSetting('localnet')"></div>
-                </div>
-                
-                <div class="form-group" style="margin-top:20px">
-                    <label class="form-label">Preferred DNS</label>
-                    <select id="dns_preference" class="form-input">
-                        <option value="auto">Auto (TrueVault DNS)</option>
-                        <option value="cloudflare">Cloudflare (1.1.1.1)</option>
-                        <option value="google">Google (8.8.8.8)</option>
-                        <option value="quad9">Quad9 (9.9.9.9)</option>
-                    </select>
-                </div>
-                
-                <button class="btn btn-primary" onclick="savePreferences()">💾 Save Preferences</button>
+                    <button type="submit" class="btn btn-primary">💾 Save Preferences</button>
+                </form>
             </div>
             
             <!-- Danger Zone -->
             <div class="card danger-zone">
                 <h2 class="card-title" style="color:var(--error)">⚠️ Danger Zone</h2>
-                
-                <div class="toggle-group">
-                    <div>
-                        <div class="toggle-label">Delete all devices</div>
-                        <div class="toggle-desc">Remove all registered devices from your account</div>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteAllDevices()">Delete Devices</button>
-                </div>
-                
-                <div class="toggle-group" style="border:none">
-                    <div>
-                        <div class="toggle-label">Delete account</div>
-                        <div class="toggle-desc">Permanently delete your account and all data</div>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteAccount()">Delete Account</button>
-                </div>
+                <p class="text-muted" style="margin-bottom:15px">
+                    These actions are permanent and cannot be undone.
+                </p>
+                <button class="btn btn-danger" onclick="deleteAccount()">
+                    🗑️ Delete Account
+                </button>
             </div>
         </main>
     </div>
@@ -291,18 +240,14 @@
     <script>
         const API = '/api';
         let authToken = localStorage.getItem('auth_token');
-        let preferences = {};
+        let userData = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             if (!authToken) {
                 window.location.href = '/login.html';
                 return;
             }
-            loadProfile();
-            loadPreferences();
-            
-            document.getElementById('profile-form').addEventListener('submit', saveProfile);
-            document.getElementById('password-form').addEventListener('submit', changePassword);
+            loadSettings();
         });
 
         function logout() {
@@ -324,28 +269,45 @@
         }
 
         function showAlert(message, type = 'success') {
-            document.getElementById('alert-container').innerHTML = 
-                `<div class="alert alert-${type}">${message}</div>`;
-            setTimeout(() => document.getElementById('alert-container').innerHTML = '', 5000);
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => container.innerHTML = '', 5000);
+            window.scrollTo(0, 0);
         }
 
-        async function loadProfile() {
-            const res = await api(`${API}/user/profile.php`);
-            if (res && res.success) {
-                document.getElementById('email').value = res.user.email;
-                document.getElementById('first_name').value = res.user.first_name || '';
-                document.getElementById('last_name').value = res.user.last_name || '';
+        async function loadSettings() {
+            const [profileRes, serversRes] = await Promise.all([
+                api(`${API}/user/profile.php`),
+                api(`${API}/servers/list.php`)
+            ]);
+            
+            if (profileRes && profileRes.success) {
+                userData = profileRes.user;
+                document.getElementById('first_name').value = userData.first_name || '';
+                document.getElementById('last_name').value = userData.last_name || '';
+                document.getElementById('email').value = userData.email || '';
+            }
+            
+            if (serversRes && serversRes.success) {
+                const select = document.getElementById('preferred_server');
+                serversRes.servers.forEach(srv => {
+                    const opt = document.createElement('option');
+                    opt.value = srv.id;
+                    opt.textContent = `${srv.display_name} (${srv.location})`;
+                    select.appendChild(opt);
+                });
             }
         }
 
-        async function saveProfile(e) {
+        async function updateProfile(e) {
             e.preventDefault();
+            const form = e.target;
             
             const res = await api(`${API}/user/profile.php`, {
                 method: 'PUT',
                 body: JSON.stringify({
-                    first_name: document.getElementById('first_name').value,
-                    last_name: document.getElementById('last_name').value
+                    first_name: form.first_name.value,
+                    last_name: form.last_name.value
                 })
             });
             
@@ -358,89 +320,53 @@
 
         async function changePassword(e) {
             e.preventDefault();
+            const form = e.target;
             
-            const newPass = document.getElementById('new_password').value;
-            const confirmPass = document.getElementById('confirm_password').value;
-            
-            if (newPass !== confirmPass) {
+            if (form.new_password.value !== form.confirm_password.value) {
                 showAlert('Passwords do not match', 'error');
-                return;
-            }
-            
-            if (newPass.length < 8) {
-                showAlert('Password must be at least 8 characters', 'error');
                 return;
             }
             
             const res = await api(`${API}/user/password.php`, {
                 method: 'POST',
                 body: JSON.stringify({
-                    current_password: document.getElementById('current_password').value,
-                    new_password: newPass
+                    current_password: form.current_password.value,
+                    new_password: form.new_password.value
                 })
             });
             
             if (res && res.success) {
                 showAlert('Password changed successfully!');
-                document.getElementById('password-form').reset();
+                form.reset();
             } else {
                 showAlert(res?.error || 'Failed to change password', 'error');
             }
         }
 
-        function loadPreferences() {
-            // Load from localStorage for now
-            preferences = JSON.parse(localStorage.getItem('vpn_prefs') || '{}');
+        async function updatePreferences(e) {
+            e.preventDefault();
+            const form = e.target;
             
-            ['autoconnect', 'killswitch', 'localnet'].forEach(key => {
-                const el = document.getElementById(`toggle-${key}`);
-                if (el && preferences[key]) el.classList.add('active');
-            });
+            // Save to localStorage for now
+            localStorage.setItem('preferred_server', form.preferred_server.value);
+            localStorage.setItem('dns_preference', form.dns_preference.value);
             
-            if (preferences.dns) {
-                document.getElementById('dns_preference').value = preferences.dns;
-            }
-        }
-
-        function toggleSetting(key) {
-            const el = document.getElementById(`toggle-${key}`);
-            el.classList.toggle('active');
-            preferences[key] = el.classList.contains('active');
-        }
-
-        function savePreferences() {
-            preferences.dns = document.getElementById('dns_preference').value;
-            localStorage.setItem('vpn_prefs', JSON.stringify(preferences));
             showAlert('Preferences saved!');
         }
 
-        async function deleteAllDevices() {
-            if (!confirm('Delete ALL devices? This cannot be undone.')) return;
-            if (!confirm('Are you absolutely sure?')) return;
-            
-            const res = await api(`${API}/devices/remove-all.php`, { method: 'POST' });
-            
-            if (res && res.success) {
-                showAlert('All devices deleted');
-            } else {
-                showAlert(res?.error || 'Failed to delete devices', 'error');
-            }
-        }
-
         async function deleteAccount() {
-            if (!confirm('DELETE YOUR ACCOUNT? This is permanent and cannot be undone!')) return;
-            if (!confirm('All your data, devices, and subscription will be lost. Continue?')) return;
+            const confirmed = prompt('This will permanently delete your account and all data. Type "DELETE" to confirm:');
             
-            const password = prompt('Enter your password to confirm:');
-            if (!password) return;
+            if (confirmed !== 'DELETE') {
+                return;
+            }
             
             const res = await api(`${API}/user/delete.php`, {
-                method: 'POST',
-                body: JSON.stringify({ password })
+                method: 'DELETE'
             });
             
             if (res && res.success) {
-                alert('Account deleted. Goodbye!');
+                alert('Account deleted. You will be logged out.');
                 logout();
             } else {
                 showAlert(res?.error || 'Failed to delete account', 'error');

@@ -3,7 +3,7 @@
  * TrueVault VPN - User Profile API
  * 
  * GET  - Get user profile
- * PUT  - Update profile (first_name, last_name)
+ * PUT  - Update user profile
  * 
  * @created January 2026
  */
@@ -49,15 +49,14 @@ if (!$payload) {
 $userId = $payload['user_id'];
 $usersDb = Database::getInstance('users');
 $mainDb = Database::getInstance('main');
-$billingDb = Database::getInstance('billing');
 $devicesDb = Database::getInstance('devices');
+$billingDb = Database::getInstance('billing');
 
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         // Get user profile
         $user = $usersDb->queryOne(
-            "SELECT id, email, first_name, last_name, plan, status, created_at, last_login 
-             FROM users WHERE id = ?",
+            "SELECT id, email, first_name, last_name, status, plan, created_at, updated_at FROM users WHERE id = ?",
             [$userId]
         );
         
@@ -69,54 +68,41 @@ switch ($_SERVER['REQUEST_METHOD']) {
         
         // Check VIP status
         $vip = $mainDb->queryOne(
-            "SELECT max_devices FROM vip_users WHERE email = ?",
+            "SELECT max_devices, dedicated_server_id FROM vip_users WHERE email = ?",
             [$user['email']]
         );
         
-        $isVip = !empty($vip);
+        $user['is_vip'] = $vip ? true : false;
+        
+        // Determine max devices
+        if ($vip) {
+            $user['max_devices'] = $vip['max_devices'] ?? 999;
+            $user['dedicated_server_id'] = $vip['dedicated_server_id'];
+        } else {
+            // Get from plan
+            $planDevices = [
+                'personal' => 3,
+                'family' => 6,
+                'dedicated' => 999
+            ];
+            $user['max_devices'] = $planDevices[$user['plan']] ?? 3;
+        }
         
         // Get device count
-        $deviceCount = $devicesDb->queryValue(
+        $user['device_count'] = $devicesDb->queryValue(
             "SELECT COUNT(*) FROM devices WHERE user_id = ?",
             [$userId]
         );
         
-        // Determine max devices based on plan or VIP
-        if ($isVip) {
-            $maxDevices = $vip['max_devices'] ?? 999;
-        } else {
-            $planDevices = [
-                'personal' => 3,
-                'family' => 6,
-                'dedicated' => 999,
-                'trial' => 1
-            ];
-            $maxDevices = $planDevices[$user['plan']] ?? 3;
-        }
-        
-        // Get active subscription
+        // Get subscription info
         $subscription = $billingDb->queryOne(
-            "SELECT * FROM subscriptions WHERE user_id = ? AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+            "SELECT plan, status, billing_interval, current_period_end FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
             [$userId]
         );
         
-        echo json_encode([
-            'success' => true,
-            'user' => [
-                'id' => $user['id'],
-                'email' => $user['email'],
-                'first_name' => $user['first_name'],
-                'last_name' => $user['last_name'],
-                'plan' => $isVip ? 'vip' : $user['plan'],
-                'status' => $user['status'],
-                'is_vip' => $isVip,
-                'device_count' => (int)$deviceCount,
-                'max_devices' => $maxDevices,
-                'created_at' => $user['created_at'],
-                'last_login' => $user['last_login'],
-                'subscription' => $subscription
-            ]
-        ]);
+        $user['subscription'] = $subscription;
+        
+        echo json_encode(['success' => true, 'user' => $user]);
         break;
         
     case 'PUT':
@@ -125,6 +111,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
         
         $updateData = ['updated_at' => date('Y-m-d H:i:s')];
         
+        // Allowed fields to update
         if (isset($input['first_name'])) {
             $updateData['first_name'] = trim($input['first_name']);
         }

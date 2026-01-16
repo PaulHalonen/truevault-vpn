@@ -11,7 +11,7 @@
  * Dedicated: $39.97/mo  | $399.97/yr  | unlimited devices
  * 
  * @created January 2026
- * @version 1.0.2 - Corrected pricing
+ * @version 1.0.3 - Added support tickets schema update
  */
 
 error_reporting(E_ALL);
@@ -465,10 +465,12 @@ $logsSeeds = [];
 $supportSchema = "
 CREATE TABLE IF NOT EXISTS tickets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id TEXT NOT NULL UNIQUE,
     user_id INTEGER NOT NULL,
-    ticket_number TEXT NOT NULL UNIQUE,
+    email TEXT,
     subject TEXT NOT NULL,
     category TEXT DEFAULT 'general',
+    message TEXT,
     priority TEXT DEFAULT 'normal',
     status TEXT DEFAULT 'open',
     assigned_to TEXT,

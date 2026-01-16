@@ -58,14 +58,10 @@
         .card {
             background: rgba(255,255,255,0.04);
             border-radius: var(--card-radius);
-            padding: 20px; margin-bottom: 20px;
+            padding: 25px; margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.08);
         }
-        .card-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 20px;
-        }
-        .card-title { font-size: 1.2rem; font-weight: 600; }
+        .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; }
         
         .btn {
             padding: 10px 18px; border: none;
@@ -90,91 +86,102 @@
             background: linear-gradient(135deg, rgba(0,217,255,0.1), rgba(0,255,136,0.1));
             border: 1px solid rgba(0,217,255,0.3);
             border-radius: var(--card-radius);
-            padding: 25px; margin-bottom: 25px;
+            padding: 30px; margin-bottom: 25px;
         }
         .subscription-card.vip {
             background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15));
-            border-color: rgba(255,215,0,0.4);
+            border-color: rgba(255,215,0,0.5);
         }
-        .sub-status { font-size: 1.3rem; font-weight: 700; margin-bottom: 5px; }
-        .sub-plan { color: var(--primary); font-size: 1.1rem; }
-        .sub-plan.vip { color: #ffd700; }
-        .sub-details { margin-top: 15px; color: var(--text-muted); }
-        .sub-details p { margin: 5px 0; }
+        .sub-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
+        .sub-plan { font-size: 1.5rem; font-weight: 700; }
+        .sub-price { font-size: 2rem; font-weight: 700; }
+        .sub-price span { font-size: 1rem; color: var(--text-muted); }
+        .sub-status {
+            padding: 6px 15px; border-radius: 20px;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .sub-status.active { background: rgba(0,255,136,0.2); color: var(--success); }
+        .sub-status.cancelled { background: rgba(255,100,100,0.2); color: var(--error); }
+        .sub-status.vip { background: linear-gradient(90deg, #ffd700, #ff8c00); color: #000; }
+        .sub-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .sub-detail label { font-size: 0.8rem; color: var(--text-muted); display: block; }
+        .sub-detail span { font-size: 1rem; }
         
-        .plan-grid {
+        .plans-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
         }
         .plan-card {
-            background: rgba(255,255,255,0.04);
-            border: 2px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,255,255,0.1);
             border-radius: var(--card-radius);
-            padding: 25px; text-align: center;
+            padding: 25px;
+            text-align: center;
             transition: 0.3s;
         }
         .plan-card:hover { border-color: var(--primary); transform: translateY(-5px); }
         .plan-card.popular {
             border-color: var(--secondary);
-            position: relative;
+            background: rgba(0,255,136,0.05);
         }
-        .plan-card.popular::before {
-            content: 'Most Popular';
-            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-            background: var(--secondary); color: var(--bg);
-            padding: 4px 15px; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 600;
+        .plan-card.current { border-color: var(--primary); opacity: 0.7; }
+        .popular-badge {
+            background: var(--secondary);
+            color: var(--bg);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: inline-block;
         }
-        .plan-name { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; }
-        .plan-price {
-            font-size: 2.5rem; font-weight: 700;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .plan-price small { font-size: 1rem; }
-        .plan-annual { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
-        .plan-features { text-align: left; margin: 20px 0; }
-        .plan-features li {
-            list-style: none; padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .plan-features li::before { content: '✓ '; color: var(--secondary); }
+        .plan-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+        .plan-price { font-size: 2.5rem; font-weight: 700; margin-bottom: 5px; }
+        .plan-price span { font-size: 1rem; color: var(--text-muted); }
+        .plan-features { list-style: none; margin: 20px 0; text-align: left; }
+        .plan-features li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .plan-features li:before { content: "✓ "; color: var(--secondary); }
         
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
         }
         .invoice-table th, .invoice-table td {
-            padding: 12px; text-align: left;
+            padding: 12px 15px;
+            text-align: left;
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .invoice-table th {
             color: var(--text-muted);
-            font-weight: 500; font-size: 0.85rem;
+            font-weight: 500;
+            font-size: 0.85rem;
         }
+        .invoice-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .invoice-status.paid { background: rgba(0,255,136,0.15); color: var(--success); }
+        .invoice-status.pending { background: rgba(255,170,0,0.15); color: #ffaa00; }
         
-        .badge {
-            padding: 4px 10px; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 600;
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
         }
-        .badge-success { background: rgba(0,255,136,0.15); color: var(--success); }
-        .badge-warning { background: rgba(255,170,0,0.15); color: #ffaa00; }
-        .badge-danger { background: rgba(255,100,100,0.15); color: var(--error); }
-        
-        .currency-toggle {
-            display: inline-flex; background: rgba(255,255,255,0.05);
-            border-radius: 20px; padding: 3px;
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            padding: 25px; max-width: 500px; width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .currency-btn {
-            padding: 6px 15px; border: none; background: none;
-            color: var(--text-muted); cursor: pointer;
-            border-radius: 18px; font-size: 0.85rem;
-        }
-        .currency-btn.active {
-            background: var(--primary); color: var(--bg);
-        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 1.2rem; font-weight: 600; }
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
         
         .alert {
             padding: 12px 15px; border-radius: var(--btn-radius);
@@ -182,6 +189,33 @@
         }
         .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
         .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
+        .alert-warning { background: rgba(255,170,0,0.15); color: #ffaa00; }
+        
+        .toggle-group { display: flex; justify-content: center; margin-bottom: 25px; }
+        .toggle-btn {
+            padding: 10px 25px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .toggle-btn:first-child { border-radius: 8px 0 0 8px; }
+        .toggle-btn:last-child { border-radius: 0 8px 8px 0; }
+        .toggle-btn.active {
+            background: var(--primary);
+            color: var(--bg);
+            border-color: var(--primary);
+        }
+        .savings-badge {
+            background: var(--secondary);
+            color: var(--bg);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 5px;
+        }
         
         .hidden { display: none !important; }
         .text-muted { color: var(--text-muted); }
@@ -226,63 +260,93 @@
             <!-- Current Subscription -->
             <div id="subscription-section">
                 <div class="subscription-card" id="sub-card">
-                    <div class="sub-status" id="sub-status">Loading...</div>
-                    <div class="sub-plan" id="sub-plan"></div>
-                    <div class="sub-details" id="sub-details"></div>
-                </div>
-            </div>
-            
-            <!-- VIP Notice -->
-            <div id="vip-notice" class="card hidden" style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,140,0,0.1));border-color:rgba(255,215,0,0.3)">
-                <div style="display:flex;align-items:center;gap:15px">
-                    <span style="font-size:2.5rem">⭐</span>
-                    <div>
-                        <h3 style="color:#ffd700">VIP Access Active</h3>
-                        <p class="text-muted">You have complimentary VIP access to all TrueVault services</p>
+                    <div class="sub-header">
+                        <div>
+                            <div class="sub-plan" id="sub-plan-name">Loading...</div>
+                            <div class="sub-price" id="sub-price">-</div>
+                        </div>
+                        <span class="sub-status active" id="sub-status">Active</span>
+                    </div>
+                    <div class="sub-details">
+                        <div class="sub-detail">
+                            <label>Billing Cycle</label>
+                            <span id="sub-cycle">-</span>
+                        </div>
+                        <div class="sub-detail">
+                            <label>Next Payment</label>
+                            <span id="sub-next">-</span>
+                        </div>
+                        <div class="sub-detail">
+                            <label>Devices</label>
+                            <span id="sub-devices">-</span>
+                        </div>
+                        <div class="sub-detail">
+                            <label>Member Since</label>
+                            <span id="sub-since">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-20" id="sub-actions">
+                        <button class="btn btn-secondary" onclick="showPlans()">Change Plan</button>
+                        <button class="btn btn-danger" onclick="cancelSubscription()" id="cancel-btn">Cancel Subscription</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Plans -->
-            <div class="card" id="plans-section">
-                <div class="card-header">
-                    <span class="card-title">📦 Subscription Plans</span>
-                    <div class="currency-toggle">
-                        <button class="currency-btn active" onclick="setCurrency('USD')">USD $</button>
-                        <button class="currency-btn" onclick="setCurrency('CAD')">CAD $</button>
+            <!-- Plans Section (hidden by default) -->
+            <div id="plans-section" class="hidden">
+                <div class="card">
+                    <h2 class="card-title">💎 Choose Your Plan</h2>
+                    
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" onclick="setBillingCycle('monthly')">Monthly</button>
+                        <button class="toggle-btn" onclick="setBillingCycle('annual')">
+                            Annual <span class="savings-badge">Save 17%</span>
+                        </button>
+                    </div>
+                    
+                    <div class="plans-grid" id="plans-grid">
+                        <!-- Plans loaded dynamically -->
+                    </div>
+                    
+                    <div class="text-center mt-20">
+                        <button class="btn btn-secondary" onclick="hidePlans()">← Back to Subscription</button>
                     </div>
                 </div>
-                <div class="plan-grid" id="plans-grid"></div>
             </div>
             
             <!-- Payment History -->
             <div class="card">
-                <div class="card-header">
-                    <span class="card-title">📜 Payment History</span>
+                <h2 class="card-title">📜 Payment History</h2>
+                <div id="invoices-container">
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoices-body">
+                            <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <table class="invoice-table" id="invoices-table">
-                    <thead>
-                        <tr>
-                            <th>Invoice #</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="invoices-body">
-                        <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
-                    </tbody>
-                </table>
+                <div id="no-invoices" class="text-center text-muted hidden" style="padding:30px">
+                    <p>No payment history yet</p>
+                </div>
             </div>
         </main>
     </div>
 
+    <div id="modal-container"></div>
+
     <script>
         const API = '/api';
         let authToken = localStorage.getItem('auth_token');
-        let currency = 'USD';
+        let currentPlan = null;
+        let billingCycle = 'monthly';
         let plans = null;
-        let isVip = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             if (!authToken) {
@@ -311,193 +375,191 @@
         }
 
         function showAlert(message, type = 'success') {
-            document.getElementById('alert-container').innerHTML = 
-                `<div class="alert alert-${type}">${message}</div>`;
-            setTimeout(() => document.getElementById('alert-container').innerHTML = '', 5000);
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => container.innerHTML = '', 5000);
         }
 
         async function loadBillingData() {
-            // Load subscription status
-            const subRes = await api(`${API}/billing/subscription.php`);
-            if (subRes && subRes.success) {
-                isVip = subRes.is_vip;
-                renderSubscription(subRes);
-            }
+            const [subRes, plansRes] = await Promise.all([
+                api(`${API}/billing/subscription.php`),
+                api(`${API}/billing/plans.php`)
+            ]);
             
-            // Load plans
-            const plansRes = await api(`${API}/billing/plans.php`);
             if (plansRes && plansRes.success) {
                 plans = plansRes.plans;
-                renderPlans();
+            }
+            
+            if (subRes && subRes.success) {
+                renderSubscription(subRes);
+                renderInvoices(subRes.payments || []);
             }
         }
 
         function renderSubscription(data) {
+            const sub = data.subscription;
+            const user = data.user;
             const card = document.getElementById('sub-card');
-            const statusEl = document.getElementById('sub-status');
-            const planEl = document.getElementById('sub-plan');
-            const detailsEl = document.getElementById('sub-details');
             
-            if (data.is_vip) {
+            // Check if VIP
+            if (user.is_vip) {
                 card.classList.add('vip');
-                statusEl.textContent = '⭐ VIP Access';
-                planEl.textContent = 'Unlimited Everything';
-                planEl.classList.add('vip');
-                detailsEl.innerHTML = `
-                    <p>✓ All servers including VIP dedicated</p>
-                    <p>✓ Unlimited devices</p>
-                    <p>✓ Priority support</p>
-                `;
-                document.getElementById('vip-notice').classList.remove('hidden');
-                document.getElementById('plans-section').classList.add('hidden');
+                document.getElementById('sub-plan-name').textContent = '⭐ VIP Access';
+                document.getElementById('sub-price').innerHTML = 'FREE <span>forever</span>';
+                document.getElementById('sub-status').textContent = '⭐ VIP';
+                document.getElementById('sub-status').className = 'sub-status vip';
+                document.getElementById('sub-cycle').textContent = 'Lifetime';
+                document.getElementById('sub-next').textContent = 'Never';
+                document.getElementById('sub-devices').textContent = user.max_devices + ' devices';
+                document.getElementById('sub-since').textContent = new Date(user.created_at).toLocaleDateString();
+                document.getElementById('sub-actions').classList.add('hidden');
+                currentPlan = 'vip';
                 return;
             }
             
-            if (data.subscription) {
-                const sub = data.subscription;
-                statusEl.textContent = sub.status === 'active' ? '✓ Active Subscription' : '⚠️ ' + sub.status;
-                planEl.textContent = sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1) + ' Plan';
+            if (sub) {
+                currentPlan = sub.plan;
+                const planName = sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1);
+                document.getElementById('sub-plan-name').textContent = `${planName} Plan`;
+                document.getElementById('sub-price').innerHTML = `$${sub.amount} <span>/${sub.billing_interval === 'annual' ? 'year' : 'month'}</span>`;
+                document.getElementById('sub-status').textContent = sub.status === 'active' ? '✓ Active' : sub.status;
+                document.getElementById('sub-status').className = `sub-status ${sub.status}`;
+                document.getElementById('sub-cycle').textContent = sub.billing_interval === 'annual' ? 'Annual' : 'Monthly';
+                document.getElementById('sub-next').textContent = sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : '-';
+                document.getElementById('sub-devices').textContent = user.max_devices + ' devices';
+                document.getElementById('sub-since').textContent = new Date(sub.created_at).toLocaleDateString();
                 
-                const endDate = new Date(sub.current_period_end).toLocaleDateString();
-                detailsEl.innerHTML = `
-                    <p>Next billing: ${endDate}</p>
-                    <p>Amount: $${sub.amount} ${sub.currency} / ${sub.billing_interval}</p>
-                    ${sub.status === 'active' ? `
-                        <button class="btn btn-danger mt-20" onclick="cancelSubscription()">
-                            Cancel Subscription
-                        </button>
-                    ` : ''}
-                `;
+                if (sub.status === 'cancelled') {
+                    document.getElementById('cancel-btn').classList.add('hidden');
+                    showAlert('Your subscription is cancelled and will end on ' + new Date(sub.current_period_end).toLocaleDateString(), 'warning');
+                }
             } else {
-                statusEl.textContent = 'No Active Subscription';
-                planEl.textContent = 'Choose a plan below';
-                detailsEl.innerHTML = '';
+                // No subscription
+                document.getElementById('sub-plan-name').textContent = 'No Active Plan';
+                document.getElementById('sub-price').innerHTML = '-';
+                document.getElementById('sub-status').textContent = 'Inactive';
+                document.getElementById('sub-status').className = 'sub-status cancelled';
+                document.getElementById('cancel-btn').classList.add('hidden');
+                showPlans();
             }
-            
-            // Load invoices
-            if (data.payments && data.payments.length > 0) {
-                renderInvoices(data.payments);
-            } else {
-                document.getElementById('invoices-body').innerHTML = 
-                    '<tr><td colspan="4" class="text-center text-muted">No payment history</td></tr>';
-            }
-        }
-
-        function renderPlans() {
-            const grid = document.getElementById('plans-grid');
-            const c = currency;
-            
-            grid.innerHTML = `
-                <div class="plan-card">
-                    <div class="plan-name">Personal</div>
-                    <div class="plan-price">$${plans.personal[c].monthly}<small>/mo</small></div>
-                    <div class="plan-annual">or $${plans.personal[c].annual}/year (save ${plans.personal.savings}%)</div>
-                    <ul class="plan-features">
-                        <li>3 devices</li>
-                        <li>All server locations</li>
-                        <li>Smart routing</li>
-                        <li>24/7 Support</li>
-                    </ul>
-                    <button class="btn btn-secondary" style="width:100%" onclick="subscribe('personal', 'monthly')">
-                        Choose Monthly
-                    </button>
-                    <button class="btn btn-primary mt-20" style="width:100%" onclick="subscribe('personal', 'annual')">
-                        Choose Annual
-                    </button>
-                </div>
-                
-                <div class="plan-card popular">
-                    <div class="plan-name">Family</div>
-                    <div class="plan-price">$${plans.family[c].monthly}<small>/mo</small></div>
-                    <div class="plan-annual">or $${plans.family[c].annual}/year (save ${plans.family.savings}%)</div>
-                    <ul class="plan-features">
-                        <li>6 devices</li>
-                        <li>All server locations</li>
-                        <li>Family mesh networking</li>
-                        <li>Priority support</li>
-                    </ul>
-                    <button class="btn btn-secondary" style="width:100%" onclick="subscribe('family', 'monthly')">
-                        Choose Monthly
-                    </button>
-                    <button class="btn btn-primary mt-20" style="width:100%" onclick="subscribe('family', 'annual')">
-                        Choose Annual
-                    </button>
-                </div>
-                
-                <div class="plan-card">
-                    <div class="plan-name">Dedicated Server</div>
-                    <div class="plan-price">$${plans.dedicated[c].monthly}<small>/mo</small></div>
-                    <div class="plan-annual">or $${plans.dedicated[c].annual}/year (save ${plans.dedicated.savings}%)</div>
-                    <ul class="plan-features">
-                        <li>Unlimited devices</li>
-                        <li>Your own dedicated server</li>
-                        <li>Admin dashboard</li>
-                        <li>API access</li>
-                        <li>White-glove support</li>
-                    </ul>
-                    <button class="btn btn-secondary" style="width:100%" onclick="subscribe('dedicated', 'monthly')">
-                        Choose Monthly
-                    </button>
-                    <button class="btn btn-primary mt-20" style="width:100%" onclick="subscribe('dedicated', 'annual')">
-                        Choose Annual
-                    </button>
-                </div>
-            `;
         }
 
         function renderInvoices(payments) {
             const tbody = document.getElementById('invoices-body');
+            const noInvoices = document.getElementById('no-invoices');
             
-            tbody.innerHTML = payments.map(p => `
+            if (!payments || payments.length === 0) {
+                tbody.innerHTML = '';
+                noInvoices.classList.remove('hidden');
+                return;
+            }
+            
+            noInvoices.classList.add('hidden');
+            tbody.innerHTML = payments.map(inv => `
                 <tr>
-                    <td>${p.invoice_number || '-'}</td>
-                    <td>${new Date(p.created_at).toLocaleDateString()}</td>
-                    <td>$${p.amount} ${p.currency}</td>
-                    <td><span class="badge badge-${p.status === 'completed' ? 'success' : 'warning'}">${p.status}</span></td>
+                    <td>${inv.invoice_number || '-'}</td>
+                    <td>${new Date(inv.created_at).toLocaleDateString()}</td>
+                    <td>$${parseFloat(inv.amount).toFixed(2)} ${inv.currency || 'USD'}</td>
+                    <td><span class="invoice-status ${inv.status === 'completed' ? 'paid' : 'pending'}">${inv.status}</span></td>
                 </tr>
             `).join('');
         }
 
-        function setCurrency(c) {
-            currency = c;
-            document.querySelectorAll('.currency-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.includes(c));
-            });
-            if (plans) renderPlans();
+        function showPlans() {
+            document.getElementById('subscription-section').classList.add('hidden');
+            document.getElementById('plans-section').classList.remove('hidden');
+            renderPlans();
         }
 
-        async function subscribe(plan, interval) {
-            showAlert('Redirecting to PayPal...', 'success');
+        function hidePlans() {
+            document.getElementById('subscription-section').classList.remove('hidden');
+            document.getElementById('plans-section').classList.add('hidden');
+        }
+
+        function setBillingCycle(cycle) {
+            billingCycle = cycle;
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(cycle));
+            });
+            renderPlans();
+        }
+
+        function renderPlans() {
+            if (!plans) return;
             
+            const grid = document.getElementById('plans-grid');
+            const planOrder = ['personal', 'family', 'dedicated'];
+            
+            grid.innerHTML = planOrder.map(planKey => {
+                const plan = plans[planKey];
+                if (!plan) return '';
+                
+                const price = billingCycle === 'annual' ? plan.price_annual : plan.price_monthly;
+                const interval = billingCycle === 'annual' ? 'year' : 'month';
+                const isCurrent = planKey === currentPlan;
+                const isPopular = planKey === 'family';
+                
+                return `
+                    <div class="plan-card ${isPopular ? 'popular' : ''} ${isCurrent ? 'current' : ''}">
+                        ${isPopular ? '<span class="popular-badge">MOST POPULAR</span>' : ''}
+                        <div class="plan-name">${plan.name}</div>
+                        <div class="plan-price">$${price} <span>/${interval}</span></div>
+                        ${billingCycle === 'annual' ? `<div class="text-muted" style="font-size:0.85rem">Save $${plan.annual_savings}/year</div>` : ''}
+                        <ul class="plan-features">
+                            <li>${plan.max_devices} Devices</li>
+                            <li>All Server Locations</li>
+                            <li>WireGuard Protocol</li>
+                            <li>24/7 Support</li>
+                            ${planKey === 'dedicated' ? '<li>Dedicated Server</li>' : ''}
+                            ${planKey === 'family' ? '<li>Family Sharing</li>' : ''}
+                        </ul>
+                        ${isCurrent ? 
+                            '<button class="btn btn-secondary" disabled style="width:100%">Current Plan</button>' :
+                            `<button class="btn btn-primary" style="width:100%" onclick="selectPlan('${planKey}')">
+                                ${currentPlan ? 'Switch to ' + plan.name : 'Get Started'}
+                            </button>`
+                        }
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectPlan(planKey) {
             const res = await api(`${API}/billing/checkout.php`, {
                 method: 'POST',
-                body: JSON.stringify({ plan, interval, currency })
+                body: JSON.stringify({
+                    plan: planKey,
+                    interval: billingCycle,
+                    currency: 'USD'
+                })
             });
             
             if (res && res.success && res.approval_url) {
+                // Redirect to PayPal
                 window.location.href = res.approval_url;
-            } else if (res && res.is_vip) {
-                showAlert('You already have VIP access!', 'success');
+            } else if (res && res.success && res.vip) {
+                showAlert('VIP access activated!');
+                loadBillingData();
             } else {
-                showAlert(res?.error || 'Checkout failed', 'error');
+                showAlert(res?.error || 'Failed to start checkout', 'error');
             }
         }
 
         async function cancelSubscription() {
-            if (!confirm('Are you sure you want to cancel? You will retain access until the end of your billing period.')) {
+            if (!confirm('Are you sure you want to cancel your subscription? You will retain access until the end of your billing period.')) {
                 return;
             }
             
             const res = await api(`${API}/billing/subscription.php?action=cancel`, {
                 method: 'POST',
-                body: JSON.stringify({ reason: 'User requested cancellation' })
+                body: JSON.stringify({ reason: 'user_requested' })
             });
             
             if (res && res.success) {
-                showAlert('Subscription cancelled. Access continues until period end.');
+                showAlert('Subscription cancelled. You will have access until ' + new Date(res.access_until).toLocaleDateString());
                 loadBillingData();
             } else {
-                showAlert(res?.error || 'Cancellation failed', 'error');
+                showAlert(res?.error || 'Failed to cancel subscription', 'error');
             }
         }
     </script>

@@ -450,3 +450,308 @@ CREATE INDEX idx_kb_category ON knowledge_base(category);
 - seige235@yahoo.com gets dedicated St. Louis server
 
 **Say "next" for Day 8 (Frontend & Transfer)!** 🚀
+
+
+---
+
+## ADVANCED PARENTAL CONTROLS SESSION (4-5 hours) - ADDED JAN 17, 2026
+
+### **Task 7.X: Advanced Parental Controls - Calendar Scheduling**
+**Lines:** ~600 lines total
+**Files:** Multiple files
+**Database:** parental_controls.db (6 new tables)
+
+⚠️ **IMPORTANT:** This extends the basic parental controls built in PART 6.
+The basic system (category filters, domain blocking) is already complete.
+This task adds the advanced scheduling and device control features.
+
+---
+
+### **Subtask 7.X.1: Create Advanced Parental Control Tables**
+**Lines:** ~80 lines
+**Database:** parental_controls.db
+
+- [ ] Add to `/admin/setup-databases.php` (parental_controls.db section)
+- [ ] Create 6 new tables:
+
+```sql
+-- Schedule templates
+CREATE TABLE IF NOT EXISTS parental_schedules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    device_id INTEGER,  -- NULL = applies to all devices
+    schedule_name TEXT NOT NULL,  -- "School Day", "Weekend", etc.
+    is_template INTEGER DEFAULT 0, -- 1 if reusable template
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Time windows for schedules
+CREATE TABLE IF NOT EXISTS schedule_windows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    schedule_id INTEGER NOT NULL,
+    day_of_week INTEGER, -- 0=Sunday, 1=Monday, etc. NULL=specific date
+    specific_date TEXT,  -- NULL if using day_of_week
+    start_time TEXT NOT NULL,     -- "15:00" (3pm)
+    end_time TEXT NOT NULL,       -- "16:00" (4pm)
+    access_type TEXT NOT NULL,    -- "full", "homework_only", "streaming_only", "blocked"
+    FOREIGN KEY (schedule_id) REFERENCES parental_schedules(id) ON DELETE CASCADE
+);
+
+-- Whitelist (always allow)
+CREATE TABLE IF NOT EXISTS parental_whitelist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    domain TEXT NOT NULL,
+    notes TEXT,         -- "School website", "Khan Academy"
+    added_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Temporary blocks
+CREATE TABLE IF NOT EXISTS temporary_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    domain TEXT NOT NULL,
+    blocked_until TEXT NOT NULL,
+    reason TEXT,        -- "Punishment", "Focus time"
+    added_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Gaming controls
+CREATE TABLE IF NOT EXISTS gaming_restrictions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    device_id INTEGER NOT NULL,
+    gaming_enabled INTEGER DEFAULT 1,
+    last_toggled_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    toggled_by TEXT,     -- "parent" or "schedule"
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Device-specific rules
+CREATE TABLE IF NOT EXISTS device_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    device_id INTEGER NOT NULL,
+    schedule_id INTEGER, -- Links to parental_schedules
+    override_enabled INTEGER DEFAULT 0,
+    notes TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (schedule_id) REFERENCES parental_schedules(id) ON DELETE SET NULL
+);
+```
+
+---
+
+### **Subtask 7.X.2: Build Calendar Scheduling UI**
+**Lines:** ~250 lines
+**File:** `/dashboard/parental-schedule.php`
+
+- [ ] Create monthly calendar view
+- [ ] Features:
+  - Full month calendar with clickable days
+  - Color-coded days (full/restricted/blocked)
+  - Day selection (click to edit)
+  - Month navigation (prev/next)
+  - Quick templates dropdown
+- [ ] JavaScript calendar rendering
+- [ ] Beautiful gradient UI matching TrueVault design
+- [ ] Upload and test
+
+**Calendar Features:**
+- Visual monthly view
+- Click day → Edit schedule modal
+- Color coding: Green=Free, Yellow=Limited, Red=Blocked
+- Template buttons: "School Day", "Weekend", "Holiday"
+
+---
+
+### **Subtask 7.X.3: Build Time Window Editor**
+**Lines:** ~180 lines
+**File:** `/dashboard/schedule-editor.php`
+
+- [ ] Create time window management interface
+- [ ] Features:
+  - Add multiple time windows per day
+  - Set start/end times (dropdown or time picker)
+  - Select access type (Full, Homework Only, Streaming Only, Blocked)
+  - Delete windows
+  - Apply to: This day / Every Monday / Weekdays / Custom
+- [ ] Save schedule via AJAX
+- [ ] Upload and test
+
+**Time Window Types:**
+- **Full:** Everything allowed
+- **Homework Only:** Only whitelist allowed
+- **Streaming Only:** Netflix, Disney+, YouTube, etc.
+- **Blocked:** Nothing allowed
+
+---
+
+### **Subtask 7.X.4: Build Gaming Controls Dashboard**
+**Lines:** ~120 lines
+**File:** `/dashboard/gaming-controls.php`
+
+- [ ] Create gaming-specific control panel
+- [ ] Features:
+  - Master toggle: Gaming ON/OFF
+  - Quick actions: "Block for 1 Hour", "Block Until Bedtime", "Allow Extra Hour"
+  - Device status (which gaming devices are active)
+  - Gaming server detection status
+- [ ] Real-time toggle (AJAX)
+- [ ] Upload and test
+
+**Gaming Detection:**
+- Detect Xbox Live, PlayStation Network, Steam, Epic Games
+- Show which gaming devices are currently active
+- Allow parent to block specific devices
+
+---
+
+### **Subtask 7.X.5: Build Whitelist/Blacklist Manager**
+**Lines:** ~150 lines
+**File:** Already in `/dashboard/parental-controls.php` - extend it
+
+- [ ] Add Whitelist section
+  - Form to add domains
+  - List of whitelisted domains with remove button
+  - Notes field (optional)
+- [ ] Add Temporary Blocks section
+  - Form to add domain + duration
+  - List of active blocks with countdown
+  - "Unblock Now" and "Extend" buttons
+- [ ] Upload and test
+
+**Whitelist Examples:**
+- khanacademy.org (educational)
+- classroom.google.com (school)
+- school.edu (school website)
+
+**Temporary Block Durations:**
+- 1 hour
+- Until bedtime (9pm)
+- Until tomorrow
+- 1 week
+
+---
+
+### **Subtask 7.X.6: Build Schedule Templates System**
+**Lines:** ~100 lines
+**File:** `/api/parental-controls/templates.php`
+
+- [ ] Create API for template management
+- [ ] Pre-built templates:
+  - School Day (8am-3pm blocked, 3-4pm homework, 4-8pm limited)
+  - Weekend (9am-9pm free with breaks)
+  - Holiday (extended hours)
+  - Grounded (very restricted)
+- [ ] User can save custom templates
+- [ ] Apply template to selected days
+- [ ] Upload and test
+
+---
+
+### **Subtask 7.X.7: Build Schedule Enforcement Engine**
+**Lines:** ~200 lines
+**File:** `/api/parental-controls/enforce.php`
+
+- [ ] Create enforcement logic
+- [ ] Check current time against schedule windows
+- [ ] Priority order:
+  1. Blacklist (always blocked)
+  2. Whitelist (always allowed)
+  3. Temporary blocks
+  4. Gaming restrictions
+  5. Schedule windows
+  6. Default (allow)
+- [ ] Log blocked requests
+- [ ] Return block/allow decision
+- [ ] Upload and test
+
+**Enforcement Logic:**
+```php
+function isAccessAllowed($userId, $deviceId, $domain, $currentTime) {
+    // 1. Check if parental controls enabled
+    // 2. Check blacklist (always block)
+    // 3. Check whitelist (always allow)
+    // 4. Check temporary blocks
+    // 5. Check gaming restrictions
+    // 6. Check current time window
+    // 7. Return allow/block + reason
+}
+```
+
+---
+
+### **Subtask 7.X.8: Build Statistics Dashboard**
+**Lines:** ~120 lines
+**File:** `/dashboard/parental-stats.php`
+
+- [ ] Create statistics and reporting dashboard
+- [ ] Features:
+  - Screen time per child (this week)
+  - Most visited sites
+  - Most blocked sites
+  - Gaming hours
+  - Schedule adherence percentage
+- [ ] Weekly email report (optional)
+- [ ] Upload and test
+
+**Statistics Shown:**
+- Total screen time (daily/weekly)
+- Gaming hours
+- Educational site time
+- Top blocked sites
+- Schedule compliance
+
+---
+
+### **Subtask 7.X.9: Mobile Responsive Design**
+**Lines:** ~80 lines
+**File:** Update all parental control pages
+
+- [ ] Make calendar swipeable on mobile
+- [ ] Collapsible time windows
+- [ ] Bottom sheet for editing
+- [ ] Quick toggle buttons optimized for mobile
+- [ ] Test on real mobile devices
+- [ ] Upload and test
+
+---
+
+### **Testing Checklist for Advanced Parental Controls:**
+
+- [ ] Calendar displays correct month
+- [ ] Can click days to edit schedules
+- [ ] Time windows save correctly
+- [ ] Templates apply correctly
+- [ ] Gaming toggle works instantly
+- [ ] Whitelist domains always allowed
+- [ ] Blacklist domains always blocked
+- [ ] Temporary blocks expire correctly
+- [ ] Schedule enforcement works at correct times
+- [ ] Statistics calculate correctly
+- [ ] Mobile view works properly
+- [ ] No conflicts between rules
+- [ ] Real-time updates work
+
+---
+
+**Total Lines for Advanced Parental Controls:** ~1,280 lines
+
+**Time Estimate:** 8-10 hours
+
+**Priority:** HIGH - Family feature, competitive advantage
+
+**Dependencies:**
+- Basic parental controls (PART 6) ✅ Complete
+- Device management system ✅ Complete
+- User authentication ✅ Complete
+
+---
+
+**NOTE:** This is a MAJOR feature that transforms TrueVault into a family internet safety solution.
+No other VPN offers calendar-based parental controls with this level of sophistication.
+
