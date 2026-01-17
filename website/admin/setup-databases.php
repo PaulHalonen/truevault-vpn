@@ -1,582 +1,510 @@
 <?php
 /**
- * TrueVault VPN - Complete Database Setup
- * Creates all required tables across all databases
- * 
- * Run once during installation: /admin/setup-databases.php
+ * TrueVault VPN - Database Setup Script
+ * Creates all required SQLite3 databases and tables
+ * Run once: https://vpn.the-truth-publishing.com/admin/setup-databases.php
  */
 
-// Prevent accidental re-runs in production
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Prevent re-running
 $lockFile = __DIR__ . '/../databases/.setup_complete';
-$forceRun = isset($_GET['force']) && $_GET['force'] === 'yes';
 
-if (file_exists($lockFile) && !$forceRun) {
-    die('Database setup already completed. Add ?force=yes to run again.');
+$dbPath = __DIR__ . '/../databases/';
+
+// Create databases directory
+if (!is_dir($dbPath)) {
+    mkdir($dbPath, 0755, true);
 }
-
-require_once __DIR__ . '/../includes/Database.php';
 
 $results = [];
+$errors = [];
 
 // ============================================
-// 1. MAIN DATABASE (main.db)
+// 1. MAIN DATABASE (users, sessions, vip_list)
 // ============================================
-
 try {
-    $db = new Database('main');
+    $db = new SQLite3($dbPath . 'main.db');
+    $db->enableExceptions(true);
     
-    // Users table
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            name TEXT,
-            tier TEXT NOT NULL DEFAULT 'free',
-            status TEXT NOT NULL DEFAULT 'active',
-            email_verified INTEGER DEFAULT 0,
-            verification_token TEXT,
-            reset_token TEXT,
-            reset_expires DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            last_login DATETIME
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        first_name TEXT,
+        last_name TEXT,
+        phone TEXT,
+        plan TEXT DEFAULT 'free',
+        status TEXT DEFAULT 'active',
+        is_vip INTEGER DEFAULT 0,
+        vip_approved_at DATETIME,
+        max_devices INTEGER DEFAULT 3,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_login DATETIME
+    )");
     
-    // Sessions table
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            token TEXT NOT NULL UNIQUE,
-            ip_address TEXT,
-            user_agent TEXT,
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        ip_address TEXT,
+        user_agent TEXT,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
     
-    // VIP list (SECRET - admin only)
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS vip_list (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
-            added_by TEXT,
-            notes TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS vip_list (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        added_by TEXT,
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
     // Add default VIP
-    $db->exec("INSERT OR IGNORE INTO vip_list (email, notes) VALUES ('seige235@yahoo.com', 'Permanent VIP - dedicated server')");
+    $db->exec("INSERT OR IGNORE INTO vip_list (email, added_by, notes) VALUES ('seige235@yahoo.com', 'system', 'Dedicated server user')");
     
-    // Indexes
     $db->exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_users_tier ON users(tier)");
     $db->exec("CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)");
     
-    $results['main.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ main.db - users, sessions, vip_list";
 } catch (Exception $e) {
-    $results['main.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ main.db: " . $e->getMessage();
 }
 
 // ============================================
-// 2. DEVICES DATABASE (devices.db)
+// 2. DEVICES DATABASE
 // ============================================
-
 try {
-    $db = new Database('devices');
+    $db = new SQLite3($dbPath . 'devices.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS devices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            public_key TEXT NOT NULL,
-            private_key_encrypted TEXT,
-            assigned_ip TEXT NOT NULL,
-            server_id INTEGER,
-            server_ip TEXT,
-            is_active INTEGER DEFAULT 1,
-            last_handshake DATETIME,
-            bytes_received INTEGER DEFAULT 0,
-            bytes_sent INTEGER DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS devices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT DEFAULT 'computer',
+        public_key TEXT NOT NULL,
+        private_key TEXT,
+        assigned_ip TEXT,
+        server_id INTEGER,
+        is_active INTEGER DEFAULT 1,
+        last_connected DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
     $db->exec("CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_devices_server ON devices(server_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_devices_pubkey ON devices(public_key)");
     
-    $results['devices.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ devices.db - devices";
 } catch (Exception $e) {
-    $results['devices.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ devices.db: " . $e->getMessage();
 }
 
 // ============================================
-// 3. SERVERS DATABASE (servers.db)
+// 3. SERVERS DATABASE
 // ============================================
-
 try {
-    $db = new Database('servers');
+    $db = new SQLite3($dbPath . 'servers.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS servers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            ip TEXT NOT NULL,
-            location TEXT,
-            country TEXT,
-            type TEXT DEFAULT 'shared',
-            public_key TEXT,
-            endpoint TEXT,
-            port INTEGER DEFAULT 51820,
-            dns TEXT DEFAULT '1.1.1.1',
-            is_active INTEGER DEFAULT 1,
-            max_users INTEGER DEFAULT 500,
-            current_users INTEGER DEFAULT 0,
-            last_check DATETIME,
-            last_status TEXT DEFAULT 'unknown',
-            provider TEXT,
-            monthly_cost REAL,
-            notes TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS servers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        location TEXT NOT NULL,
+        country TEXT DEFAULT 'US',
+        ip TEXT NOT NULL,
+        port INTEGER DEFAULT 51820,
+        public_key TEXT,
+        endpoint TEXT,
+        dns TEXT DEFAULT '1.1.1.1, 8.8.8.8',
+        allowed_ips TEXT DEFAULT '0.0.0.0/0',
+        type TEXT DEFAULT 'shared',
+        is_active INTEGER DEFAULT 1,
+        max_users INTEGER DEFAULT 100,
+        current_users INTEGER DEFAULT 0,
+        last_check DATETIME,
+        last_status TEXT DEFAULT 'unknown',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
     // Insert default servers
-    $db->exec("INSERT OR IGNORE INTO servers (name, ip, location, country, type, port) VALUES 
-        ('New York', '66.94.103.91', 'USA East', 'US', 'shared', 51820),
-        ('St. Louis', '144.126.133.253', 'USA Central', 'US', 'vip', 51820),
-        ('Dallas', '66.241.124.4', 'USA Central', 'US', 'shared', 51820),
-        ('Toronto', '66.241.125.247', 'Canada', 'CA', 'shared', 51820)
+    $db->exec("INSERT OR IGNORE INTO servers (id, name, location, country, ip, port, type, max_users) VALUES 
+        (1, 'US East', 'New York, USA', 'US', '66.94.103.91', 51820, 'shared', 100),
+        (2, 'US Central', 'St. Louis, USA', 'US', '144.126.133.253', 51820, 'dedicated', 1),
+        (3, 'US South', 'Dallas, USA', 'US', '66.241.124.4', 51820, 'shared', 100),
+        (4, 'Canada', 'Toronto, Canada', 'CA', '66.241.125.247', 51820, 'shared', 100)
     ");
     
-    $results['servers.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ servers.db - servers (4 default servers added)";
 } catch (Exception $e) {
-    $results['servers.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ servers.db: " . $e->getMessage();
 }
 
 // ============================================
-// 4. BILLING DATABASE (billing.db)
+// 4. BILLING DATABASE
 // ============================================
-
 try {
-    $db = new Database('billing');
+    $db = new SQLite3($dbPath . 'billing.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS subscriptions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            paypal_subscription_id TEXT UNIQUE,
-            plan_id TEXT,
-            plan_name TEXT,
-            status TEXT NOT NULL DEFAULT 'pending',
-            amount REAL,
-            currency TEXT DEFAULT 'USD',
-            billing_cycle TEXT DEFAULT 'monthly',
-            current_period_start DATETIME,
-            current_period_end DATETIME,
-            cancelled_at DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        paypal_subscription_id TEXT,
+        plan TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        amount REAL,
+        currency TEXT DEFAULT 'USD',
+        billing_cycle TEXT DEFAULT 'monthly',
+        started_at DATETIME,
+        expires_at DATETIME,
+        cancelled_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            subscription_id INTEGER,
-            paypal_transaction_id TEXT,
-            type TEXT NOT NULL,
-            amount REAL NOT NULL,
-            currency TEXT DEFAULT 'USD',
-            status TEXT NOT NULL,
-            description TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        subscription_id INTEGER,
+        paypal_transaction_id TEXT,
+        type TEXT DEFAULT 'payment',
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'USD',
+        status TEXT DEFAULT 'completed',
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS invoices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            invoice_number TEXT NOT NULL UNIQUE,
-            subscription_id INTEGER,
-            amount REAL NOT NULL,
-            tax REAL DEFAULT 0,
-            total REAL NOT NULL,
-            status TEXT DEFAULT 'pending',
-            due_date DATE,
-            paid_at DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS invoices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        invoice_number TEXT UNIQUE,
+        amount REAL NOT NULL,
+        tax REAL DEFAULT 0,
+        total REAL NOT NULL,
+        status TEXT DEFAULT 'pending',
+        due_date DATE,
+        paid_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_subscriptions_paypal ON subscriptions(paypal_subscription_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_subs_user ON subscriptions(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_trans_user ON transactions(user_id)");
     
-    $results['billing.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ billing.db - subscriptions, transactions, invoices";
 } catch (Exception $e) {
-    $results['billing.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ billing.db: " . $e->getMessage();
 }
 
 // ============================================
-// 5. ADMIN DATABASE (admin.db)
+// 5. ADMIN DATABASE
 // ============================================
-
 try {
-    $db = new Database('admin');
+    $db = new SQLite3($dbPath . 'admin.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            name TEXT,
-            role TEXT DEFAULT 'admin',
-            is_active INTEGER DEFAULT 1,
-            last_login DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
+    $db->exec("CREATE TABLE IF NOT EXISTS admin_users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        name TEXT,
+        role TEXT DEFAULT 'admin',
+        is_active INTEGER DEFAULT 1,
+        last_login DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    $db->exec("CREATE TABLE IF NOT EXISTS system_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        setting_key TEXT UNIQUE NOT NULL,
+        setting_value TEXT,
+        description TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    $db->exec("CREATE TABLE IF NOT EXISTS email_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        variables TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // Default admin (change password!)
+    $defaultPass = password_hash('TrueVault2026!', PASSWORD_DEFAULT);
+    $db->exec("INSERT OR IGNORE INTO admin_users (email, password, name, role) VALUES ('admin@truevault.com', '$defaultPass', 'Administrator', 'superadmin')");
+    
+    // Default settings
+    $db->exec("INSERT OR IGNORE INTO system_settings (setting_key, setting_value, description) VALUES 
+        ('site_name', 'TrueVault VPN', 'Website name'),
+        ('support_email', 'paulhalonen@gmail.com', 'Support email address'),
+        ('paypal_mode', 'sandbox', 'PayPal mode: sandbox or live'),
+        ('max_devices_free', '1', 'Max devices for free users'),
+        ('max_devices_personal', '3', 'Max devices for personal plan'),
+        ('max_devices_family', '10', 'Max devices for family plan')
     ");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS system_settings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            setting_key TEXT NOT NULL UNIQUE,
-            setting_value TEXT,
-            category TEXT DEFAULT 'general',
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
-    
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS email_templates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            subject TEXT NOT NULL,
-            body_html TEXT NOT NULL,
-            body_text TEXT,
-            category TEXT DEFAULT 'general',
-            variables TEXT,
-            is_active INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
-    
-    // Insert default settings
-    $defaultSettings = [
-        ['company_name', 'TrueVault VPN', 'general'],
-        ['support_email', 'support@vpn.the-truth-publishing.com', 'general'],
-        ['from_email', 'noreply@vpn.the-truth-publishing.com', 'email'],
-        ['smtp_host', 'smtp.gmail.com', 'email'],
-        ['smtp_port', '587', 'email'],
-        ['gmail_user', 'paulhalonen@gmail.com', 'email'],
-        ['paypal_mode', 'live', 'paypal'],
-        ['plan_personal_price', '9.97', 'billing'],
-        ['plan_family_price', '14.97', 'billing'],
-        ['plan_dedicated_price', '39.97', 'billing']
-    ];
-    
-    $stmt = $db->prepare("INSERT OR IGNORE INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, ?)");
-    foreach ($defaultSettings as $setting) {
-        $stmt->execute($setting);
-    }
-    
-    $results['admin.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ admin.db - admin_users, system_settings, email_templates";
 } catch (Exception $e) {
-    $results['admin.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ admin.db: " . $e->getMessage();
 }
 
 // ============================================
-// 6. LOGS DATABASE (logs.db)
+// 6. LOGS DATABASE
 // ============================================
-
 try {
-    $db = new Database('logs');
+    $db = new SQLite3($dbPath . 'logs.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS security_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            event_type TEXT NOT NULL,
-            user_id INTEGER,
-            ip_address TEXT,
-            user_agent TEXT,
-            details TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS security_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        event_type TEXT NOT NULL,
+        ip_address TEXT,
+        user_agent TEXT,
+        details TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS audit_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            admin_id INTEGER,
-            action TEXT NOT NULL,
-            target_type TEXT,
-            target_id INTEGER,
-            old_value TEXT,
-            new_value TEXT,
-            ip_address TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        action TEXT NOT NULL,
+        table_name TEXT,
+        record_id INTEGER,
+        old_values TEXT,
+        new_values TEXT,
+        ip_address TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS api_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            endpoint TEXT NOT NULL,
-            method TEXT,
-            user_id INTEGER,
-            ip_address TEXT,
-            response_code INTEGER,
-            response_time_ms INTEGER,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS email_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        to_email TEXT NOT NULL,
+        subject TEXT,
+        template TEXT,
+        status TEXT DEFAULT 'sent',
+        error TEXT,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS email_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            method TEXT NOT NULL,
-            recipient TEXT NOT NULL,
-            subject TEXT NOT NULL,
-            body TEXT,
-            status TEXT NOT NULL DEFAULT 'pending',
-            error_message TEXT,
-            sent_at DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS email_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        to_email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        priority INTEGER DEFAULT 5,
+        attempts INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        scheduled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        sent_at DATETIME,
+        error TEXT
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS email_queue (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            recipient TEXT NOT NULL,
-            subject TEXT NOT NULL,
-            template_name TEXT NOT NULL,
-            template_variables TEXT,
-            email_type TEXT NOT NULL DEFAULT 'customer',
-            status TEXT NOT NULL DEFAULT 'pending',
-            scheduled_for DATETIME NOT NULL,
-            sent_at DATETIME,
-            attempts INTEGER DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS workflow_executions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workflow_name TEXT NOT NULL,
+        trigger_data TEXT,
+        status TEXT DEFAULT 'running',
+        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME,
+        error TEXT
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS workflow_executions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            workflow_name TEXT NOT NULL,
-            trigger_event TEXT NOT NULL,
-            user_id INTEGER,
-            user_email TEXT,
-            status TEXT NOT NULL DEFAULT 'running',
-            started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            completed_at DATETIME,
-            error_message TEXT,
-            execution_data TEXT
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS scheduled_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_type TEXT NOT NULL,
+        task_data TEXT,
+        execute_at DATETIME NOT NULL,
+        status TEXT DEFAULT 'pending',
+        attempts INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        executed_at DATETIME
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS scheduled_tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            execution_id INTEGER,
-            task_name TEXT NOT NULL,
-            task_type TEXT NOT NULL,
-            task_data TEXT,
-            execute_at DATETIME NOT NULL,
-            status TEXT NOT NULL DEFAULT 'pending',
-            executed_at DATETIME,
-            result TEXT
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS cron_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_name TEXT NOT NULL,
+        status TEXT,
+        duration_ms INTEGER,
+        details TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS automation_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            level TEXT DEFAULT 'info',
-            message TEXT NOT NULL,
-            execution_id INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_security_user ON security_events(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_email_queue_status ON email_queue(status)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_scheduled_status ON scheduled_tasks(status, execute_at)");
     
-    // Indexes
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_email_queue_status ON email_queue(status, scheduled_for)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_status ON scheduled_tasks(status, execute_at)");
-    
-    $results['logs.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ logs.db - security_events, audit_log, email_log, email_queue, workflow_executions, scheduled_tasks, cron_log";
 } catch (Exception $e) {
-    $results['logs.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ logs.db: " . $e->getMessage();
 }
 
 // ============================================
-// 7. PORT FORWARDS DATABASE (port_forwards.db)
+// 7. PORT FORWARDS DATABASE
 // ============================================
-
 try {
-    $db = new Database('port_forwards');
+    $db = new SQLite3($dbPath . 'port_forwards.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS port_forwards (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            device_id INTEGER,
-            name TEXT,
-            external_port INTEGER NOT NULL,
-            internal_ip TEXT NOT NULL,
-            internal_port INTEGER NOT NULL,
-            protocol TEXT DEFAULT 'tcp',
-            is_active INTEGER DEFAULT 1,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS port_forwards (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        device_id INTEGER,
+        name TEXT NOT NULL,
+        internal_ip TEXT NOT NULL,
+        internal_port INTEGER NOT NULL,
+        external_port INTEGER NOT NULL,
+        protocol TEXT DEFAULT 'tcp',
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS discovered_devices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            ip TEXT NOT NULL,
-            mac TEXT,
-            hostname TEXT,
-            vendor TEXT,
-            device_type TEXT,
-            open_ports TEXT,
-            discovered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS discovered_devices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        ip TEXT NOT NULL,
+        mac TEXT,
+        hostname TEXT,
+        vendor TEXT,
+        device_type TEXT,
+        open_ports TEXT,
+        last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_port_forwards_user ON port_forwards(user_id)");
-    
-    $results['port_forwards.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ port_forwards.db - port_forwards, discovered_devices";
 } catch (Exception $e) {
-    $results['port_forwards.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ port_forwards.db: " . $e->getMessage();
 }
 
 // ============================================
-// 8. SUPPORT DATABASE (support.db)
+// 8. SUPPORT DATABASE
 // ============================================
-
 try {
-    $db = new Database('support');
+    $db = new SQLite3($dbPath . 'support.db');
+    $db->enableExceptions(true);
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS support_tickets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            subject TEXT NOT NULL,
-            description TEXT NOT NULL,
-            category TEXT,
-            priority TEXT NOT NULL DEFAULT 'normal',
-            status TEXT NOT NULL DEFAULT 'open',
-            assigned_to TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            resolved_at DATETIME
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS support_tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        ticket_number TEXT UNIQUE,
+        subject TEXT NOT NULL,
+        category TEXT DEFAULT 'general',
+        priority TEXT DEFAULT 'normal',
+        status TEXT DEFAULT 'open',
+        assigned_to INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        closed_at DATETIME
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS ticket_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ticket_id INTEGER NOT NULL,
-            user_id INTEGER,
-            is_staff INTEGER DEFAULT 0,
-            message TEXT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS ticket_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id INTEGER NOT NULL,
+        user_id INTEGER,
+        is_staff INTEGER DEFAULT 0,
+        message TEXT NOT NULL,
+        attachments TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE
+    )");
     
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS knowledge_base (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            category TEXT NOT NULL,
-            keywords TEXT,
-            view_count INTEGER DEFAULT 0,
-            helpful_count INTEGER DEFAULT 0,
-            is_published INTEGER DEFAULT 1,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    ");
+    $db->exec("CREATE TABLE IF NOT EXISTS knowledge_base (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        slug TEXT UNIQUE,
+        content TEXT NOT NULL,
+        category TEXT,
+        tags TEXT,
+        views INTEGER DEFAULT 0,
+        is_published INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
     
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_tickets_user ON support_tickets(user_id, status)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_tickets_status ON support_tickets(status, priority)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_tickets_user ON support_tickets(user_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_tickets_status ON support_tickets(status)");
     
-    $results['support.db'] = 'SUCCESS';
+    $db->close();
+    $results[] = "✅ support.db - support_tickets, ticket_messages, knowledge_base";
 } catch (Exception $e) {
-    $results['support.db'] = 'FAILED: ' . $e->getMessage();
+    $errors[] = "❌ support.db: " . $e->getMessage();
 }
 
-// ============================================
-// CREATE LOCK FILE
-// ============================================
+// Create lock file
+file_put_contents($lockFile, date('Y-m-d H:i:s'));
 
-$allSuccess = !in_array(false, array_map(function($r) { return strpos($r, 'SUCCESS') === 0; }, $results));
-
-if ($allSuccess) {
-    file_put_contents($lockFile, date('Y-m-d H:i:s') . "\n" . json_encode($results));
-}
-
-// ============================================
-// OUTPUT RESULTS
-// ============================================
-
+// Output HTML
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Database Setup - TrueVault VPN</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #1a1a2e; color: #fff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; padding: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
         h1 { color: #00d9ff; }
-        .result { padding: 10px 15px; margin: 10px 0; border-radius: 6px; }
-        .success { background: rgba(0,255,136,0.2); border-left: 4px solid #00ff88; }
-        .failed { background: rgba(255,107,107,0.2); border-left: 4px solid #ff6b6b; }
-        .summary { margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+        .success { color: #00ff88; }
+        .error { color: #ff5050; }
+        .box { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .next-steps { background: rgba(0,217,255,0.1); border: 1px solid rgba(0,217,255,0.3); border-radius: 10px; padding: 20px; margin-top: 30px; }
+        .next-steps h3 { color: #00d9ff; margin-top: 0; }
         a { color: #00d9ff; }
+        code { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <h1>🗄️ Database Setup Complete</h1>
-    
-    <h2>Results:</h2>
-    <?php foreach ($results as $db => $status): ?>
-        <div class="result <?= strpos($status, 'SUCCESS') === 0 ? 'success' : 'failed' ?>">
-            <strong><?= $db ?>:</strong> <?= $status ?>
+    <div class="container">
+        <h1>🗄️ TrueVault Database Setup</h1>
+        
+        <div class="box">
+            <h2>Results</h2>
+            <?php foreach ($results as $r): ?>
+                <p class="success"><?= $r ?></p>
+            <?php endforeach; ?>
+            
+            <?php foreach ($errors as $e): ?>
+                <p class="error"><?= $e ?></p>
+            <?php endforeach; ?>
         </div>
-    <?php endforeach; ?>
-    
-    <div class="summary">
-        <?php if ($allSuccess): ?>
-            <h3>✅ All databases created successfully!</h3>
-            <p>You can now:</p>
+        
+        <div class="box">
+            <h2>📊 Summary</h2>
+            <p><strong>Databases created:</strong> <?= count($results) ?></p>
+            <p><strong>Errors:</strong> <?= count($errors) ?></p>
+            <p><strong>Location:</strong> <code><?= realpath($dbPath) ?: $dbPath ?></code></p>
+        </div>
+        
+        <?php if (count($errors) === 0): ?>
+        <div class="next-steps">
+            <h3>✅ Setup Complete! Next Steps:</h3>
+            <ol>
+                <li><a href="install-email-templates.php">Install Email Templates</a></li>
+                <li><a href="index.html">Go to Admin Dashboard</a></li>
+                <li>Test user registration at <a href="../register.html">/register.html</a></li>
+            </ol>
+            <p><strong>Default Admin Login:</strong></p>
             <ul>
-                <li><a href="/admin/">Go to Admin Panel</a></li>
-                <li><a href="/admin/install-email-templates.php">Install Email Templates</a></li>
+                <li>Email: <code>admin@truevault.com</code></li>
+                <li>Password: <code>TrueVault2026!</code></li>
             </ul>
-        <?php else: ?>
-            <h3>⚠️ Some databases failed to create</h3>
-            <p>Please check the errors above and try again.</p>
+            <p style="color: #ffc107;">⚠️ Change this password immediately!</p>
+        </div>
         <?php endif; ?>
     </div>
-    
-    <p style="margin-top: 20px; color: #888; font-size: 12px;">
-        This page can only be run once. To run again, delete the lock file or add ?force=yes to the URL.
-    </p>
 </body>
 </html>
