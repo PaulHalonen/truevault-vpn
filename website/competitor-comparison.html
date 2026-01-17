@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrueVault VPN vs Competitors - Honest Comparison</title>
+    <title>TrueVault VPN vs Business VPNs - Dedicated Server Comparison</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         :root {
             --primary: #00d4ff;
             --secondary: #7c3aed;
@@ -20,228 +19,278 @@
             --text: #e2e8f0;
             --text-muted: #94a3b8;
         }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--darker);
             color: var(--text);
             line-height: 1.6;
         }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
         
-        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
-        
-        /* Header */
+        /* Hero */
         .hero {
             padding: 80px 0 60px;
             text-align: center;
             background: linear-gradient(180deg, var(--dark) 0%, var(--darker) 100%);
         }
-        
         .hero h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-size: clamp(2rem, 5vw, 3rem);
             margin-bottom: 20px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
         .hero p {
             font-size: 1.25rem;
             color: var(--text-muted);
             max-width: 700px;
             margin: 0 auto 30px;
         }
-        
+        .hero-highlight {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(124, 58, 237, 0.15));
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px 40px;
+            margin-top: 20px;
+        }
+        .hero-highlight .price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .hero-highlight .label {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
         .badge-row {
             display: flex;
             justify-content: center;
             gap: 15px;
             flex-wrap: wrap;
-            margin-top: 20px;
+            margin-top: 25px;
         }
-        
         .badge {
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
         }
-        
-        .badge-info { background: rgba(0, 212, 255, 0.15); color: var(--primary); border: 1px solid var(--primary); }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); }
         .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
-        
-        /* Main Comparison Table */
-        .comparison-section {
+
+        /* Problem Section */
+        .problem-section {
             padding: 60px 0;
+            background: var(--dark);
         }
-        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .problem-grid { grid-template-columns: 1fr; }
+        }
+        .problem-content h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--danger);
+        }
+        .problem-content p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .math-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        .math-box h3 {
+            color: var(--danger);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .math-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .math-line:last-child { border-bottom: none; }
+        .math-line .label { color: var(--text-muted); }
+        .math-line .value { font-weight: 600; }
+        .math-line.total {
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid var(--danger);
+            font-size: 1.2rem;
+        }
+        .math-line.total .value { color: var(--danger); }
+
+        /* Comparison Table */
+        .comparison-section { padding: 60px 0; }
         .section-title {
             font-size: 2rem;
             text-align: center;
             margin-bottom: 15px;
         }
-        
         .section-subtitle {
             text-align: center;
             color: var(--text-muted);
             margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
         }
-        
         .comparison-table-wrapper {
             overflow-x: auto;
             border-radius: 16px;
             border: 1px solid var(--border);
             background: var(--card);
         }
-        
         .comparison-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1000px;
+            min-width: 900px;
         }
-        
         .comparison-table th,
         .comparison-table td {
-            padding: 16px 12px;
+            padding: 18px 15px;
             text-align: center;
             border-bottom: 1px solid var(--border);
         }
-        
         .comparison-table th {
             background: rgba(0, 0, 0, 0.3);
             font-weight: 600;
-            position: sticky;
-            top: 0;
         }
-        
         .comparison-table th:first-child,
         .comparison-table td:first-child {
             text-align: left;
             padding-left: 20px;
-            font-weight: 500;
         }
-        
-        .comparison-table tr:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        
-        /* TrueVault column highlight */
+        .comparison-table tr:hover { background: rgba(255, 255, 255, 0.02); }
         .comparison-table th.highlight,
         .comparison-table td.highlight {
             background: rgba(0, 212, 255, 0.08);
             border-left: 2px solid var(--primary);
             border-right: 2px solid var(--primary);
         }
-        
         .comparison-table th.highlight {
             background: rgba(0, 212, 255, 0.15);
             color: var(--primary);
         }
-        
-        .provider-logo {
+        .provider-cell {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 5px;
         }
-        
-        .provider-logo .emoji { font-size: 1.5rem; }
-        .provider-logo .name { font-weight: 600; font-size: 0.9rem; }
-        
-        /* Status Icons */
+        .provider-cell .emoji { font-size: 1.5rem; }
+        .provider-cell .name { font-weight: 600; font-size: 0.9rem; }
         .status-yes { color: var(--success); font-weight: 600; }
         .status-no { color: var(--danger); }
-        .status-partial { color: var(--warning); font-size: 0.85rem; }
-        .status-addon { color: var(--warning); font-size: 0.85rem; }
-        
+        .status-warning { color: var(--warning); font-size: 0.9rem; }
         .price-cell {
             font-weight: 600;
             color: var(--primary);
         }
-        
+        .price-cell.expensive { color: var(--danger); }
         .price-cell small {
             display: block;
             font-weight: 400;
             color: var(--text-muted);
             font-size: 0.75rem;
         }
-        
-        /* Feature Categories */
         .category-row td {
             background: rgba(124, 58, 237, 0.1);
             font-weight: 600;
             color: var(--secondary);
             padding: 12px 20px;
         }
-        
-        /* Honest Assessment Section */
-        .honest-section {
-            padding: 60px 0;
+        .winner-badge {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+
+        /* Real Cost Section */
+        .real-cost-section {
+            padding: 80px 0;
             background: var(--dark);
         }
-        
-        .honest-grid {
+        .cost-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
             margin-top: 40px;
         }
-        
-        @media (max-width: 768px) {
-            .honest-grid { grid-template-columns: 1fr; }
-        }
-        
-        .honest-card {
+        .cost-card {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 30px;
+            text-align: center;
+            transition: transform 0.3s;
         }
-        
-        .honest-card.pros { border-color: var(--success); }
-        .honest-card.cons { border-color: var(--warning); }
-        
-        .honest-card h3 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+        .cost-card:hover { transform: translateY(-5px); }
+        .cost-card.featured {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .cost-card .provider {
             font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
-        
-        .honest-card.pros h3 { color: var(--success); }
-        .honest-card.cons h3 { color: var(--warning); }
-        
-        .honest-card ul {
-            list-style: none;
+        .cost-card .plan {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
         }
-        
-        .honest-card li {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
+        .cost-card .per-user {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
         }
-        
-        .honest-card li:last-child { border-bottom: none; }
-        
-        /* Unique Features Section */
-        .unique-section {
-            padding: 80px 0;
+        .cost-card .minimum {
+            font-size: 0.85rem;
+            color: var(--warning);
+            margin-bottom: 15px;
         }
-        
+        .cost-card .real-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .cost-card .real-price.good { color: var(--success); }
+        .cost-card .real-price.bad { color: var(--danger); }
+        .cost-card .period {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .cost-card .savings {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .cost-card .savings.positive { color: var(--success); }
+        .cost-card .savings.negative { color: var(--danger); }
+
+        /* Unique Features */
+        .unique-section { padding: 80px 0; }
         .unique-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
             margin-top: 40px;
         }
-        
         .unique-card {
             background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.1));
             border: 1px solid var(--primary);
@@ -249,170 +298,97 @@
             padding: 30px;
             text-align: center;
         }
-        
-        .unique-card .icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-        
+        .unique-card .icon { font-size: 3rem; margin-bottom: 15px; }
         .unique-card h3 {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             margin-bottom: 10px;
             color: var(--primary);
         }
-        
-        .unique-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-        
-        .unique-card .competitor-status {
+        .unique-card p { color: var(--text-muted); font-size: 0.95rem; }
+        .unique-card .competitor-note {
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid var(--border);
             font-size: 0.85rem;
             color: var(--danger);
         }
-        
-        /* Detailed Competitor Cards */
-        .detailed-section {
+
+        /* Who Section */
+        .who-section {
             padding: 80px 0;
             background: var(--dark);
         }
-        
-        .competitor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 40px;
-        }
-        
-        .competitor-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 30px;
-            transition: transform 0.3s, border-color 0.3s;
-        }
-        
-        .competitor-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-        
-        .competitor-card.truevault {
-            border-color: var(--primary);
-            background: rgba(0, 212, 255, 0.05);
-        }
-        
-        .competitor-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .competitor-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            background: var(--border);
-        }
-        
-        .competitor-info h3 { font-size: 1.25rem; margin-bottom: 5px; }
-        .competitor-info .tagline { color: var(--text-muted); font-size: 0.9rem; }
-        
-        .competitor-price {
-            display: flex;
-            align-items: baseline;
-            gap: 5px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .competitor-price .amount {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .competitor-price .period { color: var(--text-muted); }
-        .competitor-price .note { font-size: 0.8rem; color: var(--warning); margin-left: 10px; }
-        
-        .feature-list {
-            list-style: none;
-        }
-        
-        .feature-list li {
-            padding: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        
-        .feature-list li:last-child { border-bottom: none; }
-        
-        .feature-list .icon-yes { color: var(--success); }
-        .feature-list .icon-no { color: var(--danger); }
-        .feature-list .icon-partial { color: var(--warning); }
-        
-        /* Who Should Choose Section */
-        .who-section {
-            padding: 80px 0;
-        }
-        
         .who-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             margin-top: 40px;
         }
-        
         .who-card {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 30px;
         }
-        
         .who-card h3 {
             font-size: 1.1rem;
             margin-bottom: 15px;
             color: var(--primary);
         }
-        
         .who-card .recommendation {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 15px;
             padding-bottom: 15px;
             border-bottom: 1px solid var(--border);
         }
-        
-        .who-card p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
+        .who-card p { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Honest Section */
+        .honest-section { padding: 60px 0; }
+        .honest-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
         }
-        
-        /* CTA Section */
+        @media (max-width: 768px) {
+            .honest-grid { grid-template-columns: 1fr; }
+        }
+        .honest-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .honest-card.pros { border-color: var(--success); }
+        .honest-card.cons { border-color: var(--warning); }
+        .honest-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        .honest-card.pros h3 { color: var(--success); }
+        .honest-card.cons h3 { color: var(--warning); }
+        .honest-card ul { list-style: none; }
+        .honest-card li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .honest-card li:last-child { border-bottom: none; }
+
+        /* CTA */
         .cta-section {
             padding: 80px 0;
             text-align: center;
-            background: linear-gradient(180deg, var(--dark) 0%, var(--darker) 100%);
+            background: linear-gradient(180deg, var(--darker) 0%, var(--dark) 100%);
         }
-        
-        .cta-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-        
+        .cta-section h2 { font-size: 2.5rem; margin-bottom: 20px; }
         .cta-section p {
             color: var(--text-muted);
             margin-bottom: 30px;
@@ -420,7 +396,6 @@
             margin-left: auto;
             margin-right: auto;
         }
-        
         .btn-primary {
             display: inline-block;
             padding: 16px 40px;
@@ -432,36 +407,36 @@
             font-size: 1.1rem;
             transition: transform 0.3s, box-shadow 0.3s;
         }
-        
         .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
         }
-        
-        /* Source Citations */
+        .cta-features {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .cta-features span {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Sources */
         .sources {
             padding: 40px 0;
             border-top: 1px solid var(--border);
         }
-        
         .sources h4 {
             font-size: 1rem;
             margin-bottom: 15px;
             color: var(--text-muted);
         }
-        
         .sources p {
             font-size: 0.85rem;
             color: var(--text-muted);
             line-height: 1.8;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero { padding: 60px 0 40px; }
-            .comparison-section { padding: 40px 0; }
-            .competitor-grid { grid-template-columns: 1fr; }
-            .unique-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -469,19 +444,59 @@
 
 <section class="hero">
     <div class="container">
-        <h1>TrueVault VPN vs The Competition</h1>
-        <p>An honest, research-based comparison. We show you exactly where we excel and where others might be a better fit for your specific needs.</p>
+        <h1>Business VPN Pricing: The Hidden Costs</h1>
+        <p>Business VPNs advertise "$7/user" but require 5-10 minimum users. We did the math so you don't have to.</p>
+        
+        <div class="hero-highlight">
+            <div class="label">TrueVault Dedicated Server</div>
+            <div class="price">$39.97/mo</div>
+            <div class="label">No minimum users required</div>
+        </div>
+        
         <div class="badge-row">
-            <span class="badge badge-info">Prices verified January 2026</span>
-            <span class="badge badge-warning">All prices shown are 2-year plan rates</span>
+            <span class="badge badge-success">✓ Actual dedicated server</span>
+            <span class="badge badge-success">✓ 1 user minimum</span>
+            <span class="badge badge-warning">Competitors require 5-10+ users</span>
+        </div>
+    </div>
+</section>
+
+<section class="problem-section">
+    <div class="container">
+        <div class="problem-grid">
+            <div class="problem-content">
+                <h2>🚨 The "$7/user" Trap</h2>
+                <p>Business VPNs like GoodAccess, NordLayer, and Perimeter 81 advertise low per-user prices. What they don't highlight: <strong>minimum user requirements</strong>.</p>
+                <p>If you're an individual, freelancer, family, or small team wanting dedicated VPN resources, you're forced to pay for users you don't need.</p>
+                <p>We built TrueVault Dedicated for people who want enterprise-grade dedicated servers without enterprise-grade minimums.</p>
+            </div>
+            <div class="math-box">
+                <h3>Example: GoodAccess "Essential" Plan</h3>
+                <div class="math-line">
+                    <span class="label">Advertised Price</span>
+                    <span class="value">$7/user/month</span>
+                </div>
+                <div class="math-line">
+                    <span class="label">Minimum Users</span>
+                    <span class="value">5 users required</span>
+                </div>
+                <div class="math-line">
+                    <span class="label">Add Dedicated Gateway</span>
+                    <span class="value">+$39/month</span>
+                </div>
+                <div class="math-line total">
+                    <span class="label">Real Cost (1 person)</span>
+                    <span class="value">$74/month</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
 <section class="comparison-section">
     <div class="container">
-        <h2 class="section-title">Quick Comparison Table</h2>
-        <p class="section-subtitle">See how TrueVault stacks up against 5 major VPN providers on the features that matter most.</p>
+        <h2 class="section-title">True Cost Comparison</h2>
+        <p class="section-subtitle">What you actually pay for dedicated VPN resources as a single user or small team.</p>
         
         <div class="comparison-table-wrapper">
             <table class="comparison-table">
@@ -489,102 +504,112 @@
                     <tr>
                         <th>Feature</th>
                         <th class="highlight">
-                            <div class="provider-logo">
+                            <div class="provider-cell">
                                 <span class="emoji">🛡️</span>
                                 <span class="name">TrueVault</span>
                             </div>
                         </th>
                         <th>
-                            <div class="provider-logo">
+                            <div class="provider-cell">
                                 <span class="emoji">🏢</span>
                                 <span class="name">GoodAccess</span>
                             </div>
                         </th>
                         <th>
-                            <div class="provider-logo">
-                                <span class="emoji">🔒</span>
-                                <span class="name">PureVPN</span>
+                            <div class="provider-cell">
+                                <span class="emoji">🔷</span>
+                                <span class="name">NordLayer</span>
                             </div>
                         </th>
                         <th>
-                            <div class="provider-logo">
-                                <span class="emoji">🔐</span>
-                                <span class="name">PIA</span>
+                            <div class="provider-cell">
+                                <span class="emoji">🔶</span>
+                                <span class="name">Perimeter 81</span>
                             </div>
                         </th>
                         <th>
-                            <div class="provider-logo">
-                                <span class="emoji">🌐</span>
-                                <span class="name">NordVPN</span>
-                            </div>
-                        </th>
-                        <th>
-                            <div class="provider-logo">
-                                <span class="emoji">🦈</span>
-                                <span class="name">Surfshark</span>
+                            <div class="provider-cell">
+                                <span class="emoji">🔗</span>
+                                <span class="name">Twingate</span>
                             </div>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Pricing -->
                     <tr class="category-row">
-                        <td colspan="7">💰 Pricing (2-year plans)</td>
+                        <td colspan="6">💰 Real Monthly Cost (Single User with Dedicated Resources)</td>
                     </tr>
                     <tr>
-                        <td>Starting Price</td>
-                        <td class="highlight price-cell">$9.97/mo</td>
-                        <td class="price-cell">$7/user/mo<small>Min 5 users = $35/mo</small></td>
-                        <td class="price-cell">$1.99/mo</td>
-                        <td class="price-cell">$2.03/mo</td>
-                        <td class="price-cell">$3.39/mo</td>
-                        <td class="price-cell">$1.99/mo</td>
+                        <td>Advertised Price</td>
+                        <td class="highlight price-cell">$39.97/mo</td>
+                        <td class="price-cell">$7/user/mo</td>
+                        <td class="price-cell">$11/user/mo</td>
+                        <td class="price-cell">$8/user/mo</td>
+                        <td class="price-cell">$10/user/mo</td>
                     </tr>
                     <tr>
-                        <td>Family Plan</td>
-                        <td class="highlight price-cell">$14.97/mo</td>
-                        <td class="status-no">Business only</td>
+                        <td>Minimum Users</td>
+                        <td class="highlight status-yes">1 user <span class="winner-badge">BEST</span></td>
+                        <td class="status-warning">5 users min</td>
+                        <td class="status-warning">5 users min</td>
+                        <td class="status-no">10 users min</td>
+                        <td class="status-warning">5 users min</td>
+                    </tr>
+                    <tr>
+                        <td>Dedicated Server/Gateway</td>
+                        <td class="highlight status-yes">✓ Included</td>
+                        <td class="status-warning">+$39/mo add-on</td>
+                        <td class="status-warning">+$40/mo add-on</td>
+                        <td class="status-warning">Extra cost</td>
                         <td class="status-no">Not available</td>
-                        <td class="status-no">Not available</td>
-                        <td class="price-cell">$5.39/mo<small>(Complete plan)</small></td>
-                        <td class="price-cell">$2.49/mo<small>(One plan)</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>REAL Cost (1 User)</strong></td>
+                        <td class="highlight price-cell" style="font-size: 1.3rem;">$39.97/mo <span class="winner-badge">BEST</span></td>
+                        <td class="price-cell expensive">$74/mo</td>
+                        <td class="price-cell expensive">$95/mo</td>
+                        <td class="price-cell expensive">$80+/mo</td>
+                        <td class="price-cell">$50/mo*</td>
                     </tr>
                     
-                    <!-- Port Forwarding -->
                     <tr class="category-row">
-                        <td colspan="7">⚡ Port Forwarding (Gamers & Remote Access)</td>
+                        <td colspan="6">🖥️ What "Dedicated" Actually Means</td>
+                    </tr>
+                    <tr>
+                        <td>Server Type</td>
+                        <td class="highlight status-yes">Full dedicated VPS</td>
+                        <td>Shared gateway + static IP</td>
+                        <td>Dedicated IP on shared</td>
+                        <td>Cloud gateway</td>
+                        <td>Connector-based</td>
+                    </tr>
+                    <tr>
+                        <td>Your Own Server</td>
+                        <td class="highlight status-yes">✓ Yes</td>
+                        <td class="status-warning">Add-on only</td>
+                        <td class="status-no">No (just IP)</td>
+                        <td class="status-warning">Varies by plan</td>
+                        <td class="status-no">No</td>
+                    </tr>
+                    <tr>
+                        <td>Static IP Included</td>
+                        <td class="highlight status-yes">✓ Yes</td>
+                        <td class="status-yes">✓ Yes</td>
+                        <td class="status-warning">+$40/mo</td>
+                        <td class="status-yes">✓ Yes</td>
+                        <td class="status-no">No</td>
+                    </tr>
+
+                    <tr class="category-row">
+                        <td colspan="6">🌟 Features Competitors DON'T Have</td>
                     </tr>
                     <tr>
                         <td>Port Forwarding</td>
-                        <td class="highlight status-yes">✓ Included</td>
-                        <td class="status-yes">✓ Included</td>
-                        <td class="status-addon">+$0.99/mo add-on</td>
-                        <td class="status-yes">✓ Included</td>
-                        <td class="status-no">✗ Not available</td>
-                        <td class="status-no">✗ Not available</td>
-                    </tr>
-                    <tr>
-                        <td>Setup Difficulty</td>
                         <td class="highlight status-yes">✓ 2-click setup</td>
-                        <td class="status-partial">Dashboard config</td>
-                        <td class="status-partial">Manual in app</td>
-                        <td class="status-partial">App settings</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
-                    </tr>
-                    <tr>
-                        <td>Port Selection</td>
-                        <td class="highlight status-yes">✓ Choose your ports</td>
-                        <td class="status-yes">✓ Configurable</td>
-                        <td class="status-yes">✓ Up to 15 ports</td>
-                        <td class="status-partial">Random port assigned</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
-                    </tr>
-                    
-                    <!-- Unique Features -->
-                    <tr class="category-row">
-                        <td colspan="7">🌟 Unique Features</td>
+                        <td class="status-yes">✓ Available</td>
+                        <td class="status-no">✗ No</td>
+                        <td class="status-no">✗ No</td>
+                        <td class="status-no">✗ No</td>
                     </tr>
                     <tr>
                         <td>Parental Controls</td>
@@ -593,12 +618,10 @@
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
-                        <td class="status-no">✗ No</td>
                     </tr>
                     <tr>
                         <td>Camera Dashboard</td>
-                        <td class="highlight status-yes">✓ View cameras remotely</td>
-                        <td class="status-no">✗ No</td>
+                        <td class="highlight status-yes">✓ Included</td>
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
@@ -606,400 +629,220 @@
                     </tr>
                     <tr>
                         <td>Network Scanner</td>
-                        <td class="highlight status-yes">✓ Auto-discover devices</td>
-                        <td class="status-no">✗ No</td>
+                        <td class="highlight status-yes">✓ Included</td>
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
                         <td class="status-no">✗ No</td>
                     </tr>
-                    
-                    <!-- Standard Features -->
+
                     <tr class="category-row">
-                        <td colspan="7">🔐 Standard VPN Features</td>
+                        <td colspan="6">🎯 Target Market</td>
                     </tr>
                     <tr>
-                        <td>Encryption</td>
-                        <td class="highlight status-yes">AES-256 (WireGuard)</td>
-                        <td class="status-yes">AES-256</td>
-                        <td class="status-yes">AES-256</td>
-                        <td class="status-yes">AES-256</td>
-                        <td class="status-yes">AES-256</td>
-                        <td class="status-yes">AES-256</td>
-                    </tr>
-                    <tr>
-                        <td>Kill Switch</td>
-                        <td class="highlight status-yes">✓</td>
-                        <td class="status-yes">✓</td>
-                        <td class="status-yes">✓</td>
-                        <td class="status-yes">✓</td>
-                        <td class="status-yes">✓</td>
-                        <td class="status-yes">✓</td>
-                    </tr>
-                    <tr>
-                        <td>No-Logs Policy</td>
-                        <td class="highlight status-yes">✓</td>
-                        <td class="status-yes">✓</td>
-                        <td class="status-yes">✓ Audited</td>
-                        <td class="status-yes">✓ Proven in court</td>
-                        <td class="status-yes">✓ Audited</td>
-                        <td class="status-yes">✓ Audited</td>
-                    </tr>
-                    
-                    <!-- Infrastructure -->
-                    <tr class="category-row">
-                        <td colspan="7">🌍 Infrastructure</td>
-                    </tr>
-                    <tr>
-                        <td>Server Locations</td>
-                        <td class="highlight">4 regions<small>(US East, US Central, Texas, Canada)</small></td>
-                        <td>35+ locations</td>
-                        <td>6,000+ servers<small>65+ countries</small></td>
-                        <td>35,000+ servers<small>91 countries</small></td>
-                        <td>7,000+ servers<small>118 countries</small></td>
-                        <td>3,200+ servers<small>100 countries</small></td>
-                    </tr>
-                    <tr>
-                        <td>Simultaneous Devices</td>
-                        <td class="highlight">5 (Personal)<br>Unlimited (Family)</td>
-                        <td>Per user license</td>
-                        <td>10 devices</td>
-                        <td class="status-yes">Unlimited</td>
-                        <td>10 devices</td>
-                        <td class="status-yes">Unlimited</td>
-                    </tr>
-                    
-                    <!-- Best For -->
-                    <tr class="category-row">
-                        <td colspan="7">👥 Best For</td>
-                    </tr>
-                    <tr>
-                        <td>Primary Use Case</td>
-                        <td class="highlight">Families, Gamers,<br>IP Camera users</td>
-                        <td>Business teams<br>(5+ users)</td>
-                        <td>Budget users,<br>Torrenting</td>
-                        <td>Privacy enthusiasts,<br>P2P heavy users</td>
-                        <td>Streaming,<br>General privacy</td>
-                        <td>Budget users,<br>Large households</td>
+                        <td>Best For</td>
+                        <td class="highlight">Individuals, Families,<br>Gamers, Camera Users</td>
+                        <td>SMB Teams<br>(5+ employees)</td>
+                        <td>Remote Teams<br>(5+ employees)</td>
+                        <td>Enterprises<br>(10+ employees)</td>
+                        <td>Dev Teams<br>(5+ employees)</td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <p style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.85rem;">
+            *Twingate Business doesn't include dedicated servers - only access management. Prices as of January 2026.
+        </p>
     </div>
 </section>
 
-<!-- Honest Assessment -->
-<section class="honest-section">
+<section class="real-cost-section">
     <div class="container">
-        <h2 class="section-title">Honest Assessment: TrueVault</h2>
-        <p class="section-subtitle">We believe in transparency. Here's where we shine and where others might be better.</p>
+        <h2 class="section-title">The Real Monthly Cost</h2>
+        <p class="section-subtitle">What you'll actually pay for dedicated VPN resources (not the advertised "per user" fiction)</p>
         
-        <div class="honest-grid">
-            <div class="honest-card pros">
-                <h3>✅ Where TrueVault Excels</h3>
-                <ul>
-                    <li><span>🎮</span> <strong>Easiest port forwarding setup</strong> - 2 clicks, no router config needed. Competitors require app settings or add-ons.</li>
-                    <li><span>👨‍👩‍👧‍👦</span> <strong>Only VPN with parental controls</strong> - Block content, set schedules. No competitor offers this built-in.</li>
-                    <li><span>📹</span> <strong>Camera dashboard included</strong> - View Geeni, Wyze, Hikvision cameras remotely without paying cloud fees.</li>
-                    <li><span>🔍</span> <strong>Network scanner</strong> - Automatically finds devices for port forwarding. No other VPN does this.</li>
-                    <li><span>🇺🇸🇨🇦</span> <strong>North American focused</strong> - If you primarily need US/Canada access, our servers are optimized for it.</li>
-                </ul>
+        <div class="cost-grid">
+            <div class="cost-card featured">
+                <div class="provider">🛡️ TrueVault</div>
+                <div class="plan">Dedicated Server Plan</div>
+                <div class="per-user">Flat rate pricing</div>
+                <div class="minimum">✓ No minimum users</div>
+                <div class="real-price good">$39.97</div>
+                <div class="period">per month</div>
+                <div class="savings positive">Includes actual dedicated VPS server</div>
             </div>
             
-            <div class="honest-card cons">
-                <h3>⚠️ Where Others May Be Better</h3>
-                <ul>
-                    <li><span>🌍</span> <strong>Limited server locations</strong> - We have 4 regions vs PIA's 91 countries. If you need global coverage, choose PIA or NordVPN.</li>
-                    <li><span>💰</span> <strong>Higher base price</strong> - At $9.97/mo, we cost more than Surfshark ($1.99) or PIA ($2.03). Our price includes unique features they don't have.</li>
-                    <li><span>📊</span> <strong>No third-party audit yet</strong> - PIA has proven no-logs in court. NordVPN and Surfshark have audits. We're new.</li>
-                    <li><span>📺</span> <strong>Streaming optimization</strong> - If Netflix unblocking across 15+ countries is your priority, NordVPN or ExpressVPN are better tested.</li>
-                    <li><span>🔄</span> <strong>Shared servers on basic plans</strong> - Our Personal plan uses shared infrastructure. For dedicated resources, choose our Dedicated plan ($39.97/mo).</li>
-                </ul>
+            <div class="cost-card">
+                <div class="provider">🏢 GoodAccess</div>
+                <div class="plan">Essential + Gateway</div>
+                <div class="per-user">$7/user + $39 gateway</div>
+                <div class="minimum">⚠️ Minimum 5 users</div>
+                <div class="real-price bad">$74.00</div>
+                <div class="period">per month minimum</div>
+                <div class="savings negative">85% more than TrueVault</div>
+            </div>
+            
+            <div class="cost-card">
+                <div class="provider">🔷 NordLayer</div>
+                <div class="plan">Core + Fixed IP</div>
+                <div class="per-user">$11/user + $40 IP</div>
+                <div class="minimum">⚠️ Minimum 5 users</div>
+                <div class="real-price bad">$95.00</div>
+                <div class="period">per month minimum</div>
+                <div class="savings negative">138% more than TrueVault</div>
+            </div>
+            
+            <div class="cost-card">
+                <div class="provider">🔶 Perimeter 81</div>
+                <div class="plan">Essentials</div>
+                <div class="per-user">$8/user/month</div>
+                <div class="minimum">⚠️ Minimum 10 users</div>
+                <div class="real-price bad">$80.00</div>
+                <div class="period">per month minimum</div>
+                <div class="savings negative">100% more than TrueVault</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Unique Features We Actually Have -->
 <section class="unique-section">
     <div class="container">
         <h2 class="section-title">Features Only TrueVault Offers</h2>
-        <p class="section-subtitle">We verified these against all major competitors - none of them have these.</p>
+        <p class="section-subtitle">Business VPNs focus on team management. We focus on what you actually need.</p>
         
         <div class="unique-grid">
             <div class="unique-card">
+                <div class="icon">🎮</div>
+                <h3>2-Click Port Forwarding</h3>
+                <p>Open ports for gaming, Plex, Minecraft servers instantly. No router configuration needed.</p>
+                <div class="competitor-note">❌ NordLayer, Perimeter 81, Twingate: Not available</div>
+            </div>
+            
+            <div class="unique-card">
                 <div class="icon">👨‍👩‍👧‍👦</div>
                 <h3>Built-in Parental Controls</h3>
-                <p>Block inappropriate content, set time limits, and monitor activity. Protect your kids without buying separate software like Bark or Qustodio ($99/year).</p>
-                <div class="competitor-status">❌ GoodAccess, PureVPN, PIA, NordVPN, Surfshark - None offer this</div>
+                <p>Block content, set schedules, monitor activity. No extra software needed.</p>
+                <div class="competitor-note">❌ No business VPN offers parental controls</div>
             </div>
             
             <div class="unique-card">
                 <div class="icon">📹</div>
                 <h3>Camera Dashboard</h3>
-                <p>View your IP cameras from anywhere without cloud subscriptions. Works with Geeni, Wyze, Hikvision, Reolink, and more. Stop paying Ring $10/month.</p>
-                <div class="competitor-status">❌ No VPN competitor offers camera integration</div>
+                <p>View Geeni, Wyze, Hikvision cameras remotely without cloud subscription fees.</p>
+                <div class="competitor-note">❌ No competitor offers camera integration</div>
             </div>
             
             <div class="unique-card">
                 <div class="icon">🔍</div>
-                <h3>Network Device Scanner</h3>
-                <p>Automatically discovers all devices on your home network. One-click to set up port forwarding - no logging into your router.</p>
-                <div class="competitor-status">❌ No competitor offers network discovery tools</div>
-            </div>
-            
-            <div class="unique-card">
-                <div class="icon">🎮</div>
-                <h3>2-Click Port Forwarding</h3>
-                <p>Open ports for gaming, Plex, Minecraft servers in seconds. Select your port, click save. No router configuration needed.</p>
-                <div class="competitor-status">⚠️ PIA: Random ports only. PureVPN: +$0.99/mo. NordVPN/Surfshark: Not available</div>
+                <h3>Network Scanner</h3>
+                <p>Auto-discover devices on your network for easy port forwarding setup.</p>
+                <div class="competitor-note">❌ No competitor offers network discovery</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Detailed Competitor Breakdown -->
-<section class="detailed-section">
-    <div class="container">
-        <h2 class="section-title">Detailed Competitor Breakdown</h2>
-        <p class="section-subtitle">Honest pros and cons for each provider based on January 2026 research.</p>
-        
-        <div class="competitor-grid">
-            <!-- TrueVault -->
-            <div class="competitor-card truevault">
-                <div class="competitor-header">
-                    <div class="competitor-icon" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">🛡️</div>
-                    <div class="competitor-info">
-                        <h3>TrueVault VPN</h3>
-                        <span class="tagline">Family & Gamer Focused</span>
-                    </div>
-                </div>
-                <div class="competitor-price">
-                    <span class="amount">$9.97</span>
-                    <span class="period">/month</span>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="icon-yes">✓</span> Port forwarding with 2-click setup</li>
-                    <li><span class="icon-yes">✓</span> Parental controls built-in</li>
-                    <li><span class="icon-yes">✓</span> Camera dashboard (no cloud fees)</li>
-                    <li><span class="icon-yes">✓</span> Network scanner included</li>
-                    <li><span class="icon-yes">✓</span> Family plan available ($14.97)</li>
-                    <li><span class="icon-partial">⚠️</span> Only 4 server regions</li>
-                    <li><span class="icon-partial">⚠️</span> New provider (less track record)</li>
-                    <li><span class="icon-partial">⚠️</span> Higher price than budget VPNs</li>
-                </ul>
-            </div>
-            
-            <!-- GoodAccess -->
-            <div class="competitor-card">
-                <div class="competitor-header">
-                    <div class="competitor-icon">🏢</div>
-                    <div class="competitor-info">
-                        <h3>GoodAccess</h3>
-                        <span class="tagline">Business Zero-Trust VPN</span>
-                    </div>
-                </div>
-                <div class="competitor-price">
-                    <span class="amount">$7</span>
-                    <span class="period">/user/month</span>
-                    <span class="note">Min 5 users = $35/mo</span>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="icon-yes">✓</span> Port forwarding included</li>
-                    <li><span class="icon-yes">✓</span> Static IP addresses</li>
-                    <li><span class="icon-yes">✓</span> Zero-trust architecture</li>
-                    <li><span class="icon-yes">✓</span> 35+ gateway locations</li>
-                    <li><span class="icon-yes">✓</span> Team management dashboard</li>
-                    <li><span class="icon-no">✗</span> Not for individuals (5 user minimum)</li>
-                    <li><span class="icon-no">✗</span> No parental controls</li>
-                    <li><span class="icon-no">✗</span> No consumer features</li>
-                </ul>
-            </div>
-            
-            <!-- PureVPN -->
-            <div class="competitor-card">
-                <div class="competitor-header">
-                    <div class="competitor-icon">🔒</div>
-                    <div class="competitor-info">
-                        <h3>PureVPN</h3>
-                        <span class="tagline">Budget VPN with Add-ons</span>
-                    </div>
-                </div>
-                <div class="competitor-price">
-                    <span class="amount">$1.99</span>
-                    <span class="period">/month</span>
-                    <span class="note">Port forwarding +$0.99</span>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="icon-yes">✓</span> Very affordable base price</li>
-                    <li><span class="icon-yes">✓</span> 6,000+ servers worldwide</li>
-                    <li><span class="icon-yes">✓</span> Up to 15 ports with add-on</li>
-                    <li><span class="icon-yes">✓</span> Always-on KPMG audit</li>
-                    <li><span class="icon-partial">⚠️</span> Port forwarding costs extra</li>
-                    <li><span class="icon-partial">⚠️</span> Speed can be inconsistent</li>
-                    <li><span class="icon-no">✗</span> No parental controls</li>
-                    <li><span class="icon-no">✗</span> No unique features</li>
-                </ul>
-            </div>
-            
-            <!-- PIA -->
-            <div class="competitor-card">
-                <div class="competitor-header">
-                    <div class="competitor-icon">🔐</div>
-                    <div class="competitor-info">
-                        <h3>Private Internet Access</h3>
-                        <span class="tagline">Privacy-First, Great Value</span>
-                    </div>
-                </div>
-                <div class="competitor-price">
-                    <span class="amount">$2.03</span>
-                    <span class="period">/month</span>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="icon-yes">✓</span> Port forwarding included free</li>
-                    <li><span class="icon-yes">✓</span> 35,000+ servers (largest network)</li>
-                    <li><span class="icon-yes">✓</span> Unlimited simultaneous devices</li>
-                    <li><span class="icon-yes">✓</span> No-logs proven in court</li>
-                    <li><span class="icon-yes">✓</span> Open-source apps</li>
-                    <li><span class="icon-partial">⚠️</span> Random port assignment only</li>
-                    <li><span class="icon-no">✗</span> No parental controls</li>
-                    <li><span class="icon-no">✗</span> US jurisdiction (Five Eyes)</li>
-                </ul>
-            </div>
-            
-            <!-- NordVPN -->
-            <div class="competitor-card">
-                <div class="competitor-header">
-                    <div class="competitor-icon">🌐</div>
-                    <div class="competitor-info">
-                        <h3>NordVPN</h3>
-                        <span class="tagline">Most Popular Consumer VPN</span>
-                    </div>
-                </div>
-                <div class="competitor-price">
-                    <span class="amount">$3.39</span>
-                    <span class="period">/month</span>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="icon-yes">✓</span> 7,000+ servers in 118 countries</li>
-                    <li><span class="icon-yes">✓</span> Excellent streaming support</li>
-                    <li><span class="icon-yes">✓</span> Threat Protection Pro</li>
-                    <li><span class="icon-yes">✓</span> Double VPN option</li>
-                    <li><span class="icon-yes">✓</span> Independently audited</li>
-                    <li><span class="icon-no">✗</span> NO port forwarding at all</li>
-                    <li><span class="icon-no">✗</span> No parental controls</li>
-                    <li><span class="icon-partial">⚠️</span> 10 device limit</li>
-                </ul>
-            </div>
-            
-            <!-- Surfshark -->
-            <div class="competitor-card">
-                <div class="competitor-header">
-                    <div class="competitor-icon">🦈</div>
-                    <div class="competitor-info">
-                        <h3>Surfshark</h3>
-                        <span class="tagline">Budget King, Unlimited Devices</span>
-                    </div>
-                </div>
-                <div class="competitor-price">
-                    <span class="amount">$1.99</span>
-                    <span class="period">/month</span>
-                </div>
-                <ul class="feature-list">
-                    <li><span class="icon-yes">✓</span> Cheapest premium VPN</li>
-                    <li><span class="icon-yes">✓</span> Unlimited simultaneous devices</li>
-                    <li><span class="icon-yes">✓</span> 3,200+ servers in 100 countries</li>
-                    <li><span class="icon-yes">✓</span> GPS spoofing (Android)</li>
-                    <li><span class="icon-yes">✓</span> CleanWeb ad blocker</li>
-                    <li><span class="icon-no">✗</span> NO port forwarding at all</li>
-                    <li><span class="icon-no">✗</span> No parental controls</li>
-                    <li><span class="icon-partial">⚠️</span> Owned by NordVPN parent</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Who Should Choose What -->
 <section class="who-section">
     <div class="container">
         <h2 class="section-title">Who Should Choose What?</h2>
-        <p class="section-subtitle">Our honest recommendations based on your specific needs.</p>
+        <p class="section-subtitle">Honest recommendations based on your actual situation.</p>
         
         <div class="who-grid">
             <div class="who-card">
-                <h3>👨‍👩‍👧‍👦 Families with Kids</h3>
-                <div class="recommendation">→ Choose TrueVault</div>
-                <p>We're the only VPN with built-in parental controls. You'd pay $99/year extra for Bark or Qustodio with any other VPN.</p>
+                <h3>👤 Individuals Wanting Dedicated Resources</h3>
+                <div class="recommendation">→ Choose TrueVault Dedicated</div>
+                <p>At $39.97/mo with no minimum users, you get an actual dedicated server. GoodAccess would cost $74+, NordLayer $95+.</p>
             </div>
             
             <div class="who-card">
                 <h3>🎮 Gamers & Server Hosts</h3>
-                <div class="recommendation">→ Choose TrueVault or PIA</div>
-                <p>TrueVault: 2-click setup, choose your ports. PIA: Free port forwarding but random ports only. NordVPN/Surfshark: No port forwarding.</p>
+                <div class="recommendation">→ Choose TrueVault</div>
+                <p>We have port forwarding. NordLayer, Perimeter 81, and Twingate don't offer it at all.</p>
+            </div>
+            
+            <div class="who-card">
+                <h3>👨‍👩‍👧‍👦 Families Wanting Premium Protection</h3>
+                <div class="recommendation">→ Choose TrueVault</div>
+                <p>Only VPN with parental controls. Business VPNs are designed for corporate teams, not families.</p>
             </div>
             
             <div class="who-card">
                 <h3>📹 IP Camera Users</h3>
                 <div class="recommendation">→ Choose TrueVault</div>
-                <p>Only VPN with a camera dashboard. View cameras remotely without paying Ring/Nest cloud fees.</p>
+                <p>Our camera dashboard lets you view cameras remotely. No business VPN offers this.</p>
             </div>
             
             <div class="who-card">
-                <h3>💰 Tight Budget</h3>
-                <div class="recommendation">→ Choose Surfshark or PIA</div>
-                <p>At $1.99-2.03/month, they're the cheapest. Surfshark adds unlimited devices. We can't compete on price alone.</p>
+                <h3>🏢 Actual Business Teams (10+ people)</h3>
+                <div class="recommendation">→ Consider GoodAccess or NordLayer</div>
+                <p>If you have 10+ employees, their per-user pricing becomes more cost-effective, and you'll use their team management features.</p>
             </div>
             
             <div class="who-card">
-                <h3>🌍 Global Travelers</h3>
-                <div class="recommendation">→ Choose NordVPN or PIA</div>
-                <p>We only have 4 regions (US/Canada). NordVPN has 118 countries, PIA has 91. Better for worldwide access.</p>
-            </div>
-            
-            <div class="who-card">
-                <h3>📺 Streaming Enthusiasts</h3>
-                <div class="recommendation">→ Choose NordVPN or ExpressVPN</div>
-                <p>They're optimized for Netflix, Hulu, BBC iPlayer across dozens of regions. We focus on US/Canada streaming.</p>
-            </div>
-            
-            <div class="who-card">
-                <h3>🏢 Business Teams (5+)</h3>
-                <div class="recommendation">→ Choose GoodAccess</div>
-                <p>Built for business with zero-trust, team management, and static IPs. We're consumer-focused.</p>
-            </div>
-            
-            <div class="who-card">
-                <h3>🔒 Maximum Privacy</h3>
-                <div class="recommendation">→ Choose PIA or Mullvad</div>
-                <p>PIA proved no-logs in court. They have the longest track record. We're new and haven't been audited yet.</p>
+                <h3>🔒 Zero-Trust Enterprise Security</h3>
+                <div class="recommendation">→ Consider Perimeter 81 or Twingate</div>
+                <p>For enterprise compliance (HIPAA, SOC2), these services offer identity management and audit logs we don't focus on.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- CTA -->
-<section class="cta-section">
+<section class="honest-section">
     <div class="container">
-        <h2>Ready to Try TrueVault?</h2>
-        <p>If you're a family with kids, a gamer needing easy port forwarding, or an IP camera user tired of cloud fees - we built TrueVault for you.</p>
-        <a href="pricing.html" class="btn-primary">View Plans & Pricing</a>
+        <h2 class="section-title">Honest Assessment</h2>
+        <p class="section-subtitle">Where we excel and where business VPNs might be better.</p>
+        
+        <div class="honest-grid">
+            <div class="honest-card pros">
+                <h3>✅ TrueVault Advantages</h3>
+                <ul>
+                    <li><span>💰</span> <strong>No minimum users</strong> - Pay only for what you need</li>
+                    <li><span>🖥️</span> <strong>Actual dedicated server</strong> - Not just a dedicated IP on shared infrastructure</li>
+                    <li><span>🎮</span> <strong>Port forwarding included</strong> - Most business VPNs don't offer this</li>
+                    <li><span>👨‍👩‍👧‍👦</span> <strong>Consumer features</strong> - Parental controls, camera dashboard, network scanner</li>
+                    <li><span>⚡</span> <strong>Simple setup</strong> - No IT team required</li>
+                </ul>
+            </div>
+            
+            <div class="honest-card cons">
+                <h3>⚠️ When Business VPNs Are Better</h3>
+                <ul>
+                    <li><span>🏢</span> <strong>Large teams (10+)</strong> - Per-user pricing becomes cheaper at scale</li>
+                    <li><span>📋</span> <strong>Compliance needs</strong> - SOC2, HIPAA, GDPR audit logs</li>
+                    <li><span>🔐</span> <strong>SSO/Identity management</strong> - Okta, Azure AD integration</li>
+                    <li><span>🌍</span> <strong>Global server network</strong> - We have 4 regions vs their 35+</li>
+                    <li><span>📊</span> <strong>Team management</strong> - Role-based access, user provisioning</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </section>
 
-<!-- Sources -->
+<section class="cta-section">
+    <div class="container">
+        <h2>Ready for Dedicated VPN Without Minimum Users?</h2>
+        <p>Get your own dedicated server at $39.97/month. No forced 5-user minimums. No add-on fees for basic features.</p>
+        <a href="pricing.html" class="btn-primary">View All Plans</a>
+        <div class="cta-features">
+            <span>✓ Dedicated server included</span>
+            <span>✓ Port forwarding included</span>
+            <span>✓ Parental controls included</span>
+            <span>✓ Camera dashboard included</span>
+        </div>
+    </div>
+</section>
+
 <section class="sources">
     <div class="container">
-        <h4>📚 Research Sources (January 2026)</h4>
+        <h4>📚 Pricing Sources (January 2026)</h4>
         <p>
-            Pricing and features verified from official websites and trusted review sites:
-            GoodAccess (goodaccess.com, G2, Capterra) • 
-            PureVPN (purevpn.com, Security.org) • 
-            Private Internet Access (privateinternetaccess.com, Gizmodo, CyberInsider) • 
-            NordVPN (nordvpn.com, Security.org, CyberNews) • 
-            Surfshark (surfshark.com, VPNOverview, AllAboutCookies) •
-            Additional research from TechRadar, Tom's Guide, and VPNPro.
-            All prices reflect 2-year plan rates as of January 2026. Prices may vary by region and promotion.
+            All pricing verified from official websites and third-party review sites:
+            GoodAccess (goodaccess.com, G2, TechRadar) • 
+            NordLayer (nordlayer.com, CyberNews, Tom's Guide) • 
+            Perimeter 81/Check Point Harmony SASE (checkpoint.com, Comparitech) •
+            Twingate (twingate.com, SaaSWorthy) •
+            Additional research from TechRadar, Tom's Guide, VPNMentor, and Comparitech.
+            All prices reflect annual billing rates. GoodAccess additional gateway is $39/mo. NordLayer fixed IP add-on is $40/mo.
         </p>
     </div>
 </section>
