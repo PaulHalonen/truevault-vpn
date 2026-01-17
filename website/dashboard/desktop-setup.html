@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Setup Guide - TrueVault VPN</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <style>
+        .setup-page { padding: 100px 20px 60px; min-height: 100vh; }
+        .setup-container { max-width: 800px; margin: 0 auto; }
+        .setup-header { text-align: center; margin-bottom: 50px; }
+        .setup-header h1 { font-size: 2.2rem; margin-bottom: 15px; }
+        .step-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 30px; margin-bottom: 25px; }
+        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--gradient); border-radius: 50%; font-weight: 700; color: var(--bg-dark); margin-bottom: 15px; }
+        .step-card h3 { font-size: 1.2rem; margin-bottom: 12px; }
+        .step-card p, .step-card li { color: var(--text-secondary); line-height: 1.7; }
+        .download-box { background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 12px; padding: 25px; text-align: center; margin: 20px 0; }
+        .download-box .btn { margin: 8px; }
+        .success-box { background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .success-box h4 { color: var(--secondary); margin-bottom: 10px; }
+        .os-tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .os-tab { padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-size: 16px; }
+        .os-tab.active { background: var(--primary); color: var(--bg-dark); border-color: var(--primary); }
+        .os-content { display: none; }
+        .os-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <nav class="navbar scrolled">
+        <div class="container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span class="logo-text">TrueVault<span class="accent">VPN</span></span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="setup-page">
+        <div class="setup-container">
+            <div class="setup-header">
+                <h1>💻 Desktop Setup Guide</h1>
+                <p>Get TrueVault VPN running on Windows or Mac</p>
+                
+                <div class="os-tabs">
+                    <button class="os-tab active" onclick="showOS('windows')">🪟 Windows</button>
+                    <button class="os-tab" onclick="showOS('mac')">🍎 Mac</button>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Download WireGuard</h3>
+                
+                <div id="os-windows" class="os-content active">
+                    <p>Download the official WireGuard app for Windows:</p>
+                    <div class="download-box">
+                        <a href="https://download.wireguard.com/windows-client/wireguard-installer.exe" class="btn btn-primary">
+                            📥 Download for Windows
+                        </a>
+                    </div>
+                    <p>Run the installer and follow the prompts. No configuration needed during install.</p>
+                </div>
+                
+                <div id="os-mac" class="os-content">
+                    <p>Download WireGuard from the Mac App Store:</p>
+                    <div class="download-box">
+                        <a href="https://apps.apple.com/us/app/wireguard/id1451685025" target="_blank" class="btn btn-primary">
+                            📥 Get on Mac App Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Get Your Configuration</h3>
+                <ol style="padding-left: 20px;">
+                    <li>Go to <a href="/dashboard/">your TrueVault dashboard</a></li>
+                    <li>Click <strong>"+ Add Device"</strong></li>
+                    <li>Name it (e.g., "My Laptop")</li>
+                    <li>Choose your server location</li>
+                    <li>Click <strong>"Download Config"</strong></li>
+                </ol>
+                <p style="margin-top: 15px;">Save the <code>.conf</code> file somewhere you can find it (Desktop or Downloads).</p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Import Configuration</h3>
+                
+                <div id="os-windows-import" class="os-content active">
+                    <ol style="padding-left: 20px;">
+                        <li>Open WireGuard from Start menu</li>
+                        <li>Click <strong>"Import tunnel(s) from file"</strong></li>
+                        <li>Select your downloaded <code>.conf</code> file</li>
+                        <li>The tunnel appears in your list</li>
+                    </ol>
+                </div>
+                
+                <div id="os-mac-import" class="os-content">
+                    <ol style="padding-left: 20px;">
+                        <li>Open WireGuard from Applications</li>
+                        <li>Click <strong>"Import tunnel(s) from file"</strong> or drag the file onto the window</li>
+                        <li>Allow the system extension when prompted</li>
+                        <li>The tunnel appears in your list</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <h3>Connect</h3>
+                <ol style="padding-left: 20px;">
+                    <li>Select your TrueVault tunnel</li>
+                    <li>Click <strong>"Activate"</strong></li>
+                    <li>Status changes to "Active" with green indicator</li>
+                </ol>
+                <div class="success-box">
+                    <h4>✅ You're Protected!</h4>
+                    <p>Visit <a href="https://whatismyipaddress.com" target="_blank">whatismyipaddress.com</a> to verify your new IP location.</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="/dashboard/" class="btn btn-primary btn-lg">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showOS(os) {
+            document.querySelectorAll('.os-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.os-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('os-' + os).classList.add('active');
+            document.getElementById('os-' + os + '-import').classList.add('active');
+        }
+    </script>
+</body>
+</html>

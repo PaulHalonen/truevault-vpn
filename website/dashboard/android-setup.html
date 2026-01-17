@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Setup Guide - TrueVault VPN</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <style>
+        .setup-page { padding: 100px 20px 60px; min-height: 100vh; }
+        .setup-container { max-width: 800px; margin: 0 auto; }
+        .setup-header { text-align: center; margin-bottom: 50px; }
+        .setup-header h1 { font-size: 2.2rem; margin-bottom: 15px; }
+        .setup-header p { color: var(--text-secondary); }
+        
+        .step-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 30px; margin-bottom: 25px; }
+        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--gradient); border-radius: 50%; font-weight: 700; color: var(--bg-dark); margin-bottom: 15px; }
+        .step-card h3 { font-size: 1.2rem; margin-bottom: 12px; }
+        .step-card p { color: var(--text-secondary); line-height: 1.7; }
+        .step-card ul { margin: 15px 0; padding-left: 20px; }
+        .step-card li { color: var(--text-secondary); margin-bottom: 8px; }
+        
+        .download-box { background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 12px; padding: 25px; text-align: center; margin: 20px 0; }
+        .download-box .btn { margin: 10px 5px; }
+        
+        .warning-box { background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .warning-box h4 { color: #ffc107; margin-bottom: 10px; }
+        
+        .success-box { background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .success-box h4 { color: var(--secondary); margin-bottom: 10px; }
+        
+        .code-block { background: #1a1a2e; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 14px; overflow-x: auto; margin: 15px 0; }
+        
+        .img-placeholder { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 40px; text-align: center; color: var(--text-muted); margin: 20px 0; }
+        
+        .method-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .method-tab { padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-secondary); }
+        .method-tab.active { background: var(--primary); color: var(--bg-dark); border-color: var(--primary); }
+        
+        .method-content { display: none; }
+        .method-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <nav class="navbar scrolled">
+        <div class="container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span class="logo-text">TrueVault<span class="accent">VPN</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="/dashboard/">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="setup-page">
+        <div class="setup-container">
+            <div class="setup-header">
+                <h1>📱 Android Setup Guide</h1>
+                <p>Get TrueVault VPN running on your Android device in minutes</p>
+            </div>
+
+            <!-- Method Selection -->
+            <div class="step-card">
+                <h3>Choose Your Setup Method</h3>
+                <div class="method-tabs">
+                    <button class="method-tab active" onclick="showMethod('qr')">📷 QR Code (Easiest)</button>
+                    <button class="method-tab" onclick="showMethod('file')">📁 Config File</button>
+                </div>
+                
+                <!-- QR Code Method -->
+                <div id="method-qr" class="method-content active">
+                    <p>Scan the QR code directly from your computer screen using your phone's camera.</p>
+                    <div class="success-box">
+                        <h4>✅ Recommended Method</h4>
+                        <p>This is the fastest way - no file downloads needed!</p>
+                    </div>
+                </div>
+                
+                <!-- File Method -->
+                <div id="method-file" class="method-content">
+                    <p>Download the config file and import it into WireGuard app.</p>
+                    <div class="warning-box">
+                        <h4>⚠️ Important: File Extension Fix</h4>
+                        <p>Android sometimes saves the file as <code>.conf.txt</code> instead of <code>.conf</code>. See Step 4 below if WireGuard can't find your file.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: Install WireGuard -->
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Install WireGuard App</h3>
+                <p>Download the official WireGuard app from Google Play Store:</p>
+                <div class="download-box">
+                    <a href="https://play.google.com/store/apps/details?id=com.wireguard.android" target="_blank" class="btn btn-primary">
+                        📥 Get WireGuard on Google Play
+                    </a>
+                </div>
+                <p>The app is free, open-source, and trusted by millions.</p>
+            </div>
+
+            <!-- Step 2: Get Your Config -->
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Get Your VPN Configuration</h3>
+                <p>Go to your TrueVault dashboard and add a new device:</p>
+                <ol style="padding-left: 20px; color: var(--text-secondary);">
+                    <li>Open <a href="/dashboard/">your dashboard</a></li>
+                    <li>Click <strong>"+ Add Device"</strong></li>
+                    <li>Name it (e.g., "My Android Phone")</li>
+                    <li>Choose your preferred server location</li>
+                    <li>Click <strong>"Generate Config"</strong></li>
+                </ol>
+                <p style="margin-top: 15px;">You'll see a <strong>QR code</strong> and a <strong>Download</strong> button.</p>
+            </div>
+
+            <!-- Step 3: Import to WireGuard -->
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Import Configuration</h3>
+                
+                <div id="import-qr" class="method-content active">
+                    <h4 style="margin-bottom: 15px;">📷 Using QR Code:</h4>
+                    <ol style="padding-left: 20px; color: var(--text-secondary);">
+                        <li>Open WireGuard app on your phone</li>
+                        <li>Tap the <strong>blue + button</strong></li>
+                        <li>Select <strong>"Scan from QR code"</strong></li>
+                        <li>Point your camera at the QR code on your computer screen</li>
+                        <li>Name the tunnel (e.g., "TrueVault")</li>
+                        <li>Tap <strong>"Create Tunnel"</strong></li>
+                    </ol>
+                </div>
+                
+                <div id="import-file" class="method-content">
+                    <h4 style="margin-bottom: 15px;">📁 Using Config File:</h4>
+                    <ol style="padding-left: 20px; color: var(--text-secondary);">
+                        <li>Download the <code>.conf</code> file to your phone</li>
+                        <li>Open WireGuard app</li>
+                        <li>Tap the <strong>blue + button</strong></li>
+                        <li>Select <strong>"Import from file or archive"</strong></li>
+                        <li>Navigate to Downloads and select your file</li>
+                        <li>Tap <strong>"Create Tunnel"</strong></li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Step 4: File Extension Fix -->
+            <div class="step-card" id="file-fix">
+                <div class="step-number">4</div>
+                <h3>🔧 Fix: Can't Find Config File?</h3>
+                <p>If WireGuard shows "No files found" when importing, Android likely saved it with the wrong extension.</p>
+                
+                <div class="warning-box">
+                    <h4>The Problem</h4>
+                    <p>Android sometimes saves <code>truevault.conf</code> as <code>truevault.conf.txt</code></p>
+                </div>
+                
+                <h4 style="margin: 20px 0 15px;">Quick Fix Options:</h4>
+                
+                <div style="margin-bottom: 20px;">
+                    <strong>Option A: Use a File Manager</strong>
+                    <ol style="padding-left: 20px; color: var(--text-secondary); margin-top: 10px;">
+                        <li>Install <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.nbu.files" target="_blank">Files by Google</a> (free)</li>
+                        <li>Go to Downloads folder</li>
+                        <li>Find your config file</li>
+                        <li>Long-press → Rename</li>
+                        <li>Remove <code>.txt</code> from the end</li>
+                        <li>Try importing again in WireGuard</li>
+                    </ol>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <strong>Option B: Use QR Code Instead</strong>
+                    <p style="color: var(--text-secondary); margin-top: 10px;">Go back to your dashboard and scan the QR code - it's faster and avoids this issue entirely!</p>
+                </div>
+                
+                <div class="success-box">
+                    <h4>💡 Pro Tip</h4>
+                    <p>Always use the QR code method on Android - it's faster and never has file extension issues!</p>
+                </div>
+            </div>
+
+            <!-- Step 5: Connect -->
+            <div class="step-card">
+                <div class="step-number">5</div>
+                <h3>Connect & Verify</h3>
+                <ol style="padding-left: 20px; color: var(--text-secondary);">
+                    <li>In WireGuard, find your new tunnel</li>
+                    <li>Toggle the switch to <strong>ON</strong></li>
+                    <li>Accept the VPN permission if prompted</li>
+                    <li>You should see a 🔑 key icon in your status bar</li>
+                </ol>
+                
+                <div class="success-box">
+                    <h4>✅ Verify It's Working</h4>
+                    <p>Visit <a href="https://whatismyipaddress.com" target="_blank">whatismyipaddress.com</a> - your IP should show your VPN server location!</p>
+                </div>
+            </div>
+
+            <!-- Troubleshooting -->
+            <div class="step-card">
+                <h3>❓ Troubleshooting</h3>
+                <ul>
+                    <li><strong>Connection keeps dropping?</strong> Try switching to a different server in your dashboard.</li>
+                    <li><strong>Slow speeds?</strong> Choose a server closer to your location.</li>
+                    <li><strong>QR code not scanning?</strong> Increase screen brightness and hold phone steady.</li>
+                    <li><strong>Still stuck?</strong> <a href="/dashboard/support.php">Contact our support team</a></li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="/dashboard/" class="btn btn-primary btn-lg">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMethod(method) {
+            // Update tabs
+            document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.method-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('method-' + method).classList.add('active');
+            document.getElementById('import-' + method).classList.add('active');
+            
+            // Show/hide file fix section
+            document.getElementById('file-fix').style.display = method === 'file' ? 'block' : 'none';
+        }
+        
+        // Initially hide file fix section
+        document.getElementById('file-fix').style.display = 'none';
+    </script>
+</body>
+</html>

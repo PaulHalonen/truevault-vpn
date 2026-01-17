@@ -4,339 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - TrueVault VPN</title>
-    <style>
-        :root {
-            --primary: #00d9ff;
-            --secondary: #00ff88;
-            --bg: #0f0f1a;
-            --bg-secondary: #1a1a2e;
-            --text: #ffffff;
-            --text-muted: #888888;
-            --success: #00ff88;
-            --error: #ff6464;
-            --card-radius: 14px;
-            --btn-radius: 8px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--bg), var(--bg-secondary));
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        a { color: var(--primary); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-        }
-        
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo-icon { font-size: 3.5rem; margin-bottom: 10px; }
-        .logo h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .logo p { color: var(--text-muted); margin-top: 5px; }
-        
-        .card {
-            background: rgba(255,255,255,0.04);
-            border-radius: var(--card-radius);
-            padding: 30px;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; margin-bottom: 8px; color: var(--text); font-weight: 500; }
-        .form-input {
-            width: 100%; padding: 14px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: var(--btn-radius);
-            color: var(--text); font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: rgba(255,255,255,0.08);
-        }
-        .form-input::placeholder { color: var(--text-muted); }
-        
-        .btn {
-            width: 100%;
-            padding: 14px 20px;
-            border: none;
-            border-radius: var(--btn-radius);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-primary {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            color: var(--bg);
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,217,255,0.3);
-        }
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 25px 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255,255,255,0.1);
-        }
-        .divider span { padding: 0 15px; }
-        
-        .signup-link {
-            text-align: center;
-            color: var(--text-muted);
-        }
-        
-        .alert {
-            padding: 12px 15px;
-            border-radius: var(--btn-radius);
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        .alert-error { background: rgba(255,100,100,0.15); color: var(--error); }
-        .alert-success { background: rgba(0,255,136,0.15); color: var(--success); }
-        
-        .features {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            margin-top: 30px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-        .feature { display: flex; align-items: center; gap: 6px; }
-        
-        .forgot-link {
-            display: block;
-            text-align: right;
-            font-size: 0.9rem;
-            margin-top: 10px;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 25px;
-            border-radius: var(--btn-radius);
-            overflow: hidden;
-            background: rgba(255,255,255,0.05);
-        }
-        .tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-            color: var(--text-muted);
-            border: none;
-            background: transparent;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-        .tab.active {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            color: var(--bg);
-        }
-        .tab:hover:not(.active) { background: rgba(255,255,255,0.08); }
-        
-        .hidden { display: none !important; }
-    </style>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="login-container">
-        <div class="logo">
-            <div class="logo-icon">🔐</div>
-            <h1>TrueVault VPN</h1>
-            <p>Secure • Private • Fast</p>
-        </div>
-        
-        <div class="card">
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('login')">Login</button>
-                <button class="tab" onclick="showTab('register')">Sign Up</button>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">TrueVault<span class="accent">VPN</span></span>
+                </a>
+                <h1>Welcome Back</h1>
+                <p>Sign in to access your secure dashboard</p>
             </div>
             
-            <div id="alert-container"></div>
-            
-            <!-- Login Form -->
-            <form id="login-form" onsubmit="handleLogin(event)">
+            <form id="loginForm" class="auth-form">
                 <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email">
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+                    <label for="password">Password</label>
+                    <div class="password-field">
+                        <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+                        <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary" id="login-btn">
-                    🔓 Sign In
-                </button>
-                <a href="#" class="forgot-link">Forgot password?</a>
-            </form>
-            
-            <!-- Register Form -->
-            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
+                
+                <div class="form-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="/forgot-password.html" class="forgot-link">Forgot password?</a>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" placeholder="Min. 8 characters" required minlength="8">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Confirm Password</label>
-                    <input type="password" name="confirm_password" class="form-input" placeholder="••••••••" required minlength="8">
-                </div>
-                <button type="submit" class="btn btn-primary" id="register-btn">
-                    🚀 Create Account
+                
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loading" style="display: none;">Signing in...</span>
                 </button>
             </form>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register.html">Create one free</a></p>
+            </div>
         </div>
         
-        <div class="features">
-            <div class="feature">🔒 256-bit Encryption</div>
-            <div class="feature">🚫 Zero Logs</div>
-            <div class="feature">⚡ Fast Servers</div>
+        <div class="auth-info">
+            <div class="info-content">
+                <h2>Your Digital Fortress Awaits</h2>
+                <ul class="info-features">
+                    <li>🔐 256-bit Military-Grade Encryption</li>
+                    <li>🌐 4+ Global Server Locations</li>
+                    <li>⚡ Unlimited Bandwidth</li>
+                    <li>🛡️ Zero-Log Policy</li>
+                </ul>
+            </div>
         </div>
     </div>
-
+    
     <script>
-        const API = '/api';
-
-        // Check if already logged in
-        document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('auth_token');
-            if (token) {
-                // Verify token is still valid
-                fetch(`${API}/auth/verify.php`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }).then(res => res.json()).then(data => {
-                    if (data.success) {
-                        window.location.href = '/dashboard/';
-                    }
+        const API_BASE = '/api';
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const btnText = btn.querySelector('.btn-text');
+            const btnLoading = btn.querySelector('.btn-loading');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            // Show loading
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline';
+            errorDiv.style.display = 'none';
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, remember })
                 });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store token
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard/';
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed. Please check your credentials.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
             }
         });
-
-        function showTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`.tab:${tab === 'login' ? 'first' : 'last'}-child`).classList.add('active');
-            
-            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
-            document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
-            document.getElementById('alert-container').innerHTML = '';
+        
+        function togglePassword() {
+            const input = document.getElementById('password');
+            input.type = input.type === 'password' ? 'text' : 'password';
         }
-
-        function showAlert(message, type = 'error') {
-            document.getElementById('alert-container').innerHTML = 
-                `<div class="alert alert-${type}">${message}</div>`;
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const form = e.target;
-            const btn = document.getElementById('login-btn');
-            
-            btn.disabled = true;
-            btn.textContent = 'Signing in...';
-            
-            try {
-                const res = await fetch(`${API}/auth/login.php`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: form.email.value,
-                        password: form.password.value
-                    })
-                });
-                
-                const data = await res.json();
-                
-                if (data.success) {
-                    localStorage.setItem('auth_token', data.token);
-                    showAlert('Login successful! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = '/dashboard/', 1000);
-                } else {
-                    showAlert(data.error || 'Login failed');
-                    btn.disabled = false;
-                    btn.textContent = '🔓 Sign In';
-                }
-            } catch (err) {
-                showAlert('Connection error. Please try again.');
-                btn.disabled = false;
-                btn.textContent = '🔓 Sign In';
-            }
-        }
-
-        async function handleRegister(e) {
-            e.preventDefault();
-            const form = e.target;
-            const btn = document.getElementById('register-btn');
-            
-            if (form.password.value !== form.confirm_password.value) {
-                showAlert('Passwords do not match');
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.textContent = 'Creating account...';
-            
-            try {
-                const res = await fetch(`${API}/auth/register.php`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: form.email.value,
-                        password: form.password.value
-                    })
-                });
-                
-                const data = await res.json();
-                
-                if (data.success) {
-                    localStorage.setItem('auth_token', data.token);
-                    showAlert('Account created! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = '/dashboard/', 1000);
-                } else {
-                    showAlert(data.error || 'Registration failed');
-                    btn.disabled = false;
-                    btn.textContent = '🚀 Create Account';
-                }
-            } catch (err) {
-                showAlert('Connection error. Please try again.');
-                btn.disabled = false;
-                btn.textContent = '🚀 Create Account';
-            }
+        
+        // Check if already logged in
+        if (localStorage.getItem('auth_token')) {
+            window.location.href = '/dashboard/';
         }
     </script>
 </body>
