@@ -1,115 +1,2162 @@
 # SECTION 23: ENTERPRISE BUSINESS HUB
-## Reference Document
-**Status:** 📋 PLANNING  
-**Created:** January 17, 2026
+## Complete Technical Specification
+**Status:** 📋 IN DEVELOPMENT  
+**Created:** January 17, 2026  
+**Last Updated:** January 17, 2026
 
 ---
 
-## 📍 LOCATION
+## TABLE OF CONTENTS
 
-The Enterprise Business Hub documentation is located in the root folder for easier access:
-
-- **Blueprint:** `/ENTERPRISE_BLUEPRINT.md`
-- **Checklist:** `/ENTERPRISE_CHECKLIST.md`
+1. [Overview](#1-overview)
+2. [Architecture](#2-architecture)
+3. [Technology Stack](#3-technology-stack)
+4. [Database Schemas](#4-database-schemas)
+5. [Role & Permission System](#5-role--permission-system)
+6. [API Endpoints](#6-api-endpoints)
+7. [Authentication Flow](#7-authentication-flow)
+8. [WebSocket Events](#8-websocket-events)
+9. [Frontend Components](#9-frontend-components)
+10. [DataForge Builder](#10-dataforge-builder)
+11. [VPN Integration](#11-vpn-integration)
+12. [File Structure](#12-file-structure)
 
 ---
 
-## 🎯 QUICK OVERVIEW
+## 1. OVERVIEW
 
-The Enterprise Business Hub transforms TrueVault from a consumer VPN into a complete business platform competing with:
+### 1.1 What Is Enterprise Business Hub?
 
-| Competitor | Their Price | Our Price | Difference |
-|------------|-------------|-----------|------------|
-| GoodAccess | $74/mo (5 users) | $79.97/mo | We include DataForge |
+The Enterprise Business Hub transforms TrueVault from a consumer VPN into a complete business platform. It combines:
+
+- **Secure VPN Access** - WireGuard-based corporate VPN
+- **HR Management** - Employee records, time-off, reviews
+- **DataForge** - Custom database builder (FileMaker Pro alternative)
+- **Role-Based Access** - 7-tier permission system
+- **Real-Time Sync** - WebSocket-based live updates
+
+### 1.2 Target Market
+
+| Competitor | Their Price | Our Price | Advantage |
+|------------|-------------|-----------|-----------|
+| GoodAccess | $74/mo (5 users) | $79.97/mo | Includes DataForge |
 | NordLayer | $95/mo (5 users) | $79.97/mo | 16% cheaper + more features |
 | Perimeter 81 | $80/mo (10 min) | $79.97/mo | No minimums |
 | FileMaker Pro | $588/year | $0 (included) | FREE with VPN |
 
+### 1.3 Pricing
+
+- **Corporate Plan:** $79.97/month
+- **Includes:** 5 seats
+- **Additional Seats:** $8/month each
+- **Profit Margin:** 91.5% ($73.22 profit per company)
+
+### 1.4 Key Differentiators
+
+1. **Web-First PWA** - No desktop app installation required
+2. **Company Dedicated Server** - Each company gets their own VPS
+3. **2-Minute Onboarding** - Install WireGuard, scan QR, open dashboard
+4. **DataForge Included** - Custom database builder at no extra cost
+5. **Real-Time Everything** - WebSocket-based live updates
+
 ---
 
-## 🏗️ ARCHITECTURE SUMMARY
+## 2. ARCHITECTURE
+
+### 2.1 Deployment Model
 
 ```
-Desktop App (Electron)
-├── Embedded Web Server (localhost:8080)
-├── WireGuard VPN Client
-├── SQLite Databases (local storage)
-└── React Dashboard UI
+┌─────────────────────────────────────────────────────────────────┐
+│                    TRUEVAULT ENTERPRISE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐    WireGuard VPN    ┌────────────────────┐   │
+│  │              │◄──────────────────►│                    │   │
+│  │   Employee   │                     │  Company Server    │   │
+│  │   Browser    │    HTTPS/WSS        │  (Contabo VPS)     │   │
+│  │              │◄──────────────────►│                    │   │
+│  └──────────────┘                     │  - Node.js API     │   │
+│                                        │  - SQLite DBs      │   │
+│  ┌──────────────┐                     │  - WireGuard       │   │
+│  │              │◄──────────────────►│  - Web Dashboard   │   │
+│  │   Employee   │    VPN + HTTPS      │                    │   │
+│  │   (Remote)   │                     └────────────────────┘   │
+│  │              │                                               │
+│  └──────────────┘                                               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-User's Computer
-├── ~/Documents/TrueVaultBusiness/
-│   ├── config.json (branding, VPN config)
-│   ├── company.db (employees, roles)
-│   ├── hr.db (salary, time-off, reviews)
-│   ├── dataforge.db (custom tables)
-│   ├── audit.db (activity logs)
-│   ├── sync.db (multi-device sync)
-│   └── backups/
+### 2.2 Access Flow
+
+1. Employee installs WireGuard app (any device)
+2. Scans QR code from company dashboard
+3. Connects to company VPN
+4. Opens `https://dashboard.acme.truevault.app`
+5. All traffic secured through company server
+
+### 2.3 Company Server Specifications
+
+**Auto-Provisioned on Signup:**
+- **Provider:** Contabo Cloud VPS 10 SSD
+- **Specs:** 4 vCPU, 6GB RAM, 150GB SSD, 32TB bandwidth
+- **IP:** Dedicated IPv4
+- **Software:**
+  - Ubuntu 24.04 LTS
+  - Node.js 20 LTS
+  - WireGuard VPN server
+  - SQLite databases
+  - Nginx reverse proxy
+  - Let's Encrypt SSL
+- **Cost:** $6.75/month
+- **Subdomain:** `{company-slug}.truevault.app`
+
+### 2.4 Data Architecture
+
+```
+Company Server
+├── /opt/truevault/
+│   ├── server/           # Node.js backend
+│   ├── frontend/         # Built React app
+│   └── data/
+│       ├── company.db    # Employees, roles, sessions
+│       ├── hr.db         # Salary, time-off, reviews
+│       ├── dataforge.db  # Custom tables/records
+│       └── audit.db      # Activity logs
+```
+
+**Key Principle:** Single source of truth. No local databases. All data on company server. Real-time sync via WebSocket.
+
+---
+
+## 3. TECHNOLOGY STACK
+
+### 3.1 Backend
+
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|---------|
+| Runtime | Node.js | 20 LTS | JavaScript runtime |
+| Framework | Express.js | 4.18 | HTTP server |
+| Database | better-sqlite3 | 9.4 | SQLite driver |
+| Auth | jsonwebtoken | 9.0 | JWT tokens |
+| Password | bcrypt | 5.1 | Password hashing |
+| Real-time | Socket.io | 4.7 | WebSocket server |
+| Validation | Zod | 3.22 | Schema validation |
+| Uploads | Multer | 1.4 | File uploads |
+| Logging | Pino | 8.x | Structured logging |
+| Security | Helmet | 7.1 | HTTP headers |
+
+### 3.2 Frontend
+
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|---------|
+| Framework | React | 18 | UI library |
+| Build | Vite | 5.x | Dev server & bundler |
+| Routing | React Router | 6 | Client-side routing |
+| Styling | Tailwind CSS | 3.4 | Utility CSS |
+| Components | shadcn/ui | latest | UI component library |
+| Icons | Lucide React | latest | Icon library |
+| Charts | Recharts | 2.x | Data visualization |
+| Forms | React Hook Form | 7.x | Form management |
+| Validation | Zod | 3.22 | Schema validation |
+| State | Zustand | 4.x | Global state |
+| Data | TanStack Query | 5.x | Server state |
+| Real-time | Socket.io-client | 4.7 | WebSocket client |
+| PWA | Vite PWA Plugin | latest | Service worker |
+
+### 3.3 Infrastructure
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| VPS | Contabo Cloud VPS | Company servers |
+| VPN | WireGuard | Secure tunnel |
+| Proxy | Nginx | Reverse proxy + SSL |
+| SSL | Let's Encrypt | HTTPS certificates |
+| DNS | Cloudflare | DNS management |
+
+---
+
+## 4. DATABASE SCHEMAS
+
+### 4.1 company.db - Core Company Data
+
+#### Table: roles
+```sql
+CREATE TABLE roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,           -- 'owner', 'admin', etc.
+    display_name TEXT NOT NULL,          -- 'Owner', 'Administrator'
+    level INTEGER NOT NULL DEFAULT 0,    -- Permission level (10-100)
+    description TEXT,
+    is_system BOOLEAN DEFAULT 1,         -- Cannot be deleted
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed Data:
+-- (1, 'readonly', 'Read Only', 10, 'View-only access', 1)
+-- (2, 'employee', 'Employee', 20, 'Standard employee', 1)
+-- (3, 'manager', 'Manager', 40, 'Team manager', 1)
+-- (4, 'hr_staff', 'HR Staff', 50, 'HR team member', 1)
+-- (5, 'hr_admin', 'HR Administrator', 70, 'Full HR access', 1)
+-- (6, 'admin', 'Administrator', 80, 'System administrator', 1)
+-- (7, 'owner', 'Owner', 100, 'Company owner', 1)
+```
+
+#### Table: permissions
+```sql
+CREATE TABLE permissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,           -- 'employees.view'
+    category TEXT NOT NULL,              -- 'employees', 'hr', 'admin'
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Categories: employees, hr, vpn, dataforge, admin, system
+-- See Section 5 for complete permission list
+```
+
+#### Table: role_permissions
+```sql
+CREATE TABLE role_permissions (
+    role_id INTEGER NOT NULL,
+    permission_id INTEGER NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+);
+```
+
+#### Table: departments
+```sql
+CREATE TABLE departments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,                  -- 'Engineering'
+    code TEXT UNIQUE,                    -- 'ENG'
+    description TEXT,
+    manager_id INTEGER,                  -- FK to employees
+    parent_id INTEGER,                   -- FK to departments (hierarchy)
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES departments(id) ON DELETE SET NULL
+);
+```
+
+#### Table: positions
+```sql
+CREATE TABLE positions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,                 -- 'Senior Developer'
+    department_id INTEGER,
+    description TEXT,
+    pay_grade TEXT,                      -- 'L4', 'L5'
+    min_salary DECIMAL(12,2),
+    max_salary DECIMAL(12,2),
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+);
+```
+
+#### Table: employees
+```sql
+CREATE TABLE employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    
+    -- Authentication
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT,
+    must_change_password BOOLEAN DEFAULT 1,
+    password_changed_at DATETIME,
+    
+    -- Personal Info
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    preferred_name TEXT,
+    avatar_url TEXT,
+    phone TEXT,
+    personal_email TEXT,
+    date_of_birth DATE,
+    
+    -- Employment
+    employee_number TEXT UNIQUE,         -- 'EMP-0001'
+    role_id INTEGER NOT NULL,
+    department_id INTEGER,
+    position_id INTEGER,
+    manager_id INTEGER,                  -- FK to employees
+    hire_date DATE,
+    termination_date DATE,
+    employment_type TEXT DEFAULT 'full_time',  -- full_time, part_time, contractor
+    work_location TEXT DEFAULT 'office',       -- office, remote, hybrid
+    
+    -- Status
+    status TEXT DEFAULT 'active',        -- active, inactive, terminated, on_leave
+    is_active BOOLEAN DEFAULT 1,
+    last_login_at DATETIME,
+    
+    -- SSO
+    sso_provider TEXT,                   -- 'google', 'microsoft'
+    sso_id TEXT,
+    
+    -- Metadata
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER,
+    
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+    FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE SET NULL,
+    FOREIGN KEY (manager_id) REFERENCES employees(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE SET NULL
+);
+
+-- Indexes
+CREATE INDEX idx_employees_email ON employees(email);
+CREATE INDEX idx_employees_role ON employees(role_id);
+CREATE INDEX idx_employees_department ON employees(department_id);
+CREATE INDEX idx_employees_manager ON employees(manager_id);
+CREATE INDEX idx_employees_status ON employees(status);
+```
+
+#### Table: employee_emergency_contacts
+```sql
+CREATE TABLE employee_emergency_contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    relationship TEXT,                   -- 'spouse', 'parent', 'sibling'
+    phone TEXT NOT NULL,
+    email TEXT,
+    is_primary BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+```
+
+#### Table: sessions
+```sql
+CREATE TABLE sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    device_name TEXT,                    -- 'Chrome on Windows'
+    device_type TEXT,                    -- 'desktop', 'mobile', 'tablet'
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT 1,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_sessions_employee ON sessions(employee_id);
+CREATE INDEX idx_sessions_token ON sessions(token_hash);
+```
+
+#### Table: password_resets
+```sql
+CREATE TABLE password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,        -- 1 hour from creation
+    used_at DATETIME,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+```
+
+#### Table: invitations
+```sql
+CREATE TABLE invitations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    role_id INTEGER NOT NULL,
+    department_id INTEGER,
+    position_id INTEGER,
+    invite_code TEXT NOT NULL UNIQUE,    -- Random 32-char string
+    invited_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,        -- 7 days from creation
+    accepted_at DATETIME,
+    status TEXT DEFAULT 'pending',       -- pending, accepted, expired, cancelled
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+    FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE SET NULL,
+    FOREIGN KEY (invited_by) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_invitations_code ON invitations(invite_code);
+CREATE INDEX idx_invitations_email ON invitations(email);
+```
+
+#### Table: vpn_devices
+```sql
+CREATE TABLE vpn_devices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    device_name TEXT NOT NULL,           -- 'iPhone 15 Pro'
+    device_type TEXT,                    -- 'mobile', 'desktop', 'laptop'
+    public_key TEXT NOT NULL UNIQUE,     -- WireGuard public key
+    private_key_encrypted TEXT,          -- Optional, encrypted
+    assigned_ip TEXT NOT NULL UNIQUE,    -- '10.0.0.5'
+    is_active BOOLEAN DEFAULT 1,
+    last_handshake DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_vpn_devices_employee ON vpn_devices(employee_id);
+CREATE INDEX idx_vpn_devices_public_key ON vpn_devices(public_key);
+```
+
+#### Table: announcements
+```sql
+CREATE TABLE announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    type TEXT DEFAULT 'info',            -- info, warning, urgent, success
+    is_pinned BOOLEAN DEFAULT 0,
+    published_at DATETIME,
+    expires_at DATETIME,
+    created_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES employees(id) ON DELETE CASCADE
+);
+```
+
+#### Table: company_settings
+```sql
+CREATE TABLE company_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT NOT NULL UNIQUE,
+    value TEXT,
+    type TEXT DEFAULT 'string',          -- string, number, boolean, json
+    category TEXT DEFAULT 'general',     -- general, branding, security, vpn
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_by INTEGER,
+    FOREIGN KEY (updated_by) REFERENCES employees(id) ON DELETE SET NULL
+);
+
+-- Default settings:
+-- company_name, company_logo, primary_color, timezone,
+-- password_min_length, session_timeout, vpn_network_cidr, etc.
+```
+
+#### Table: notifications
+```sql
+CREATE TABLE notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    type TEXT NOT NULL,                  -- 'time_off_approved', 'announcement', etc.
+    title TEXT NOT NULL,
+    message TEXT,
+    link TEXT,                           -- Optional deep link
+    is_read BOOLEAN DEFAULT 0,
+    read_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_notifications_employee ON notifications(employee_id);
+CREATE INDEX idx_notifications_unread ON notifications(employee_id, is_read);
 ```
 
 ---
 
-## 👥 ROLE HIERARCHY
+### 4.2 hr.db - Human Resources Data
+
+#### Table: compensation
+```sql
+CREATE TABLE compensation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,        -- FK to company.db employees
+    salary_amount DECIMAL(12,2) NOT NULL,
+    salary_currency TEXT DEFAULT 'USD',
+    salary_frequency TEXT DEFAULT 'annual',  -- annual, monthly, hourly
+    effective_date DATE NOT NULL,
+    end_date DATE,
+    change_reason TEXT,                  -- 'promotion', 'annual_review', 'adjustment'
+    approved_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER
+);
+
+CREATE INDEX idx_compensation_employee ON compensation(employee_id);
+CREATE INDEX idx_compensation_effective ON compensation(effective_date);
+```
+
+#### Table: time_off_types
+```sql
+CREATE TABLE time_off_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,           -- 'Vacation'
+    code TEXT NOT NULL UNIQUE,           -- 'VAC'
+    description TEXT,
+    color TEXT DEFAULT '#3B82F6',        -- For calendar display
+    default_days_per_year DECIMAL(5,2) DEFAULT 0,
+    accrual_type TEXT DEFAULT 'annual',  -- annual, monthly, none
+    requires_approval BOOLEAN DEFAULT 1,
+    can_carry_over BOOLEAN DEFAULT 0,
+    max_carry_over_days DECIMAL(5,2) DEFAULT 0,
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default types:
+-- (1, 'Vacation', 'VAC', 'Paid time off', '#10B981', 15, 'annual', 1, 1, 5)
+-- (2, 'Sick Leave', 'SICK', 'Illness or medical', '#EF4444', 10, 'annual', 0, 0, 0)
+-- (3, 'Personal', 'PERS', 'Personal time', '#8B5CF6', 3, 'annual', 1, 0, 0)
+-- (4, 'Bereavement', 'BRV', 'Family death', '#6B7280', 5, 'none', 0, 0, 0)
+-- (5, 'Jury Duty', 'JURY', 'Court service', '#F59E0B', 0, 'none', 0, 0, 0)
+```
+
+#### Table: time_off_balances
+```sql
+CREATE TABLE time_off_balances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    time_off_type_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    entitled_days DECIMAL(5,2) DEFAULT 0,
+    used_days DECIMAL(5,2) DEFAULT 0,
+    pending_days DECIMAL(5,2) DEFAULT 0,
+    carried_over_days DECIMAL(5,2) DEFAULT 0,
+    adjusted_days DECIMAL(5,2) DEFAULT 0,
+    adjustment_reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, time_off_type_id, year),
+    FOREIGN KEY (time_off_type_id) REFERENCES time_off_types(id)
+);
+
+CREATE INDEX idx_time_off_balances_employee ON time_off_balances(employee_id);
+CREATE INDEX idx_time_off_balances_year ON time_off_balances(year);
+```
+
+#### Table: time_off_requests
+```sql
+CREATE TABLE time_off_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    time_off_type_id INTEGER NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    total_days DECIMAL(5,2) NOT NULL,
+    half_day_start BOOLEAN DEFAULT 0,    -- Morning only on start
+    half_day_end BOOLEAN DEFAULT 0,      -- Afternoon only on end
+    reason TEXT,
+    status TEXT DEFAULT 'pending',       -- pending, approved, denied, cancelled
+    reviewed_by INTEGER,
+    reviewed_at DATETIME,
+    review_notes TEXT,
+    cancelled_at DATETIME,
+    cancellation_reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (time_off_type_id) REFERENCES time_off_types(id)
+);
+
+CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
+CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
+CREATE INDEX idx_time_off_requests_dates ON time_off_requests(start_date, end_date);
+```
+
+#### Table: documents
+```sql
+CREATE TABLE documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    name TEXT NOT NULL,                  -- 'W-4 Form'
+    file_path TEXT NOT NULL,
+    file_size INTEGER,
+    mime_type TEXT,
+    category TEXT DEFAULT 'general',     -- tax, identification, contract, etc.
+    description TEXT,
+    is_confidential BOOLEAN DEFAULT 0,
+    expiration_date DATE,
+    reminder_sent BOOLEAN DEFAULT 0,
+    uploaded_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_documents_employee ON documents(employee_id);
+CREATE INDEX idx_documents_category ON documents(category);
+CREATE INDEX idx_documents_expiration ON documents(expiration_date);
+```
+
+#### Table: review_cycles
+```sql
+CREATE TABLE review_cycles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,                  -- 'Q4 2025 Review'
+    type TEXT DEFAULT 'annual',          -- annual, quarterly, probation
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    self_assessment_due DATE,
+    manager_assessment_due DATE,
+    status TEXT DEFAULT 'draft',         -- draft, active, completed
+    created_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Table: reviews
+```sql
+CREATE TABLE reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cycle_id INTEGER NOT NULL,
+    employee_id INTEGER NOT NULL,
+    reviewer_id INTEGER NOT NULL,
+    review_type TEXT DEFAULT 'manager',  -- manager, self, peer
+    
+    -- Self Assessment
+    self_assessment TEXT,
+    self_rating INTEGER,                 -- 1-5
+    self_submitted_at DATETIME,
+    
+    -- Manager Assessment
+    manager_assessment TEXT,
+    manager_rating INTEGER,              -- 1-5
+    manager_submitted_at DATETIME,
+    
+    -- Final
+    overall_rating INTEGER,              -- 1-5
+    strengths TEXT,
+    areas_for_improvement TEXT,
+    goals_for_next_period TEXT,
+    comments TEXT,
+    
+    -- Status
+    status TEXT DEFAULT 'draft',         -- draft, in_progress, completed
+    completed_at DATETIME,
+    acknowledged_at DATETIME,
+    
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(cycle_id, employee_id, review_type),
+    FOREIGN KEY (cycle_id) REFERENCES review_cycles(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_reviews_cycle ON reviews(cycle_id);
+CREATE INDEX idx_reviews_employee ON reviews(employee_id);
+```
+
+#### Table: hr_notes
+```sql
+CREATE TABLE hr_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    note TEXT NOT NULL,
+    category TEXT DEFAULT 'general',     -- general, disciplinary, commendation
+    is_confidential BOOLEAN DEFAULT 1,
+    created_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_hr_notes_employee ON hr_notes(employee_id);
+```
+
+#### Table: holidays
+```sql
+CREATE TABLE holidays (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,                  -- 'Christmas Day'
+    date DATE NOT NULL,
+    is_paid BOOLEAN DEFAULT 1,
+    is_recurring BOOLEAN DEFAULT 0,      -- Same date every year
+    year INTEGER,                        -- NULL if recurring
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(date, name)
+);
+```
+
+---
+
+### 4.3 dataforge.db - Custom Database Builder
+
+#### Table: tables
+```sql
+CREATE TABLE tables (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,                  -- 'Customer List'
+    slug TEXT NOT NULL UNIQUE,           -- 'customer_list'
+    description TEXT,
+    icon TEXT DEFAULT 'table',           -- Lucide icon name
+    color TEXT DEFAULT '#3B82F6',
+    created_by INTEGER NOT NULL,
+    is_system BOOLEAN DEFAULT 0,         -- Cannot be deleted
+    is_active BOOLEAN DEFAULT 1,
+    record_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_tables_slug ON tables(slug);
+CREATE INDEX idx_tables_created_by ON tables(created_by);
+```
+
+#### Table: fields
+```sql
+CREATE TABLE fields (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_id INTEGER NOT NULL,
+    name TEXT NOT NULL,                  -- 'Company Name'
+    key TEXT NOT NULL,                   -- 'company_name'
+    type TEXT NOT NULL,                  -- See field types below
+    description TEXT,
+    is_required BOOLEAN DEFAULT 0,
+    is_unique BOOLEAN DEFAULT 0,
+    is_searchable BOOLEAN DEFAULT 1,
+    default_value TEXT,
+    options TEXT,                        -- JSON for select/multiselect
+    validation TEXT,                     -- JSON validation rules
+    sort_order INTEGER DEFAULT 0,
+    width INTEGER DEFAULT 200,           -- Column width in pixels
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(table_id, key),
+    FOREIGN KEY (table_id) REFERENCES tables(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_fields_table ON fields(table_id);
+
+-- Field Types:
+-- text, textarea, number, decimal, currency, percent,
+-- date, datetime, time, checkbox, select, multiselect,
+-- email, phone, url, file, image, user, lookup, formula
+```
+
+#### Table: records
+```sql
+CREATE TABLE records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_id INTEGER NOT NULL,
+    data TEXT NOT NULL,                  -- JSON object with field values
+    created_by INTEGER NOT NULL,
+    updated_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (table_id) REFERENCES tables(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_records_table ON records(table_id);
+CREATE INDEX idx_records_created_by ON records(created_by);
+```
+
+#### Table: table_permissions
+```sql
+CREATE TABLE table_permissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_id INTEGER NOT NULL,
+    employee_id INTEGER,                 -- NULL means role-based
+    role_id INTEGER,                     -- NULL means user-specific
+    permission_level TEXT NOT NULL,      -- 'view', 'edit', 'full'
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (table_id) REFERENCES tables(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_table_permissions_table ON table_permissions(table_id);
+CREATE INDEX idx_table_permissions_employee ON table_permissions(employee_id);
+CREATE INDEX idx_table_permissions_role ON table_permissions(role_id);
+```
+
+#### Table: views
+```sql
+CREATE TABLE views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_id INTEGER NOT NULL,
+    name TEXT NOT NULL,                  -- 'Active Customers'
+    type TEXT DEFAULT 'grid',            -- grid, kanban, calendar, gallery
+    filters TEXT,                        -- JSON filter conditions
+    sorts TEXT,                          -- JSON sort rules
+    visible_fields TEXT,                 -- JSON array of field IDs
+    group_by INTEGER,                    -- Field ID to group by
+    is_default BOOLEAN DEFAULT 0,
+    created_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (table_id) REFERENCES tables(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_views_table ON views(table_id);
+```
+
+#### Table: templates
+```sql
+CREATE TABLE templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,                  -- 'CRM - Customers'
+    category TEXT NOT NULL,              -- 'crm', 'project', 'inventory', etc.
+    description TEXT,
+    icon TEXT,
+    schema TEXT NOT NULL,                -- JSON with table/field definitions
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 50+ pre-built templates for common use cases
+```
+
+---
+
+### 4.4 audit.db - Activity Logging
+
+#### Table: audit_log
+```sql
+CREATE TABLE audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER,                 -- NULL for system actions
+    action TEXT NOT NULL,                -- 'create', 'update', 'delete', 'login', etc.
+    resource_type TEXT NOT NULL,         -- 'employee', 'time_off_request', etc.
+    resource_id INTEGER,
+    old_values TEXT,                     -- JSON of previous values
+    new_values TEXT,                     -- JSON of new values
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_audit_log_employee ON audit_log(employee_id);
+CREATE INDEX idx_audit_log_action ON audit_log(action);
+CREATE INDEX idx_audit_log_resource ON audit_log(resource_type, resource_id);
+CREATE INDEX idx_audit_log_created ON audit_log(created_at);
+```
+
+#### Table: login_attempts
+```sql
+CREATE TABLE login_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    success BOOLEAN NOT NULL,
+    failure_reason TEXT,                 -- 'invalid_password', 'account_locked', etc.
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_login_attempts_email ON login_attempts(email);
+CREATE INDEX idx_login_attempts_ip ON login_attempts(ip_address);
+CREATE INDEX idx_login_attempts_created ON login_attempts(created_at);
+```
+
+---
+
+## 5. ROLE & PERMISSION SYSTEM
+
+### 5.1 Role Hierarchy
+
+| Role | Level | Description | Access |
+|------|-------|-------------|--------|
+| OWNER | 100 | Company owner | Everything |
+| ADMIN | 80 | IT/System admin | All except billing, ownership |
+| HR_ADMIN | 70 | HR department head | All HR including salary |
+| HR_STAFF | 50 | HR team member | HR except salary |
+| MANAGER | 40 | Team lead | Direct reports only |
+| EMPLOYEE | 20 | Standard user | Self-service only |
+| READONLY | 10 | View-only | Read access only |
+
+### 5.2 Permission Categories
+
+#### Employees (employees.*)
+```
+employees.view         - View employee directory
+employees.view.details - View employee profiles
+employees.create       - Create new employees
+employees.update       - Update employee info
+employees.update.own   - Update own profile
+employees.deactivate   - Deactivate employees
+employees.delete       - Delete employees (soft)
+```
+
+#### HR (hr.*)
+```
+hr.compensation.view   - View salary data
+hr.compensation.manage - Modify salary data
+hr.timeoff.view        - View all time-off
+hr.timeoff.manage      - Approve/deny time-off
+hr.timeoff.request     - Submit time-off (own)
+hr.documents.view      - View HR documents
+hr.documents.manage    - Upload/delete documents
+hr.reviews.view        - View all reviews
+hr.reviews.manage      - Create/manage review cycles
+hr.notes.view          - View HR notes
+hr.notes.create        - Create HR notes
+```
+
+#### VPN (vpn.*)
+```
+vpn.devices.view       - View own devices
+vpn.devices.manage     - Add/remove own devices
+vpn.devices.admin      - Manage all devices
+vpn.config.view        - View VPN config
+vpn.config.manage      - Modify VPN settings
+```
+
+#### DataForge (dataforge.*)
+```
+dataforge.tables.view  - View tables
+dataforge.tables.create - Create tables
+dataforge.tables.manage - Modify table structure
+dataforge.tables.delete - Delete tables
+dataforge.records.view  - View records (per-table)
+dataforge.records.create - Create records
+dataforge.records.update - Update records
+dataforge.records.delete - Delete records
+```
+
+#### Admin (admin.*)
+```
+admin.users.view       - View all users
+admin.users.manage     - Manage user accounts
+admin.roles.view       - View roles
+admin.roles.manage     - Modify roles/permissions
+admin.settings.view    - View company settings
+admin.settings.manage  - Modify settings
+admin.audit.view       - View audit logs
+admin.invitations.manage - Send/manage invitations
+admin.announcements.manage - Create announcements
+```
+
+#### System (system.*)
+```
+system.backup.create   - Create backups
+system.backup.restore  - Restore backups
+system.api.access      - Access API endpoints
+system.impersonate     - Login as another user
+```
+
+### 5.3 Default Role Permissions
+
+#### OWNER (all permissions)
+All permissions in all categories.
+
+#### ADMIN
+```
+employees.*, hr.timeoff.view, hr.documents.view,
+vpn.*, dataforge.*, admin.* (except roles.manage),
+system.backup.*, system.api.access
+```
+
+#### HR_ADMIN
+```
+employees.view, employees.view.details, employees.create, employees.update,
+hr.*, vpn.devices.view, dataforge.tables.view, dataforge.records.*
+```
+
+#### HR_STAFF
+```
+employees.view, employees.view.details,
+hr.* (except hr.compensation.*), vpn.devices.view
+```
+
+#### MANAGER
+```
+employees.view, employees.view.details (direct reports),
+hr.timeoff.view (direct reports), hr.timeoff.manage (direct reports),
+hr.reviews.view (direct reports), vpn.devices.view,
+dataforge.tables.view, dataforge.records.view
+```
+
+#### EMPLOYEE
+```
+employees.view, employees.update.own,
+hr.timeoff.request, hr.timeoff.view (own),
+hr.documents.view (own), hr.reviews.view (own),
+vpn.devices.view, vpn.devices.manage,
+dataforge.tables.view (permitted), dataforge.records.* (permitted)
+```
+
+#### READONLY
+```
+employees.view, hr.timeoff.view (own),
+vpn.devices.view, dataforge.tables.view (permitted)
+```
+
+---
+
+## 6. API ENDPOINTS
+
+### 6.1 Authentication
+
+#### POST /api/auth/login
+```
+Request:
+{
+  "email": "john@company.com",
+  "password": "password123"
+}
+
+Response:
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "email": "john@company.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "role": "employee",
+    "permissions": ["employees.view", "hr.timeoff.request", ...]
+  }
+}
+```
+
+#### POST /api/auth/logout
+```
+Headers: Authorization: Bearer {token}
+Response: { "success": true }
+```
+
+#### GET /api/auth/me
+```
+Headers: Authorization: Bearer {token}
+Response: { "user": {...} }
+```
+
+#### POST /api/auth/password/change
+```
+Request:
+{
+  "current_password": "oldpass",
+  "new_password": "newpass123",
+  "confirm_password": "newpass123"
+}
+```
+
+#### POST /api/auth/password/reset-request
+```
+Request: { "email": "john@company.com" }
+Response: { "success": true, "message": "Reset email sent" }
+```
+
+#### POST /api/auth/password/reset
+```
+Request:
+{
+  "token": "reset-token-here",
+  "password": "newpass123",
+  "confirm_password": "newpass123"
+}
+```
+
+#### POST /api/auth/refresh
+```
+Headers: Authorization: Bearer {token}
+Response: { "token": "new-token..." }
+```
+
+#### GET /api/auth/sessions
+```
+Response: [
+  {
+    "id": 1,
+    "device_name": "Chrome on Windows",
+    "ip_address": "192.168.1.1",
+    "created_at": "2025-01-17T10:00:00Z",
+    "last_used_at": "2025-01-17T14:30:00Z",
+    "is_current": true
+  }
+]
+```
+
+#### DELETE /api/auth/sessions/:id
+Revoke a specific session.
+
+---
+
+### 6.2 Employees
+
+#### GET /api/employees
+```
+Query: ?search=john&department=1&status=active&page=1&limit=20
+Response:
+{
+  "data": [...],
+  "pagination": { "page": 1, "limit": 20, "total": 45 }
+}
+```
+
+#### GET /api/employees/:id
+```
+Response: { employee object with full details }
+```
+
+#### POST /api/employees (HR+)
+```
+Request:
+{
+  "email": "new@company.com",
+  "first_name": "Jane",
+  "last_name": "Smith",
+  "role_id": 2,
+  "department_id": 1,
+  "position_id": 3,
+  "hire_date": "2025-01-15"
+}
+```
+
+#### PATCH /api/employees/:id
+```
+Request: { fields to update }
+```
+
+#### POST /api/employees/:id/deactivate (HR+)
+```
+Request: { "termination_date": "2025-01-31", "reason": "Resignation" }
+```
+
+#### POST /api/employees/:id/emergency-contacts
+```
+Request:
+{
+  "name": "Jane Doe",
+  "relationship": "spouse",
+  "phone": "555-1234",
+  "is_primary": true
+}
+```
+
+---
+
+### 6.3 Time-Off
+
+#### GET /api/timeoff/types
+```
+Response: [ array of time-off types ]
+```
+
+#### GET /api/timeoff/balances
+```
+Query: ?year=2025
+Response: [ balances for current user by type ]
+```
+
+#### GET /api/timeoff/requests
+```
+Query: ?status=pending&year=2025
+Response: [ user's time-off requests ]
+```
+
+#### POST /api/timeoff/requests
+```
+Request:
+{
+  "time_off_type_id": 1,
+  "start_date": "2025-02-01",
+  "end_date": "2025-02-05",
+  "reason": "Family vacation"
+}
+```
+
+#### POST /api/timeoff/requests/:id/cancel
+```
+Request: { "reason": "Plans changed" }
+```
+
+#### POST /api/timeoff/requests/:id/review (Manager+)
+```
+Request:
+{
+  "status": "approved",
+  "notes": "Enjoy your vacation!"
+}
+```
+
+#### GET /api/timeoff/team (Manager+)
+```
+Response: [ time-off requests for direct reports ]
+```
+
+#### GET /api/timeoff/calendar
+```
+Query: ?month=2025-02
+Response: [ calendar events for team ]
+```
+
+---
+
+### 6.4 VPN Devices
+
+#### GET /api/vpn/devices
+```
+Response: [ user's VPN devices ]
+```
+
+#### POST /api/vpn/devices
+```
+Request:
+{
+  "device_name": "iPhone 15 Pro",
+  "device_type": "mobile"
+}
+
+Response:
+{
+  "device": {...},
+  "config": "WireGuard config string",
+  "qr_code": "base64 QR image"
+}
+```
+
+#### GET /api/vpn/devices/:id/config
+```
+Query: ?format=file|qr
+Response: Config file or QR code
+```
+
+#### DELETE /api/vpn/devices/:id
+Revoke device.
+
+#### GET /api/vpn/admin/devices (Admin+)
+```
+Response: [ all VPN devices ]
+```
+
+#### POST /api/vpn/admin/devices/:id/revoke (Admin+)
+Admin revoke any device.
+
+---
+
+### 6.5 Admin
+
+#### GET /api/admin/stats
+```
+Response:
+{
+  "total_employees": 45,
+  "active_employees": 42,
+  "pending_timeoff": 3,
+  "vpn_devices": 87,
+  "announcements": 2
+}
+```
+
+#### GET /api/admin/users
+```
+Query: ?search=&role=&status=&page=1
+Response: [ paginated user list ]
+```
+
+#### PATCH /api/admin/users/:id/role
+```
+Request: { "role_id": 3 }
+```
+
+#### GET /api/admin/audit-logs
+```
+Query: ?action=&resource_type=&employee_id=&from=&to=&page=1
+Response: [ paginated audit logs ]
+```
+
+#### POST /api/admin/invitations
+```
+Request:
+{
+  "email": "newuser@company.com",
+  "role_id": 2,
+  "department_id": 1
+}
+```
+
+#### GET /api/admin/invitations
+```
+Response: [ pending invitations ]
+```
+
+#### GET /api/admin/roles
+```
+Response: [ all roles with permissions ]
+```
+
+#### GET /api/admin/departments
+```
+Response: [ all departments ]
+```
+
+#### POST /api/admin/departments
+```
+Request:
+{
+  "name": "Marketing",
+  "code": "MKT",
+  "manager_id": 5
+}
+```
+
+#### GET /api/admin/settings
+```
+Response: { all company settings }
+```
+
+#### PATCH /api/admin/settings
+```
+Request: { "key": "value", ... }
+```
+
+#### POST /api/admin/announcements
+```
+Request:
+{
+  "title": "Office Closure",
+  "content": "Office will be closed on...",
+  "type": "info",
+  "expires_at": "2025-02-01"
+}
+```
+
+---
+
+### 6.6 DataForge
+
+#### GET /api/dataforge/tables
+```
+Response: [ tables user has access to ]
+```
+
+#### GET /api/dataforge/tables/:slug
+```
+Response: { table with fields }
+```
+
+#### POST /api/dataforge/tables
+```
+Request:
+{
+  "name": "Customer List",
+  "description": "All customers",
+  "icon": "users",
+  "fields": [
+    { "name": "Company Name", "key": "company_name", "type": "text", "is_required": true },
+    { "name": "Contact Email", "key": "email", "type": "email" },
+    { "name": "Status", "key": "status", "type": "select", "options": ["Active", "Inactive"] }
+  ]
+}
+```
+
+#### PATCH /api/dataforge/tables/:slug
+Update table metadata or fields.
+
+#### DELETE /api/dataforge/tables/:slug
+Soft delete table.
+
+#### GET /api/dataforge/tables/:slug/records
+```
+Query: ?search=&filter=&sort=&page=1
+Response: { "data": [...], "pagination": {...} }
+```
+
+#### POST /api/dataforge/tables/:slug/records
+```
+Request: { field_key: value, ... }
+```
+
+#### PATCH /api/dataforge/tables/:slug/records/:id
+```
+Request: { fields to update }
+```
+
+#### DELETE /api/dataforge/tables/:slug/records/:id
+Delete record.
+
+#### GET /api/dataforge/templates
+```
+Response: [ available templates ]
+```
+
+#### POST /api/dataforge/templates/:id/use
+Create table from template.
+
+---
+
+## 7. AUTHENTICATION FLOW
+
+### 7.1 Login Flow
 
 ```
-OWNER (100) ──────────────────────────────────────────┐
-│                                                      │
-├── ADMIN (80) - IT/System administration              │
-│                                                      │
-├── HR_ADMIN (70) - Full HR access including salary    │
-│   └── HR_STAFF (50) - Limited HR access              │
-│                                                      │
-├── MANAGER (40) - Team lead (sees direct reports)     │
-│                                                      │
-├── EMPLOYEE (20) - Self-service only                  │
-│                                                      │
-└── READONLY (10) - View-only access                   │
+1. User enters email + password
+2. POST /api/auth/login
+3. Server:
+   a. Find employee by email
+   b. Verify password with bcrypt
+   c. Check account status (active, not locked)
+   d. Create session record
+   e. Generate JWT token (7-day expiry)
+   f. Log login attempt (success)
+   g. Return token + user data
+4. Client stores token in localStorage
+5. Client sets Authorization header for all requests
+6. WebSocket connects with token
+```
+
+### 7.2 JWT Token Structure
+
+```javascript
+{
+  "sub": 1,                    // Employee ID
+  "email": "john@company.com",
+  "role": "employee",
+  "role_level": 20,
+  "session_id": 123,
+  "iat": 1705500000,
+  "exp": 1706104800           // 7 days
+}
+```
+
+### 7.3 Request Authentication
+
+```javascript
+// Every API request:
+1. Extract token from Authorization: Bearer {token}
+2. Verify JWT signature
+3. Check token not expired
+4. Load session from database
+5. Verify session is active
+6. Load employee + role + permissions
+7. Attach to request: req.user, req.permissions
+8. Continue to route handler
+```
+
+### 7.4 Permission Checking
+
+```javascript
+// Middleware: requirePermission('employees.view')
+1. Check req.permissions includes 'employees.view'
+2. If yes: continue
+3. If no: return 403 Forbidden
 ```
 
 ---
 
-## 🖥️ SEPARATE PORTALS
+## 8. WEBSOCKET EVENTS
 
-| Portal | Access | Purpose |
-|--------|--------|---------|
-| /owner | Owner only | Billing, company settings, ownership |
-| /admin | Owner, Admin | User management, SSO, VPN config, audit |
-| /hr | Owner, HR_Admin, HR_Staff | Employee management, time-off, reviews |
-| /manager | Owner, HR_Admin, Manager | Team management, approvals |
-| /my | All users | Self-service profile, time-off, devices |
-| /dataforge | Based on table permissions | Database builder |
-| /vpn | All (config: Admin only) | VPN connection management |
+### 8.1 Connection
+
+```javascript
+// Client connects with token
+const socket = io('wss://dashboard.company.truevault.app', {
+  auth: { token: 'jwt-token-here' }
+});
+
+// Server authenticates and joins rooms
+socket.join(`user:${userId}`);
+socket.join(`role:${roleName}`);
+socket.join(`department:${departmentId}`);
+```
+
+### 8.2 Events
+
+#### Server → Client
+
+```javascript
+// Announcement broadcast
+socket.emit('announcement', {
+  id: 1,
+  title: 'Office Update',
+  content: '...',
+  type: 'info'
+});
+
+// Time-off status update
+socket.emit('timeoff:updated', {
+  id: 5,
+  status: 'approved',
+  reviewed_by: 'Jane Manager'
+});
+
+// Employee directory update
+socket.emit('employee:updated', {
+  id: 10,
+  changes: ['department', 'position']
+});
+
+// DataForge record update
+socket.emit('dataforge:record:updated', {
+  table_slug: 'customers',
+  record_id: 42,
+  updated_by: 'John Doe'
+});
+
+// Notification
+socket.emit('notification', {
+  id: 100,
+  type: 'timeoff_approved',
+  title: 'Time-off Approved',
+  message: 'Your vacation request was approved'
+});
+
+// VPN device status
+socket.emit('vpn:device:status', {
+  device_id: 5,
+  online: true,
+  last_handshake: '2025-01-17T10:00:00Z'
+});
+```
+
+#### Client → Server
+
+```javascript
+// Join DataForge table room
+socket.emit('dataforge:join', { table_slug: 'customers' });
+
+// Leave DataForge table room
+socket.emit('dataforge:leave', { table_slug: 'customers' });
+
+// Mark notification read
+socket.emit('notification:read', { id: 100 });
+```
 
 ---
 
-## 📋 BUILD PHASES
+## 9. FRONTEND COMPONENTS
 
-| Phase | Description | Duration |
-|-------|-------------|----------|
-| 11 | Desktop App Foundation | 1 week |
-| 12 | Authentication & Roles | 1 week |
-| 13 | Owner Dashboard | 1 week |
-| 14 | Admin Panel | 1 week |
-| 15 | HR Module | 2 weeks |
-| 16 | Manager Portal | 0.5 week |
-| 17 | Employee Portal | 1 week |
-| 18 | DataForge Builder | 2 weeks |
-| 19 | Sync & Backup | 1 week |
-| 20 | Installers & Distribution | 1 week |
-| 21 | Demo & Testing | 1 week |
-| 22 | Documentation & Launch | 1 week |
+### 9.1 Page Structure
 
-**Total: ~12 weeks (3 months)**
+```
+/                     → Redirect to /dashboard
+/login                → Login page
+/accept-invite/:code  → Accept invitation page
+
+/dashboard            → Main dashboard (role-based content)
+
+/my                   → Employee self-service
+  /my/profile         → View/edit own profile
+  /my/timeoff         → Request time-off, view balances
+  /my/devices         → Manage VPN devices
+  /my/notifications   → View notifications
+
+/directory            → Employee directory
+/directory/:id        → Employee profile view
+
+/hr                   → HR section (HR_STAFF+)
+  /hr/employees       → Employee management
+  /hr/employees/:id   → Employee detail
+  /hr/timeoff         → Time-off management
+  /hr/documents       → Document management
+  /hr/reviews         → Performance reviews
+
+/manager              → Manager section (MANAGER+)
+  /manager/team       → Direct reports
+  /manager/timeoff    → Team time-off approvals
+  /manager/reviews    → Team reviews
+
+/admin                → Admin section (ADMIN+)
+  /admin/users        → User management
+  /admin/roles        → Role management
+  /admin/departments  → Department management
+  /admin/settings     → Company settings
+  /admin/audit        → Audit logs
+  /admin/vpn          → VPN management
+
+/owner                → Owner section (OWNER only)
+  /owner/billing      → Subscription management
+  /owner/transfer     → Transfer ownership
+
+/dataforge            → DataForge (all users, per-table permissions)
+  /dataforge          → Table list
+  /dataforge/:slug    → Table view/edit
+```
+
+### 9.2 Component Library
+
+Built with shadcn/ui components:
+
+```
+Layout
+├── Sidebar           - Navigation sidebar
+├── Header            - Top bar with user menu
+├── Breadcrumb        - Page navigation
+└── Footer            - Page footer
+
+Data Display
+├── DataTable         - Sortable/filterable table
+├── Card              - Info cards
+├── Badge             - Status badges
+├── Avatar            - User avatars
+├── Stat              - Statistic display
+└── Timeline          - Activity timeline
+
+Forms
+├── Input             - Text input
+├── Select            - Dropdown select
+├── DatePicker        - Date selection
+├── DateRangePicker   - Date range
+├── Checkbox          - Boolean input
+├── RadioGroup        - Single select
+├── Textarea          - Multi-line text
+├── FileUpload        - File upload
+└── Form              - Form wrapper
+
+Feedback
+├── Alert             - Alert messages
+├── Toast             - Toast notifications
+├── Dialog            - Modal dialogs
+├── Sheet             - Slide-out panels
+├── Skeleton          - Loading skeletons
+└── Spinner           - Loading spinner
+
+Navigation
+├── Tabs              - Tab navigation
+├── Dropdown          - Dropdown menu
+├── Command           - Command palette
+└── Pagination        - Page navigation
+```
 
 ---
 
-## 🔗 FULL DOCUMENTATION
+## 10. DATAFORGE BUILDER
 
-For complete technical specifications, database schemas, API endpoints, and detailed checklists:
+### 10.1 Field Types
 
-1. **ENTERPRISE_BLUEPRINT.md** - Technical specifications
-2. **ENTERPRISE_CHECKLIST.md** - Build checklist with tasks
+| Type | Description | Options |
+|------|-------------|---------|
+| text | Single line text | maxLength, minLength |
+| textarea | Multi-line text | maxLength, rows |
+| number | Integer | min, max |
+| decimal | Decimal number | min, max, precision |
+| currency | Money | currency, min, max |
+| percent | Percentage | min, max |
+| date | Date only | min, max |
+| datetime | Date and time | min, max |
+| time | Time only | - |
+| checkbox | Boolean | - |
+| select | Single select | options[] |
+| multiselect | Multi select | options[] |
+| email | Email address | - |
+| phone | Phone number | format |
+| url | Web URL | - |
+| file | File attachment | maxSize, allowedTypes |
+| image | Image file | maxSize, maxWidth, maxHeight |
+| user | Employee reference | - |
+| lookup | Reference to another table | tableId, displayField |
+| formula | Calculated field | expression |
+
+### 10.2 Pre-Built Templates (50+)
+
+#### CRM
+- Customers
+- Contacts
+- Leads
+- Deals/Opportunities
+- Activities
+
+#### Project Management
+- Projects
+- Tasks
+- Milestones
+- Time Tracking
+- Resources
+
+#### Inventory
+- Products
+- Inventory
+- Suppliers
+- Purchase Orders
+- Stock Movements
+
+#### HR (Additional)
+- Job Postings
+- Applicants
+- Interview Schedules
+- Training Records
+- Certifications
+
+#### Finance
+- Expenses
+- Invoices
+- Budgets
+- Assets
+- Vendors
+
+#### Operations
+- Equipment
+- Maintenance Logs
+- Locations
+- Shipping
+- Quality Control
 
 ---
 
-**Note:** This section file is a reference pointer. All detailed documentation is in the root-level ENTERPRISE_*.md files.
+## 11. VPN INTEGRATION
+
+### 11.1 WireGuard Configuration
+
+#### Server Config
+```ini
+[Interface]
+Address = 10.0.0.1/24
+ListenPort = 51820
+PrivateKey = {SERVER_PRIVATE_KEY}
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+# Peers added dynamically per employee device
+[Peer]
+# Employee: John Doe - iPhone
+PublicKey = {DEVICE_PUBLIC_KEY}
+AllowedIPs = 10.0.0.5/32
+```
+
+#### Client Config (Generated)
+```ini
+[Interface]
+PrivateKey = {DEVICE_PRIVATE_KEY}
+Address = 10.0.0.5/32
+DNS = 10.0.0.1
+
+[Peer]
+PublicKey = {SERVER_PUBLIC_KEY}
+Endpoint = vpn.company.truevault.app:51820
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25
+```
+
+### 11.2 IP Assignment
+
+- Server: 10.0.0.1
+- DHCP Range: 10.0.0.2 - 10.0.0.254
+- Maximum devices: 253
+- 5 devices per employee (default)
+
+### 11.3 Device Management
+
+1. Employee creates device via dashboard
+2. Server generates key pair (or accepts provided public key)
+3. Assigns next available IP
+4. Adds peer to WireGuard server
+5. Returns config file + QR code
+6. Employee imports to WireGuard app
+
+---
+
+## 12. FILE STRUCTURE
+
+### 12.1 Server
+
+```
+enterprise-hub/
+├── server/
+│   ├── package.json
+│   ├── .env.example
+│   ├── src/
+│   │   ├── index.js              # Entry point
+│   │   ├── config/
+│   │   │   ├── database.js       # DB connections
+│   │   │   └── env.js            # Environment config
+│   │   ├── middleware/
+│   │   │   ├── auth.js           # JWT auth
+│   │   │   ├── permissions.js    # Permission checking
+│   │   │   ├── errorHandler.js   # Error handling
+│   │   │   └── audit.js          # Audit logging
+│   │   ├── routes/
+│   │   │   ├── auth.js           # /api/auth/*
+│   │   │   ├── employees.js      # /api/employees/*
+│   │   │   ├── timeoff.js        # /api/timeoff/*
+│   │   │   ├── vpn.js            # /api/vpn/*
+│   │   │   ├── admin.js          # /api/admin/*
+│   │   │   └── dataforge.js      # /api/dataforge/*
+│   │   ├── services/
+│   │   │   ├── auth.service.js
+│   │   │   ├── employee.service.js
+│   │   │   ├── timeoff.service.js
+│   │   │   ├── vpn.service.js
+│   │   │   └── dataforge.service.js
+│   │   ├── utils/
+│   │   │   ├── jwt.js
+│   │   │   ├── password.js
+│   │   │   └── validators.js
+│   │   └── websocket/
+│   │       └── handler.js        # WebSocket events
+│   └── database/
+│       ├── schema-company.sql
+│       ├── schema-hr.sql
+│       ├── schema-dataforge.sql
+│       ├── schema-audit.sql
+│       └── seed-data.sql
+```
+
+### 12.2 Frontend
+
+```
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── index.html
+│   └── src/
+│       ├── main.jsx
+│       ├── App.jsx
+│       ├── components/
+│       │   ├── ui/               # shadcn/ui components
+│       │   ├── layout/
+│       │   │   ├── Sidebar.jsx
+│       │   │   ├── Header.jsx
+│       │   │   └── Layout.jsx
+│       │   ├── forms/
+│       │   │   ├── LoginForm.jsx
+│       │   │   ├── EmployeeForm.jsx
+│       │   │   └── TimeOffForm.jsx
+│       │   └── shared/
+│       │       ├── DataTable.jsx
+│       │       ├── PermissionGate.jsx
+│       │       └── Loading.jsx
+│       ├── pages/
+│       │   ├── Login.jsx
+│       │   ├── Dashboard.jsx
+│       │   ├── my/
+│       │   ├── hr/
+│       │   ├── manager/
+│       │   ├── admin/
+│       │   ├── owner/
+│       │   └── dataforge/
+│       ├── hooks/
+│       │   ├── useAuth.js
+│       │   ├── usePermissions.js
+│       │   └── useWebSocket.js
+│       ├── store/
+│       │   └── authStore.js
+│       ├── api/
+│       │   └── client.js
+│       └── lib/
+│           └── utils.js
+```
+
+---
+
+## APPENDIX A: SEED DATA
+
+### Roles
+```sql
+INSERT INTO roles (name, display_name, level, description, is_system) VALUES
+('readonly', 'Read Only', 10, 'View-only access to permitted areas', 1),
+('employee', 'Employee', 20, 'Standard employee with self-service access', 1),
+('manager', 'Manager', 40, 'Team manager with direct report access', 1),
+('hr_staff', 'HR Staff', 50, 'HR team member without salary access', 1),
+('hr_admin', 'HR Administrator', 70, 'Full HR access including compensation', 1),
+('admin', 'Administrator', 80, 'System administrator', 1),
+('owner', 'Owner', 100, 'Company owner with full access', 1);
+```
+
+### Permissions (50+)
+```sql
+INSERT INTO permissions (name, category, description) VALUES
+-- Employees
+('employees.view', 'employees', 'View employee directory'),
+('employees.view.details', 'employees', 'View detailed employee profiles'),
+('employees.create', 'employees', 'Create new employees'),
+('employees.update', 'employees', 'Update employee information'),
+('employees.update.own', 'employees', 'Update own profile'),
+('employees.deactivate', 'employees', 'Deactivate employee accounts'),
+('employees.delete', 'employees', 'Delete employees'),
+
+-- HR
+('hr.compensation.view', 'hr', 'View salary and compensation'),
+('hr.compensation.manage', 'hr', 'Modify compensation records'),
+('hr.timeoff.view', 'hr', 'View all time-off requests'),
+('hr.timeoff.manage', 'hr', 'Approve or deny time-off'),
+('hr.timeoff.request', 'hr', 'Submit own time-off requests'),
+('hr.documents.view', 'hr', 'View employee documents'),
+('hr.documents.manage', 'hr', 'Upload and manage documents'),
+('hr.reviews.view', 'hr', 'View performance reviews'),
+('hr.reviews.manage', 'hr', 'Create and manage review cycles'),
+('hr.notes.view', 'hr', 'View HR notes'),
+('hr.notes.create', 'hr', 'Create HR notes'),
+
+-- VPN
+('vpn.devices.view', 'vpn', 'View own VPN devices'),
+('vpn.devices.manage', 'vpn', 'Add and remove own devices'),
+('vpn.devices.admin', 'vpn', 'Manage all VPN devices'),
+('vpn.config.view', 'vpn', 'View VPN configuration'),
+('vpn.config.manage', 'vpn', 'Modify VPN settings'),
+
+-- DataForge
+('dataforge.tables.view', 'dataforge', 'View DataForge tables'),
+('dataforge.tables.create', 'dataforge', 'Create new tables'),
+('dataforge.tables.manage', 'dataforge', 'Modify table structure'),
+('dataforge.tables.delete', 'dataforge', 'Delete tables'),
+('dataforge.records.view', 'dataforge', 'View records'),
+('dataforge.records.create', 'dataforge', 'Create records'),
+('dataforge.records.update', 'dataforge', 'Update records'),
+('dataforge.records.delete', 'dataforge', 'Delete records'),
+
+-- Admin
+('admin.users.view', 'admin', 'View all users'),
+('admin.users.manage', 'admin', 'Manage user accounts'),
+('admin.roles.view', 'admin', 'View roles'),
+('admin.roles.manage', 'admin', 'Modify roles and permissions'),
+('admin.settings.view', 'admin', 'View company settings'),
+('admin.settings.manage', 'admin', 'Modify company settings'),
+('admin.audit.view', 'admin', 'View audit logs'),
+('admin.invitations.manage', 'admin', 'Send and manage invitations'),
+('admin.announcements.manage', 'admin', 'Create and manage announcements'),
+
+-- System
+('system.backup.create', 'system', 'Create system backups'),
+('system.backup.restore', 'system', 'Restore from backups'),
+('system.api.access', 'system', 'Access API endpoints'),
+('system.impersonate', 'system', 'Impersonate other users');
+```
+
+### Time-Off Types
+```sql
+INSERT INTO time_off_types (name, code, description, color, default_days_per_year, accrual_type, requires_approval, can_carry_over, max_carry_over_days) VALUES
+('Vacation', 'VAC', 'Paid time off for vacation', '#10B981', 15, 'annual', 1, 1, 5),
+('Sick Leave', 'SICK', 'Time off for illness or medical appointments', '#EF4444', 10, 'annual', 0, 0, 0),
+('Personal', 'PERS', 'Personal time off', '#8B5CF6', 3, 'annual', 1, 0, 0),
+('Bereavement', 'BRV', 'Time off for family death', '#6B7280', 5, 'none', 0, 0, 0),
+('Jury Duty', 'JURY', 'Time off for court service', '#F59E0B', 0, 'none', 0, 0, 0),
+('Parental Leave', 'PAR', 'Maternity/paternity leave', '#EC4899', 0, 'none', 1, 0, 0);
+```
+
+---
+
+## APPENDIX B: ENVIRONMENT VARIABLES
+
+```bash
+# Server
+PORT=3000
+HOST=0.0.0.0
+NODE_ENV=production
+
+# JWT
+JWT_SECRET=your-256-bit-secret-key-here
+JWT_EXPIRES_IN=7d
+
+# Databases
+DB_COMPANY=./data/company.db
+DB_HR=./data/hr.db
+DB_DATAFORGE=./data/dataforge.db
+DB_AUDIT=./data/audit.db
+
+# VPN
+VPN_SERVER_ENDPOINT=vpn.company.truevault.app:51820
+VPN_SERVER_PUBLIC_KEY=server-public-key
+VPN_NETWORK_CIDR=10.0.0.0/24
+VPN_SERVER_PRIVATE_KEY=server-private-key
+
+# Email (optional)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=noreply@company.com
+SMTP_PASS=smtp-password
+SMTP_FROM=noreply@company.com
+
+# SSO (optional)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+
+# Frontend
+FRONTEND_URL=https://dashboard.company.truevault.app
+
+# Logging
+LOG_LEVEL=info
+```
+
+---
+
+---
+
+## 13. EMPLOYEE EFFECTIVENESS FEATURES
+
+### 13.1 Zero Friction Design Principles
+
+Every feature must answer: "Does this save the employee time?"
+
+**PRINCIPLE 1: ONE-CLICK ACTIONS**
+If it takes more than ONE click, redesign it.
+- ❌ BEFORE: Click menu → Click Time-Off → Click New → Fill form → Submit
+- ✅ AFTER: Click "🏖️" button → Date picker → Done!
+
+**PRINCIPLE 2: SMART DEFAULTS**
+Pre-fill everything the system already knows.
+- ❌ BEFORE: Employee fills: Name, Email, Department, Manager...
+- ✅ AFTER: System knows all this. Just pick the date!
+
+**PRINCIPLE 3: PROACTIVE INFORMATION**
+Show info BEFORE they ask for it.
+- ❌ BEFORE: Employee wonders "Do I have enough PTO?"
+- ✅ AFTER: Dashboard shows: "12 days available" prominently
+
+**PRINCIPLE 4: CONTEXTUAL ACTIONS**
+Show the right actions at the right time.
+- ❌ BEFORE: Generic dashboard, employee hunts for what they need
+- ✅ AFTER: "3 tasks due today" with direct links to complete them
+
+**PRINCIPLE 5: MOBILE FIRST**
+Everything must work perfectly on a phone.
+- ❌ BEFORE: "Please use desktop for this feature"
+- ✅ AFTER: Tap, swipe, done. Same on every device.
+
+### 13.2 Smart Dashboard Widgets
+
+**WIDGET 1: TODAY'S FOCUS**
+- Shows tasks due today with one-click complete buttons
+- Shows overdue tasks with escalation indicators
+- Direct action buttons for each item
+
+**WIDGET 2: MY TIME-OFF AT A GLANCE**
+- PTO balance with visual progress bar
+- Sick leave balance
+- Upcoming approved time-off
+- Quick "Request Time-Off" button
+
+**WIDGET 3: QUICK ACTIONS**
+- Add Task button
+- Request PTO button
+- My Tasks button
+- Team Directory button
+- Find Person button
+
+**WIDGET 4: COMPANY UPDATES**
+- Recent announcements
+- Birthday celebrations
+- Company news
+- "View All Announcements" link
+
+**WIDGET 5: MY TEAM (Managers Only)**
+- Team member online/offline status
+- Location indicators (Office/Remote/Meeting)
+- PTO status for team members
+- Pending approvals count with "Review Now" button
+
+### 13.3 One-Tap Workflows
+
+**Time-Off Request (Simplified)**
+1. Select type (dropdown with smart default)
+2. Pick dates on calendar (visual selection)
+3. Auto-shows: Summary, balance after, manager to notify
+4. Optional notes field
+5. Team conflict detection
+6. Submit → Instant confirmation
+
+**Task Completion**
+- Quick Complete: Single tap [Complete ✓] button
+- Complete with Notes: Long-press → Options menu
+- Swipe right to complete
+- Options: Snooze, Change due date, Delete
+
+### 13.4 Universal Search (Cmd+K)
+
+**Find Anything Instantly:**
+- Keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
+- Mobile: Tap search icon
+- Shows recent searches
+- Shows quick actions
+
+**Search Results Include:**
+- Employees (name, email, extension)
+- Customers (company, contact info)
+- Tasks (title, due date, assignee)
+- Projects
+- Documents
+
+### 13.5 Smart Notification System
+
+**Priority Levels:**
+
+🔴 **URGENT** (Immediate push + sound)
+- Time-off denied
+- High priority task assigned
+- System security alert
+- Manager needs response now
+
+🟡 **IMPORTANT** (Push notification)
+- Time-off approved
+- New task assigned
+- Approval waiting for you
+- Task due tomorrow
+
+🟢 **INFO** (In-app only)
+- Company announcement
+- Birthday celebration
+- Someone mentioned you
+- Weekly digest available
+
+**Smart Bundling:**
+Instead of 10 separate notifications:
+- ❌ "John commented" "Mike commented" "Sarah commented"...
+- ✅ "3 new comments on Q1 Project" [View All]
+
+**Quiet Hours:**
+- Weekdays: 8 PM - 8 AM (no push)
+- Weekends: All day (configurable)
+- Exception: 🔴 Urgent still gets through
+
+### 13.6 Integrated Calendar View
+
+**Features:**
+- Week/Month toggle
+- Color-coded events:
+  - 🏖️ Time-Off
+  - 📋 Task Due
+  - 🗓️ Meeting
+  - 🎂 Birthday
+- Upcoming events list
+- Click to view/edit details
+
+### 13.7 Personal Stats & Insights
+
+**Productivity Metrics:**
+- Tasks completed this month
+- On-time rate percentage
+- Weekly trend chart
+- Comparison to last month
+
+**Time-Off Usage:**
+- PTO days used vs total
+- Sick days used vs total
+- Visual progress bars
+- Tips: "You have 8 PTO days left. Plan before Dec 31!"
+
+### 13.8 Mobile-Optimized Workflows
+
+**Mobile Dashboard:**
+- Thumb-friendly action buttons
+- VPN connection status
+- Quick actions row
+- Collapsible task list
+- Time-off balance summary
+- Bottom navigation bar
+
+**Swipe Gestures:**
+
+| Element | Swipe Left | Swipe Right |
+|---------|------------|-------------|
+| Task | Edit/Delete | Complete ✓ |
+| Notification | Dismiss | Mark as Read |
+| Time-Off Request (Manager) | Deny | Approve |
+
+### 13.9 Time Savings Summary
+
+| Activity | Before | After | Daily Savings |
+|----------|--------|-------|---------------|
+| Task Management | 15 min/day | 2 min/day | 13 min |
+| Finding Information | 20 min/day | 30 sec/day | 19.5 min |
+| Time-Off Requests | 10 min | 1 min | 9 min |
+| Status Updates | 15 min/day | 0 min | 15 min (auto) |
+| Report Generation | 30 min/week | 0 min | Auto-generated |
+
+**TOTAL DAILY SAVINGS: ~45 minutes per employee**
+**MONTHLY SAVINGS: 15+ hours per employee**
+
+---
+
+**END OF SECTION 23 TECHNICAL SPECIFICATION**
+
+*This document contains complete technical specifications for the Enterprise Business Hub feature of TrueVault VPN. All database schemas, API endpoints, authentication flows, and component structures are defined here.*
