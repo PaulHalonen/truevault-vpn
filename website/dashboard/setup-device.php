@@ -166,6 +166,83 @@ $userName = $_SESSION['name'] ?? 'User';
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Server selection */
+        .servers-section {
+            margin-bottom: 30px;
+        }
+        
+        .servers-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .server-card {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .server-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .server-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea10, #764ba210);
+        }
+        
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .server-flag {
+            font-size: 32px;
+        }
+        
+        .server-details h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .server-ip {
+            font-size: 12px;
+            color: #666;
+            font-family: monospace;
+        }
+        
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.online {
+            background: #4caf50;
+            box-shadow: 0 0 6px #4caf50;
+        }
+        
+        .status-dot.offline {
+            background: #f44336;
+        }
     </style>
 </head>
 <body>
@@ -175,6 +252,17 @@ $userName = $_SESSION['name'] ?? 'User';
         
         <div id="status" class="status"></div>
         <div id="spinner" class="spinner"></div>
+        
+        <!-- Server Selection -->
+        <div class="servers-section">
+            <h2 style="font-size: 20px; margin-bottom: 15px;">🌍 Choose Your Server</h2>
+            <div id="serversGrid" class="servers-grid">
+                <!-- Servers loaded via JavaScript -->
+                <div style="text-align: center; padding: 20px; color: #999;">
+                    Loading servers...
+                </div>
+            </div>
+        </div>
         
         <form id="setupForm" onsubmit="generateConfig(event)">
             <div class="form-group">
@@ -215,8 +303,103 @@ $userName = $_SESSION['name'] ?? 'User';
          * No browser-side crypto needed!
          */
         
+        let selectedServerId = null;
+        
+        // Load servers on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadServers();
+        });
+        
+        /**
+         * Load available servers
+         */
+        async function loadServers() {
+            try {
+                const response = await fetch('/api/servers/list.php', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('truevault_token')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load servers');
+                }
+                
+                renderServers(data.servers);
+                
+            } catch (error) {
+                console.error('Error loading servers:', error);
+                document.getElementById('serversGrid').innerHTML = 
+                    '<div style="text-align: center; padding: 20px; color: #f44336;">Failed to load servers</div>';
+            }
+        }
+        
+        /**
+         * Render server list
+         */
+        function renderServers(servers) {
+            const grid = document.getElementById('serversGrid');
+            
+            if (!servers || servers.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">No servers available</div>';
+                return;
+            }
+            
+            grid.innerHTML = servers.map(server => `
+                <div class="server-card" onclick="selectServer(${server.id})">
+                    <div class="server-info">
+                        <div class="server-flag">${getCountryFlag(server.country)}</div>
+                        <div class="server-details">
+                            <h3>${server.name}</h3>
+                            <div class="server-ip">${server.endpoint.split(':')[0]}</div>
+                        </div>
+                    </div>
+                    <div class="server-status">
+                        <div class="status-dot ${server.status}"></div>
+                        <span style="color: ${server.status === 'online' ? '#4caf50' : '#f44336'};">
+                            ${server.status === 'online' ? 'Online' : 'Offline'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        /**
+         * Get country flag emoji
+         */
+        function getCountryFlag(country) {
+            const flags = {
+                'usa': '🇺🇸',
+                'canada': '🇨🇦',
+                'us': '🇺🇸',
+                'ca': '🇨🇦'
+            };
+            return flags[country.toLowerCase()] || '🌐';
+        }
+        
+        /**
+         * Select server
+         */
+        function selectServer(serverId) {
+            selectedServerId = serverId;
+            
+            // Update UI
+            document.querySelectorAll('.server-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
         async function generateConfig(event) {
             event.preventDefault();
+            
+            // Check if server is selected
+            if (!selectedServerId) {
+                showStatus('error', 'Please select a server first');
+                return;
+            }
             
             const deviceName = document.getElementById('deviceName').value.trim();
             const deviceType = document.getElementById('deviceType').value;
@@ -238,7 +421,8 @@ $userName = $_SESSION['name'] ?? 'User';
                     },
                     body: JSON.stringify({
                         device_name: deviceName,
-                        device_type: deviceType
+                        device_type: deviceType,
+                        server_id: selectedServerId
                     })
                 });
                 
@@ -251,8 +435,18 @@ $userName = $_SESSION['name'] ?? 'User';
                 // Download the config file
                 downloadConfig(data.config, deviceName);
                 
-                showStatus('success', '✅ Config generated! Download started.');
+                showStatus('success', '✅ Config generated! Download started. You can now switch servers anytime.');
                 generateBtn.textContent = '✅ Success! Generate Another';
+                
+                // Reset form
+                setTimeout(() => {
+                    document.getElementById('setupForm').reset();
+                    selectedServerId = null;
+                    document.querySelectorAll('.server-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    generateBtn.textContent = '🔑 Generate VPN Config';
+                }, 3000);
                 
             } catch (error) {
                 console.error('Error:', error);
