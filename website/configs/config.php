@@ -91,9 +91,9 @@ define('SESSION_LIFETIME', 604800);
 // SECURITY SETTINGS
 // ============================================
 
-// JWT Secret Key (IMPORTANT: Change this to a random string!)
-// Generate one at: https://randomkeygen.com/
-define('JWT_SECRET', 'CHANGE_THIS_TO_RANDOM_STRING'); // TODO: Change before launch!
+// JWT Secret Key (Cryptographically secure 256-bit key)
+// Generated: January 18, 2026
+define('JWT_SECRET', 'jBebDT3jAtJOUXyBSGXPVfG42XM4D9ZXSeaPCRsKbQtx2b-rZiIgpoaWj9eGUN2RqjM7-QfbrX-FvgKt7psnpw');
 
 // JWT Expiration (7 days in seconds)
 define('JWT_EXPIRATION', 604800);
