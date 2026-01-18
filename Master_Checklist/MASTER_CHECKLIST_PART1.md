@@ -4,6 +4,19 @@
 **Target:** Developers with ADHD - Clear, sequential, checkable tasks  
 **Status:** Setup & Database Phase (Week 1)  
 **Created:** January 15, 2026 - 7:40 AM CST  
+**Updated:** January 18, 2026 - 3:46 AM CST - Converted to SQLite3
+
+---
+
+## ⚠️ **CRITICAL: DATABASE CONFIGURATION**
+
+**This project uses SQLite3 class (NOT PDO)**
+
+- ✅ **Use:** `new SQLite3($dbFile)`  
+- ❌ **Don't use:** `new PDO('sqlite:' . $dbFile)`  
+- **Reason:** SQLite3 is native PHP extension, enabled on server
+
+**All code in this checklist has been updated to use SQLite3.**
 
 ---
 
