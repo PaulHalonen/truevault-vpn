@@ -669,3 +669,150 @@ FILES CREATED:
 
 NEXT: Task 4.3 - Create device provisioning/generate-config API
 
+
+[MORNING SESSION] - Task 4.3 STARTING
+
+USER: "next"
+
+PROCEEDING TO:
+Task 4.3: Device Provisioning/Generate Config API
+
+FILE: /api/devices/generate-config.php (or provision.php)
+PURPOSE: SERVER-SIDE WireGuard key generation and config creation
+ESTIMATED: ~350-380 lines, 15-20 minutes
+
+REQUIREMENTS:
+✅ JWT authentication
+✅ Accept: device_name, device_type, server_id
+✅ SERVER-SIDE WireGuard keypair generation (PHP sodium)
+✅ Allocate IP address from pool (10.8.0.x)
+✅ Store device in devices.db
+✅ Generate complete .conf file content
+✅ Return config for download
+✅ Support server selection
+✅ VIP user gets dedicated server automatically
+
+READING CHECKLIST NOW...
+
+
+[MORNING SESSION] - Task 4.3 COMPLETE
+
+CREATED: /api/devices/generate-config.php (365 lines)
+
+PURPOSE:
+Generate VPN device config with SERVER-SIDE WireGuard key generation
+
+CRITICAL ARCHITECTURE:
+✅ SERVER-SIDE key generation (NOT browser-side)
+✅ Uses PHP sodium extension for Curve25519 keypair
+✅ No JavaScript crypto libraries needed
+✅ Secure, simple, industry standard
+
+WORKFLOW:
+1. User selects server on frontend
+2. User enters device name and type
+3. Frontend calls /api/devices/generate-config.php
+4. API authenticates user (JWT)
+5. API checks device limits (3 standard, 5 pro, 999 vip)
+6. API verifies server availability
+7. API generates WireGuard keypair (SERVER-SIDE)
+8. API allocates IP address (10.8.0.x)
+9. API stores device in devices.db
+10. API generates complete .conf file
+11. API returns config content
+12. Frontend downloads .conf file
+13. User imports into WireGuard app
+14. DONE! (10 seconds total)
+
+FEATURES IMPLEMENTED:
+✅ JWT authentication
+✅ Input validation (device_name, device_type, server_id)
+✅ Device limit checking by tier
+✅ Server verification and availability check
+✅ Dedicated server validation (VIP only)
+✅ SERVER-SIDE WireGuard keypair generation (PHP sodium)
+✅ Automatic IP address allocation (with gap detection)
+✅ Database storage (devices.db)
+✅ Complete .conf file generation
+✅ Clean JSON response
+✅ Proper error handling
+✅ Security: sodium_memzero() clears sensitive keys from memory
+
+KEY GENERATION (SERVER-SIDE):
+```php
+$keypair = sodium_crypto_box_keypair();
+$privateKey = sodium_crypto_box_secretkey($keypair);
+$publicKey = sodium_crypto_box_publickey($keypair);
+$privateKeyBase64 = base64_encode($privateKey);
+$publicKeyBase64 = base64_encode($publicKey);
+sodium_memzero($keypair); // Clear from memory
+```
+
+IP ALLOCATION LOGIC:
+- Starts from pool_start (e.g., 10.8.0.2)
+- Increments pool_current
+- If pool exhausted, finds gaps from deleted devices
+- Updates server's ip_pool_current pointer
+
+CONFIG FILE FORMAT:
+```
+[Interface]
+PrivateKey = device_private_key
+Address = 10.8.0.2/32
+DNS = 1.1.1.1, 1.0.0.1
+
+[Peer]
+PublicKey = server_public_key
+Endpoint = 66.241.124.4:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25
+```
+
+API RESPONSE:
+{
+  "success": true,
+  "device": {
+    "id": 1,
+    "device_id": "dev_abc123",
+    "name": "iPhone",
+    "type": "mobile",
+    "ipv4_address": "10.8.0.2",
+    "server": "USA (Dallas)",
+    "created_at": "2026-01-18 14:05:00"
+  },
+  "config": "[Interface]\nPrivateKey=...\n[Peer]\n..."
+}
+
+DEVICE LIMITS BY TIER:
+- standard: 3 devices
+- pro: 5 devices
+- vip: 999 devices
+- admin: 999 devices
+
+VIP SPECIAL TREATMENT:
+✅ seige235@yahoo.com gets dedicated St. Louis server
+✅ Dedicated servers only visible to owner
+✅ Regular users get shared servers
+
+SECURITY FEATURES:
+✅ Private keys cleared from memory with sodium_memzero()
+✅ JWT authentication required
+✅ Input validation and sanitization
+✅ SQL injection prevention (prepared statements)
+✅ Device limit enforcement
+✅ Server availability checks
+
+FILES CREATED:
+✅ /api/devices/ directory
+✅ /api/devices/generate-config.php (365 lines)
+
+TESTING NEEDED:
+- Test with valid JWT token
+- Test device limit enforcement
+- Test server selection
+- Test IP allocation
+- Test config file generation
+- Test VIP dedicated server
+
+NEXT: Task 4.4 & 4.5 may not be needed since key generation is complete
+
