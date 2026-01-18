@@ -6,11 +6,24 @@
  * METHOD: POST
  * ENDPOINT: /api/auth/login.php
  * 
+ * INPUT (JSON):
+ * {
+ *   "email": "user@example.com",
+ *   "password": "SecurePass123"
+ * }
+ * 
+ * OUTPUT (JSON):
+ * {
+ *   "success": true,
+ *   "message": "Login successful",
+ *   "user": {...},
+ *   "token": "eyJhbGci..."
+ * }
+ * 
  * SECURITY FEATURES:
- * - Brute force protection (5 failed attempts = 15 minute lockout)
- * - Account status verification (suspended/cancelled blocked)
- * - Password verification with bcrypt
- * - Session management
+ * - Brute force protection (5 failed attempts = 15 min lockout)
+ * - Account status checking (suspended/cancelled)
+ * - Session tracking
  * - Security event logging
  * 
  * @created January 2026
@@ -90,9 +103,8 @@ try {
         [$email]
     );
     
-    // Check if user exists
+    // Check if user exists (don't reveal if email exists)
     if (!$user) {
-        // Don't reveal if email exists or not (security)
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -180,7 +192,7 @@ try {
                     $user['id'],
                     $_SERVER['REMOTE_ADDR'] ?? 'unknown',
                     $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-                    json_encode(['reason' => 'too_many_failed_attempts'])
+                    json_encode(['reason' => 'too_many_failed_attempts', 'attempts' => $loginAttempts])
                 ]
             );
             
@@ -220,9 +232,9 @@ try {
         }
     }
     
-    // PASSWORD IS CORRECT - LOGIN SUCCESS
+    // Password is correct - LOGIN SUCCESS
     
-    // Reset login attempts and update last login
+    // Reset login attempts
     Database::execute('users',
         "UPDATE users SET login_attempts = 0, locked_until = NULL, last_login = datetime('now') WHERE id = ?",
         [$user['id']]
@@ -276,6 +288,7 @@ try {
             'first_name' => $user['first_name'],
             'last_name' => $user['last_name'],
             'tier' => $user['tier'],
+            'status' => $user['status'],
             'email_verified' => (bool)$user['email_verified']
         ],
         'token' => $token
