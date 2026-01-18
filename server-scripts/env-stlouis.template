@@ -1,0 +1,12 @@
+# TrueVault VPN - St. Louis Server Configuration (VIP ONLY)
+# Copy to /opt/truevault/.env on server
+# NOTE: This server is DEDICATED to seige235@yahoo.com
+
+SERVER_NAME=st-louis
+SERVER_IP=144.126.133.253
+WG_PORT=51820
+API_PORT=8443
+SUBNET_BASE=10.8.1
+DNS=1.1.1.1, 1.0.0.1
+API_SECRET=GENERATE_A_UNIQUE_32_CHAR_SECRET_HERE
+DB_PATH=/opt/truevault/peers.db

@@ -2,6 +2,8 @@
 /**
  * TrueVault VPN - Database Helper Class
  * Uses native SQLite3 (available on GoDaddy)
+ * 
+ * @fixed January 17, 2026 - Added getInstance() and exists() methods
  */
 
 class Database {
@@ -20,6 +22,19 @@ class Database {
         'admin' => 'admin.db',
         'port_forwards' => 'port_forwards.db'
     ];
+    
+    /**
+     * Get singleton instance for a database
+     * 
+     * @param string $dbName Database name (main, users, devices, servers, billing, logs, support, admin)
+     * @return Database
+     */
+    public static function getInstance($dbName = 'main') {
+        if (!isset(self::$instances[$dbName])) {
+            self::$instances[$dbName] = new self($dbName);
+        }
+        return self::$instances[$dbName];
+    }
     
     public function __construct($dbName = 'main') {
         $this->dbName = $dbName;
@@ -66,8 +81,10 @@ class Database {
     public function queryAll($sql) {
         $result = $this->db->query($sql);
         $rows = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $rows[] = $row;
+        if ($result) {
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $rows[] = $row;
+            }
         }
         return $rows;
     }
@@ -79,6 +96,31 @@ class Database {
     
     public function queryValue($sql) {
         return $this->db->querySingle($sql);
+    }
+    
+    /**
+     * Check if a record exists
+     * 
+     * @param string $table Table name
+     * @param string $where WHERE clause
+     * @return bool
+     */
+    public function exists($table, $where) {
+        $sql = "SELECT 1 FROM {$table} WHERE {$where} LIMIT 1";
+        $result = $this->db->querySingle($sql);
+        return $result !== null && $result !== false;
+    }
+    
+    /**
+     * Count records
+     * 
+     * @param string $table Table name
+     * @param string $where Optional WHERE clause
+     * @return int
+     */
+    public function count($table, $where = '1=1') {
+        $sql = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
+        return (int)$this->db->querySingle($sql);
     }
     
     public function lastInsertId() {
@@ -123,6 +165,27 @@ class Database {
             $this->db = null;
         }
     }
+    
+    /**
+     * Begin transaction
+     */
+    public function beginTransaction() {
+        return $this->db->exec('BEGIN TRANSACTION');
+    }
+    
+    /**
+     * Commit transaction
+     */
+    public function commit() {
+        return $this->db->exec('COMMIT');
+    }
+    
+    /**
+     * Rollback transaction
+     */
+    public function rollback() {
+        return $this->db->exec('ROLLBACK');
+    }
 }
 
 /**
@@ -146,6 +209,8 @@ class DatabaseStatement {
                 $this->stmt->bindValue($index, null, SQLITE3_NULL);
             } elseif (is_int($value)) {
                 $this->stmt->bindValue($index, $value, SQLITE3_INTEGER);
+            } elseif (is_float($value)) {
+                $this->stmt->bindValue($index, $value, SQLITE3_FLOAT);
             } else {
                 $this->stmt->bindValue($index, $value, SQLITE3_TEXT);
             }
@@ -161,8 +226,10 @@ class DatabaseStatement {
     public function fetchAll() {
         $result = $this->stmt->execute();
         $rows = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $rows[] = $row;
+        if ($result) {
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $rows[] = $row;
+            }
         }
         return $rows;
     }
