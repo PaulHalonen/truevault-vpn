@@ -564,3 +564,108 @@ DATE: January 18, 2026
 SESSION END
 ---
 
+
+================================================================================
+MORNING SESSION START - January 18, 2026
+================================================================================
+
+USER: "Ok, I'm up. let's do 4.2 if 4.1 is completed"
+
+STATUS CHECK:
+✅ Task 4.1: setup-device.php (502 lines) - COMPLETE
+⏳ Task 4.2: /api/servers/list.php - STARTING NOW
+
+HANDOFF DOCUMENT REVIEWED:
+✅ Read session summary
+✅ Reviewed critical instructions
+✅ Confirmed architecture (SERVER-SIDE keys)
+✅ Confirmed server selection workflow
+✅ Ready to proceed with Task 4.2
+
+TASK 4.2 SPECIFICATIONS:
+File: /api/servers/list.php
+Purpose: Fetch available VPN servers from database
+Lines: ~100 lines
+Time: 10 minutes
+Requirements:
+- JWT authentication required
+- Read from servers.db
+- Return JSON with server details
+- Proper error handling
+
+WORKFLOW:
+1. Read MASTER_CHECKLIST_PART4.md Task 4.2 section
+2. Create /api/servers/list.php
+3. Implement JWT auth check
+4. Query servers.db for all servers
+5. Format JSON response
+6. Add error handling
+7. Test response format
+8. Update chat_log.txt
+9. Git commit
+10. Wait for confirmation
+
+STARTING TASK 4.2 NOW...
+
+
+[MORNING SESSION] - Task 4.2 COMPLETE
+
+CREATED: /api/servers/list.php (164 lines)
+
+PURPOSE:
+Return list of available VPN servers for frontend display
+
+FEATURES IMPLEMENTED:
+✅ JWT authentication required
+✅ Queries servers.db database
+✅ Filters dedicated servers (only show to owner)
+✅ Calculates load percentage
+✅ Orders by status (online first) and load
+✅ Returns clean JSON response
+✅ Proper error handling
+✅ CORS headers
+
+SPECIAL LOGIC:
+✅ Dedicated servers (is_dedicated = 1) only shown to dedicated_user_email
+✅ VIP user seige235@yahoo.com will ONLY see St. Louis dedicated server
+✅ Regular users see shared servers (New York, Dallas, Toronto)
+✅ Load percentage calculated: (current_load / max_users) * 100
+
+API RESPONSE FORMAT:
+{
+  "success": true,
+  "servers": [
+    {
+      "id": 1,
+      "name": "USA (Dallas)",
+      "country": "usa",
+      "region": "Dallas",
+      "endpoint": "66.241.124.4:51820",
+      "status": "online",
+      "load": 45,
+      "is_dedicated": false
+    }
+  ],
+  "count": 3
+}
+
+AUTHENTICATION:
+- Requires: Authorization: Bearer JWT_TOKEN
+- Validates user via Auth::require()
+- Returns 401 if not authenticated
+
+WORKFLOW:
+1. User opens setup-device.php
+2. JavaScript calls /api/servers/list.php with JWT
+3. API queries servers.db
+4. Filters servers (dedicated only for owner)
+5. Returns server list
+6. Frontend displays server cards
+7. User selects server before device setup
+
+FILES CREATED:
+✅ /api/servers/ directory
+✅ /api/servers/list.php (164 lines)
+
+NEXT: Task 4.3 - Create device provisioning/generate-config API
+
