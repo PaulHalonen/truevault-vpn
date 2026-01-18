@@ -560,22 +560,20 @@ curl -X POST https://vpn.the-truth-publishing.com/api/devices/provision.php \
 
 **Solutions:**
 
-1. **Check TweetNaCl.js Loaded:**
-   - View page source
-   - Verify `<script src="/assets/js/tweetnacl.min.js">` exists
-   - Check file exists on server
+1. **Check Server Key Generation:**
+   - Verify PHP sodium extension installed: `php -m | grep sodium`
+   - Test key generation: `php -r "echo base64_encode(random_bytes(32));"`
+   - Check error logs: `/var/log/php-errors.log`
 
 2. **Verify Server Keys:**
    - Admin panel → Settings → Servers
    - Each server must have public_key
    - Keys must be valid WireGuard keys
 
-3. **Test Key Generation:**
-   - Open browser console
-   - Run:
-   ```javascript
-   let keypair = nacl.box.keyPair();
-   console.log(keypair); // Should show keys
+3. **Test Key Generation API:**
+   - Call device provisioning endpoint
+   - Check response includes `private_key` and `public_key`
+   - Verify keys are valid base64 format
    ```
 
 4. **Check File Download Headers:**

@@ -408,7 +408,7 @@
 **User Features:**
 - ✅ Registration with VIP auto-detection
 - ✅ Email verification
-- ✅ 2-click device setup (browser key generation)
+- ✅ 1-click device setup (SERVER-SIDE key generation)
 - ✅ QR code for mobile devices
 - ✅ Multi-platform support (iOS, Android, Windows, Mac, Linux)
 - ✅ Server switching

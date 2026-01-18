@@ -786,8 +786,8 @@ try {
 **Total Lines Day 4:** ~1,120 lines
 
 ### **Features Completed:**
-- [ ] 2-click device setup interface
-- [ ] Browser-side WireGuard key generation
+- [ ] 1-click device setup interface (server-side keys)
+- [ ] SERVER-SIDE WireGuard key generation
 - [ ] Instant config file download
 - [ ] QR code for mobile devices
 - [ ] Device provisioning with IP allocation
@@ -828,7 +828,7 @@ try {
 
 ### **GitHub Commit:**
 - [ ] Commit all Day 4 files
-- [ ] Message: "Day 4 Complete - 2-click device setup system with browser key generation, instant provisioning, device management APIs"
+- [ ] Message: "Day 4 Complete - 1-click device setup with SERVER-SIDE key generation, instant provisioning, device management APIs"
 
 ---
 

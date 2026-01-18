@@ -1,21 +1,42 @@
 # TRUEVAULT VPN - MASTER BUILD CHECKLIST (Part 4)
 
-**Section:** Day 4 - Device Management & 2-Click Setup  
-**Lines This Section:** ~1,400 lines  
-**Time Estimate:** 8-10 hours  
+**Section:** Day 4 - Device Management & 1-CLICK Setup  
+**Lines This Section:** ~1,200 lines (CORRECTED)
+**Time Estimate:** 6-8 hours  
 **Created:** January 15, 2026 - 8:20 AM CST  
+**CORRECTED:** January 18, 2026 - 4:52 AM CST
 
 ---
 
-## DAY 4: DEVICE MANAGEMENT & 2-CLICK SETUP (Thursday)
+## 🚨 CRITICAL ARCHITECTURE CORRECTION - READ THIS FIRST
 
-### **Goal:** Implement the revolutionary 2-click device setup system
+**ORIGINAL (INCORRECT):**
+- ❌ Browser-side WireGuard key generation using TweetNaCl.js
+- ❌ Client-side JavaScript crypto
+- ❌ "2-click" workflow
+
+**CORRECTED (USE THIS):**
+- ✅ **SERVER-SIDE WireGuard key generation** (standard VPN practice)
+- ✅ Server creates complete config with embedded keys
+- ✅ "1-click" workflow (simpler, faster, more reliable)
+- ✅ No JavaScript crypto dependencies
+
+**IMPLEMENTATION:**
+Use **PHP server-side** key generation, NOT browser JavaScript.
+Server generates keypair, creates complete .conf file, user downloads immediately.
+
+---
+
+## DAY 4: DEVICE MANAGEMENT & 1-CLICK SETUP (Thursday)
+
+### **Goal:** Implement the revolutionary server-side 1-click device setup system
 
 **What makes this special:**
-- Browser generates WireGuard keys (no server delay)
-- Instant config download (30 seconds total)
+- **SERVER generates WireGuard keys** (standard VPN practice)
+- Instant config download (10 seconds total)
 - QR code for mobile devices
 - Multi-platform support
+- No JavaScript crypto dependencies
 
 ---
 
@@ -34,13 +55,13 @@
 /**
  * Device Setup Page
  * 
- * PURPOSE: 2-click device setup interface
- * FEATURES: Browser-side key generation, instant config download
+ * PURPOSE: 1-click device setup interface
+ * FEATURES: Server-side key generation, instant config download
  * 
  * USER FLOW:
  * 1. User enters device name (e.g., "iPhone")
- * 2. Clicks "Generate Keys" - browser creates WireGuard keypair
- * 3. Clicks "Download Config" - gets .conf file instantly
+ * 2. Clicks "Generate Config" - SERVER creates WireGuard keypair + complete config
+ * 3. Downloads .conf file instantly
  * 
  * @created January 2026
  * @version 1.0.0
@@ -1088,8 +1109,8 @@ try {
 **CHECKPOINT: Day 4 Afternoon Part 1 Complete**
 
 **Completed So Far:**
-- [ ] Beautiful 3-step setup interface
-- [ ] Browser-side key generation (TweetNaCl.js)
+- [ ] Beautiful setup interface (server-side key generation)
+- [ ] SERVER-SIDE WireGuard key generation (PHP)
 - [ ] Full provisioning API with IP allocation
 - [ ] QR code generation for mobile
 - [ ] Device limit enforcement by tier

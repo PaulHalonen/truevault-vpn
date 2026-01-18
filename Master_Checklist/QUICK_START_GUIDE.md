@@ -97,13 +97,13 @@ Make it run itself and look professional:
 **Files:** `MASTER_CHECKLIST_PART4.md` + `PART4_CONTINUED.md`
 
 **What you're doing:**
-1. Create 3-step device setup page
-2. Add browser key generation (TweetNaCl.js)
+1. Create device setup page
+2. Implement SERVER-SIDE key generation (PHP)
 3. Build device provisioning API
 4. Create device management APIs
 5. QR code generation
 
-**End goal:** Users can set up VPN in 30 seconds
+**End goal:** Users can set up VPN in 10 seconds
 
 **Test:** Device setup → Config downloads → QR code appears
 

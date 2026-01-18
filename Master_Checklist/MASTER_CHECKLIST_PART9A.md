@@ -307,7 +307,7 @@ class ServerAPI {
 
 ### 9A.7.2 Update Device Creation API
 - [ ] Modify `/api/devices/create.php` to use ServerAPI
-- [ ] Remove any browser-side key generation code
+- [ ] Use SERVER-SIDE key generation (PHP - already correct)
 - [ ] Return config and QR code from server response
 
 ### 9A.7.3 Test End-to-End
