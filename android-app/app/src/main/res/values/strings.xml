@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TrueVault Helper</string>
+    
+    <!-- Main Screen -->
+    <string name="welcome_title">Setup your VPN in seconds</string>
+    <string name="welcome_subtitle">Choose how you want to import your config</string>
+    
+    <!-- Action Cards -->
+    <string name="scan_screenshot_title">📸 Scan from Screenshot</string>
+    <string name="scan_screenshot_desc">Select a screenshot with QR code</string>
+    
+    <string name="scan_camera_title">📷 Scan with Camera</string>
+    <string name="scan_camera_desc">Point camera at desktop screen</string>
+    
+    <string name="fix_files_title">🔧 Fix Downloaded Configs</string>
+    <string name="fix_files_desc">Auto-fix .conf.txt files</string>
+    
+    <!-- QR Scanner -->
+    <string name="qr_scanner_title">Point at QR Code</string>
+    <string name="qr_processing">Processing QR code…</string>
+    <string name="qr_success">QR code scanned successfully!</string>
+    <string name="qr_error">Invalid QR code. Please try again.</string>
+    
+    <!-- Screenshot Scanner -->
+    <string name="screenshot_select">Select Screenshot</string>
+    <string name="screenshot_processing">Scanning for QR code…</string>
+    <string name="screenshot_success">Configuration extracted!</string>
+    <string name="screenshot_error">No QR code found in image</string>
+    
+    <!-- File Monitor -->
+    <string name="monitor_title">File Monitor Active</string>
+    <string name="monitor_desc">Watching for .conf.txt files</string>
+    <string name="monitor_start">Start Monitoring</string>
+    <string name="monitor_stop">Stop Monitoring</string>
+    <string name="monitor_found">Found config file!</string>
+    <string name="monitor_fixed">File fixed: %1$s</string>
+    
+    <!-- Import to WireGuard -->
+    <string name="import_title">Import to WireGuard</string>
+    <string name="import_message">Open WireGuard and import this config?</string>
+    <string name="import_success">Config ready to import</string>
+    <string name="import_error">Failed to prepare config</string>
+    <string name="wireguard_not_installed">WireGuard is not installed</string>
+    <string name="install_wireguard">Install WireGuard</string>
+    
+    <!-- Permissions -->
+    <string name="permission_camera">Camera access needed to scan QR codes</string>
+    <string name="permission_storage">Storage access needed to read screenshots</string>
+    <string name="permission_denied">Permission denied. Please enable in settings.</string>
+    
+    <!-- Buttons -->
+    <string name="btn_continue">Continue</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_settings">Settings</string>
+    <string name="btn_close">Close</string>
+    
+    <!-- Footer -->
+    <string name="version">Version %1$s</string>
+    <string name="support_link">Need help? Contact support</string>
+    <string name="support_email">paulhalonen@gmail.com</string>
+</resources>
