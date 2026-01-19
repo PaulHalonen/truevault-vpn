@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TrueVault VPN Pricing - Simple, transparent pricing. Personal $9.97, Family $14.97, Dedicated $39.97. USD & CAD pricing available.">
+    <title>Pricing - TrueVault VPN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        header { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top: 0; background: rgba(15,15,26,0.95); backdrop-filter: blur(10px); z-index: 1000; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-icon { font-size: 2rem; }
+        .logo-text { font-size: 1.5rem; font-weight: 700; background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav { display: flex; gap: 30px; align-items: center; }
+        nav a { color: #fff; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        nav a:hover { color: #00d9ff; }
+        
+        .btn { padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.2s; display: inline-block; border: none; cursor: pointer; font-size: 1rem; }
+        .btn-primary { background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,217,255,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+        
+        .hero { text-align: center; padding: 80px 20px 40px; }
+        .hero h1 { font-size: 3rem; margin-bottom: 15px; }
+        .hero p { font-size: 1.2rem; color: #aaa; margin-bottom: 40px; }
+        
+        .toggles { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
+        .toggle-group { display: flex; gap: 10px; align-items: center; }
+        .toggle-group label { color: #aaa; font-size: 0.9rem; }
+        .toggle-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden; display: flex; }
+        .toggle-btn button { padding: 10px 20px; background: transparent; border: none; color: #fff; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .toggle-btn button.active { background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; }
+        
+        .pricing-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; margin-bottom: 80px; }
+        .pricing-card { background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 40px; text-align: center; transition: all 0.3s; position: relative; }
+        .pricing-card:hover { transform: translateY(-10px); border-color: #00d9ff; }
+        .pricing-card.popular { border-color: #00ff88; }
+        .popular-badge { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; padding: 5px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+        
+        .plan-name { font-size: 1.8rem; margin-bottom: 20px; font-weight: 700; }
+        .price-display { margin-bottom: 30px; }
+        .price { font-size: 3.5rem; font-weight: 700; margin-bottom: 5px; }
+        .price-currency { font-size: 1.2rem; color: #aaa; vertical-align: super; }
+        .price-period { font-size: 1.2rem; color: #aaa; }
+        .price-note { color: #00ff88; font-size: 0.9rem; margin-top: 10px; }
+        
+        .features-list { list-style: none; margin-bottom: 30px; text-align: left; }
+        .features-list li { padding: 12px 0; padding-left: 30px; position: relative; color: #ccc; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .features-list li:last-child { border-bottom: none; }
+        .features-list li::before { content: '✓'; position: absolute; left: 0; color: #00ff88; font-weight: 700; font-size: 1.2rem; }
+        
+        .comparison-section { padding: 80px 20px; background: rgba(0,0,0,0.2); }
+        .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 60px; }
+        
+        .comparison-table { overflow-x: auto; margin-bottom: 80px; }
+        table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.03); border-radius: 12px; overflow: hidden; }
+        th, td { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { background: rgba(0,217,255,0.1); font-weight: 700; color: #00d9ff; }
+        td:first-child { text-align: left; font-weight: 600; }
+        .highlight-col { background: rgba(0,255,136,0.05); }
+        .check { color: #00ff88; font-size: 1.5rem; }
+        .cross { color: #ff6464; font-size: 1.5rem; }
+        
+        .faq-section { padding: 80px 20px; }
+        .faq-grid { display: grid; gap: 20px; max-width: 900px; margin: 0 auto; }
+        .faq-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 25px; }
+        .faq-question { font-size: 1.2rem; font-weight: 700; color: #00d9ff; margin-bottom: 10px; }
+        .faq-answer { color: #ccc; line-height: 1.8; }
+        
+        .final-cta { text-align: center; padding: 80px 20px; }
+        .final-cta h2 { font-size: 2.5rem; margin-bottom: 15px; }
+        .final-cta p { font-size: 1.2rem; color: #aaa; margin-bottom: 30px; }
+        
+        footer { padding: 60px 20px 30px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 80px; text-align: center; color: #666; }
+        
+        .hidden { display: none; }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            nav { display: none; }
+            .pricing-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">TrueVault VPN</span>
+                </a>
+                <nav>
+                    <a href="/">Home</a>
+                    <a href="/pricing.html">Pricing</a>
+                    <a href="/features.html">Features</a>
+                    <a href="/dashboard/">Login</a>
+                    <a href="/dashboard/signup.php" class="btn btn-primary">Start Free Trial</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Simple, Transparent Pricing</h1>
+            <p>No hidden fees. Cancel anytime. 7-day free trial on all plans.</p>
+            
+            <div class="toggles">
+                <div class="toggle-group">
+                    <label>Currency:</label>
+                    <div class="toggle-btn">
+                        <button class="currency-toggle active" data-currency="USD">USD</button>
+                        <button class="currency-toggle" data-currency="CAD">CAD</button>
+                    </div>
+                </div>
+                <div class="toggle-group">
+                    <label>Billing:</label>
+                    <div class="toggle-btn">
+                        <button class="billing-toggle active" data-billing="monthly">Monthly</button>
+                        <button class="billing-toggle" data-billing="annual">Annual (Save 2 Months!)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container">
+        <div class="pricing-cards">
+            <!-- Personal Plan -->
+            <div class="pricing-card">
+                <h2 class="plan-name">Personal</h2>
+                <div class="price-display">
+                    <div class="price-monthly">
+                        <div class="price usd-price">
+                            <span class="price-currency">$</span>9.97<span class="price-period">/mo</span>
+                        </div>
+                        <div class="price cad-price hidden">
+                            <span class="price-currency">$</span>13.47<span class="price-period">/mo</span>
+                        </div>
+                    </div>
+                    <div class="price-annual hidden">
+                        <div class="price usd-price">
+                            <span class="price-currency">$</span>99.70<span class="price-period">/yr</span>
+                        </div>
+                        <div class="price cad-price hidden">
+                            <span class="price-currency">$</span>134.70<span class="price-period">/yr</span>
+                        </div>
+                        <div class="price-note">Save 2 months!</div>
+                    </div>
+                </div>
+                <ul class="features-list">
+                    <li>3 Devices</li>
+                    <li>4 Server Locations</li>
+                    <li>Unlimited Bandwidth</li>
+                    <li>Port Forwarding</li>
+                    <li>Network Scanner</li>
+                    <li>Email Support</li>
+                    <li>7-Day Free Trial</li>
+                </ul>
+                <a href="/dashboard/signup.php?plan=personal" class="btn btn-secondary" style="width: 100%;">Start Free Trial</a>
+            </div>
+
+            <!-- Family Plan -->
+            <div class="pricing-card popular">
+                <span class="popular-badge">MOST POPULAR</span>
+                <h2 class="plan-name">Family</h2>
+                <div class="price-display">
+                    <div class="price-monthly">
+                        <div class="price usd-price">
+                            <span class="price-currency">$</span>14.97<span class="price-period">/mo</span>
+                        </div>
+                        <div class="price cad-price hidden">
+                            <span class="price-currency">$</span>20.21<span class="price-period">/mo</span>
+                        </div>
+                    </div>
+                    <div class="price-annual hidden">
+                        <div class="price usd-price">
+                            <span class="price-currency">$</span>149.70<span class="price-period">/yr</span>
+                        </div>
+                        <div class="price cad-price hidden">
+                            <span class="price-currency">$</span>202.10<span class="price-period">/yr</span>
+                        </div>
+                        <div class="price-note">Save 2 months!</div>
+                    </div>
+                </div>
+                <ul class="features-list">
+                    <li>10 Devices</li>
+                    <li>4 Server Locations</li>
+                    <li>Unlimited Bandwidth</li>
+                    <li>Port Forwarding</li>
+                    <li>Network Scanner</li>
+                    <li>Parental Controls</li>
+                    <li>Gaming Controls</li>
+                    <li>Calendar Scheduling</li>
+                    <li>Priority Support</li>
+                    <li>7-Day Free Trial</li>
+                </ul>
+                <a href="/dashboard/signup.php?plan=family" class="btn btn-primary" style="width: 100%;">Start Free Trial</a>
+            </div>
+
+            <!-- Dedicated Server -->
+            <div class="pricing-card">
+                <h2 class="plan-name">Dedicated Server</h2>
+                <div class="price-display">
+                    <div class="price-monthly">
+                        <div class="price usd-price">
+                            <span class="price-currency">$</span>39.97<span class="price-period">/mo</span>
+                        </div>
+                        <div class="price cad-price hidden">
+                            <span class="price-currency">$</span>53.96<span class="price-period">/mo</span>
+                        </div>
+                    </div>
+                    <div class="price-annual hidden">
+                        <div class="price usd-price">
+                            <span class="price-currency">$</span>399.70<span class="price-period">/yr</span>
+                        </div>
+                        <div class="price cad-price hidden">
+                            <span class="price-currency">$</span>539.60<span class="price-period">/yr</span>
+                        </div>
+                        <div class="price-note">Save 2 months!</div>
+                    </div>
+                </div>
+                <ul class="features-list">
+                    <li>Unlimited Devices</li>
+                    <li>Your Own Private Server</li>
+                    <li>Unlimited Bandwidth</li>
+                    <li>All Features Included</li>
+                    <li>Fastest Performance</li>
+                    <li>White-Glove Setup</li>
+                    <li>24/7 VIP Support</li>
+                    <li>7-Day Free Trial</li>
+                </ul>
+                <a href="/dashboard/signup.php?plan=dedicated" class="btn btn-secondary" style="width: 100%;">Start Free Trial</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="comparison-section">
+        <div class="container">
+            <h2 class="section-title">How We Compare</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th class="highlight-col">TrueVault</th>
+                            <th>NordVPN</th>
+                            <th>ExpressVPN</th>
+                            <th>Surfshark</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monthly Price</td>
+                            <td class="highlight-col">$9.97</td>
+                            <td>$12.99</td>
+                            <td>$12.95</td>
+                            <td>$12.95</td>
+                        </tr>
+                        <tr>
+                            <td>Port Forwarding</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>Network Scanner</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>Parental Controls</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>Calendar Scheduling</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>Gaming Controls</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>Dedicated Server Option</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                        <tr>
+                            <td>Zero Logs</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>7-Day Free Trial</td>
+                            <td class="highlight-col"><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="cross">✗</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">What's included in the free trial?</div>
+                    <div class="faq-answer">All features of your chosen plan are fully accessible during the 7-day trial. No credit card required to start. If you love it, upgrade to a paid plan. If not, no charges ever.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Can I cancel anytime?</div>
+                    <div class="faq-answer">Absolutely! Cancel from your dashboard with one click. No questions asked, no cancellation fees. You'll keep access until the end of your billing period.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Do you keep logs?</div>
+                    <div class="faq-answer">Never. We have a strict zero-logs policy. We don't track, collect, or store your browsing activity, connection times, IP addresses, or any personally identifiable information.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">What payment methods do you accept?</div>
+                    <div class="faq-answer">We accept all major credit cards (Visa, Mastercard, American Express, Discover) and PayPal through our secure payment processor.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Can I upgrade my plan later?</div>
+                    <div class="faq-answer">Yes! Upgrade or downgrade anytime from your dashboard. Changes take effect immediately, and we'll prorate the difference for fairness.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">What's the difference between plans?</div>
+                    <div class="faq-answer">Personal (3 devices, basic features), Family (10 devices + parental controls + gaming controls), Dedicated (unlimited devices + your own private server + VIP support).</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Is there a money-back guarantee?</div>
+                    <div class="faq-answer">The 7-day free trial serves as our guarantee. Try before you buy! If you're not satisfied after becoming a paid customer, contact us within 30 days for a full refund.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">How do I set up parental controls?</div>
+                    <div class="faq-answer">Parental controls are included in Family and Dedicated plans. After signing up, go to Dashboard > Parental Controls to set time limits, block categories, and schedule internet access with our visual calendar.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="final-cta">
+        <div class="container">
+            <h2>Ready to Get Started?</h2>
+            <p>Start your 7-day free trial today. No credit card required.</p>
+            <a href="/dashboard/signup.php" class="btn btn-primary" style="font-size: 1.2rem; padding: 15px 40px;">Start Free Trial Now</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 TrueVault VPN. All rights reserved.</p>
+            <p style="margin-top: 10px;">🛡️ Protecting your digital life since 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        // Currency Toggle
+        document.querySelectorAll('.currency-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active state
+                document.querySelectorAll('.currency-toggle').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show/hide prices
+                const currency = this.dataset.currency;
+                document.querySelectorAll('.usd-price').forEach(el => {
+                    el.classList.toggle('hidden', currency !== 'USD');
+                });
+                document.querySelectorAll('.cad-price').forEach(el => {
+                    el.classList.toggle('hidden', currency !== 'CAD');
+                });
+            });
+        });
+
+        // Billing Toggle
+        document.querySelectorAll('.billing-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active state
+                document.querySelectorAll('.billing-toggle').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show/hide pricing
+                const billing = this.dataset.billing;
+                document.querySelectorAll('.price-monthly').forEach(el => {
+                    el.classList.toggle('hidden', billing !== 'monthly');
+                });
+                document.querySelectorAll('.price-annual').forEach(el => {
+                    el.classList.toggle('hidden', billing !== 'annual');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
