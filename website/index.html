@@ -3,401 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TrueVault VPN - Your Complete Digital Fortress. 256-bit encryption, zero logging, 4 server locations. 7-day free trial.">
     <title>TrueVault VPN - Your Complete Digital Fortress</title>
-    <meta name="description" content="Advanced VPN service with port forwarding, network scanning, and dedicated servers for VIP users.">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f1a;
-            color: white;
-            line-height: 1.6;
-        }
-
-        .hero {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .hero-content {
-            max-width: 900px;
-        }
-
-        .hero h1 {
-            font-size: 56px;
-            margin-bottom: 20px;
-            font-weight: 800;
-            line-height: 1.2;
-        }
-
-        .hero-subtitle {
-            font-size: 24px;
-            margin-bottom: 40px;
-            opacity: 0.95;
-            font-weight: 300;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 16px 36px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 18px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: white;
-            color: #667eea;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 2px solid white;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .features {
-            padding: 100px 20px;
-            background: #1a1a2e;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 42px;
-            margin-bottom: 60px;
-            font-weight: 700;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
-        }
-
-        .feature-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-8px);
-            border-color: #667eea;
-        }
-
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-
-        .feature-title {
-            font-size: 24px;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-
-        .feature-description {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 16px;
-        }
-
-        .pricing {
-            padding: 100px 20px;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .pricing-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px;
-            border-radius: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .pricing-card:hover {
-            border-color: #667eea;
-            transform: translateY(-8px);
-        }
-
-        .pricing-card.featured {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-        }
-
-        .plan-name {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .plan-price {
-            font-size: 48px;
-            font-weight: 800;
-            margin: 20px 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .plan-period {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .plan-features {
-            list-style: none;
-            padding: 0;
-            margin: 30px 0;
-            text-align: left;
-        }
-
-        .plan-features li {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .plan-features li:before {
-            content: "✓ ";
-            color: #00ff88;
-            font-weight: 700;
-            margin-right: 8px;
-        }
-
-        .footer {
-            padding: 60px 20px;
-            background: #0f0f1a;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .footer-link {
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-link:hover {
-            color: white;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        header { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top: 0; background: rgba(15,15,26,0.95); backdrop-filter: blur(10px); z-index: 1000; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-icon { font-size: 2rem; }
+        .logo-text { font-size: 1.5rem; font-weight: 700; background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav { display: flex; gap: 30px; align-items: center; }
+        nav a { color: #fff; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        nav a:hover { color: #00d9ff; }
+        
+        .btn { padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.2s; display: inline-block; border: none; cursor: pointer; font-size: 1rem; }
+        .btn-primary { background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,217,255,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+        
+        .hero { text-align: center; padding: 100px 20px; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; line-height: 1.2; }
+        .hero h1 span { background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.3rem; color: #aaa; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto; }
+        .cta-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+        .trust-badges { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; color: #00ff88; font-size: 0.95rem; }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; padding: 60px 20px; background: rgba(0,217,255,0.05); border-radius: 20px; margin: 60px 0; }
+        .stat { text-align: center; }
+        .stat-num { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #00d9ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .stat-label { color: #aaa; font-size: 1rem; }
+        
+        .features { padding: 80px 20px; }
+        .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 60px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .feature-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; transition: all 0.3s; }
+        .feature-card:hover { transform: translateY(-5px); border-color: #00d9ff; }
+        .feature-icon { font-size: 2.5rem; margin-bottom: 15px; }
+        .feature-card h3 { font-size: 1.3rem; margin-bottom: 10px; color: #00d9ff; }
+        .feature-card p { color: #aaa; line-height: 1.7; }
+        
+        .pricing { padding: 80px 20px; background: rgba(0,0,0,0.2); }
+        .pricing-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 60px; }
+        .pricing-card { background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 40px 30px; text-align: center; transition: all 0.3s; }
+        .pricing-card:hover { transform: translateY(-10px); border-color: #00d9ff; }
+        .pricing-card.popular { border-color: #00ff88; position: relative; }
+        .popular-badge { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #00d9ff, #00ff88); color: #0f0f1a; padding: 5px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+        .price { font-size: 3rem; font-weight: 700; margin-bottom: 10px; }
+        .price span { font-size: 1.2rem; color: #aaa; }
+        .price-note { color: #aaa; font-size: 0.9rem; margin-bottom: 30px; }
+        
+        footer { padding: 60px 20px 30px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 80px; text-align: center; color: #666; }
+        
         @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 36px;
-            }
-
-            .hero-subtitle {
-                font-size: 18px;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
+            .hero h1 { font-size: 2.5rem; }
+            nav { display: none; }
         }
     </style>
 </head>
 <body>
-    <!-- Hero Section -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">TrueVault VPN</span>
+                </a>
+                <nav>
+                    <a href="/pricing.html">Pricing</a>
+                    <a href="/features.html">Features</a>
+                    <a href="/dashboard/">Login</a>
+                    <a href="/dashboard/signup.php" class="btn btn-primary">Start Free Trial</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
     <section class="hero">
-        <div class="hero-content">
-            <h1>🔐 TrueVault VPN</h1>
-            <p class="hero-subtitle">
-                Your Complete Digital Fortress - Advanced VPN with Port Forwarding, 
-                Network Scanning, and Dedicated Servers
-            </p>
+        <div class="container">
+            <h1>Your Complete <span>Digital Fortress</span></h1>
+            <p>Military-grade encryption meets business-class tools. Protect your privacy, secure your devices, and manage your digital life—all in one platform.</p>
+            
             <div class="cta-buttons">
-                <a href="/auth/register.php" class="btn btn-primary">Start Free Trial</a>
-                <a href="/auth/login.php" class="btn btn-secondary">Sign In</a>
+                <a href="/dashboard/signup.php" class="btn btn-primary">Start 7-Day Free Trial</a>
+                <a href="/pricing.html" class="btn btn-secondary">View Pricing</a>
+            </div>
+            
+            <div class="trust-badges">
+                <span>✓ 7-Day Free Trial</span>
+                <span>✓ No Credit Card</span>
+                <span>✓ Cancel Anytime</span>
+                <span>✓ 256-bit Encryption</span>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
+    <section class="container">
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-num">256-bit</div>
+                <div class="stat-label">Military Encryption</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">Zero</div>
+                <div class="stat-label">Data Logging</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">4</div>
+                <div class="stat-label">Server Locations</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">50+</div>
+                <div class="stat-label">Business Tools</div>
+            </div>
+        </div>
+    </section>
+
     <section class="features">
         <div class="container">
-            <h2 class="section-title">Revolutionary Features</h2>
+            <h2 class="section-title">Powerful Features, Simple Setup</h2>
+            
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3 class="feature-title">256-bit Encryption</h3>
-                    <p class="feature-description">
-                        Military-grade encryption protects all your data with WireGuard protocol
-                    </p>
+                    <div class="feature-icon">🚀</div>
+                    <h3>2-Click Setup</h3>
+                    <p>Connect any device in seconds with our QR code system. No technical knowledge required.</p>
                 </div>
-
+                
                 <div class="feature-card">
-                    <div class="feature-icon">🔌</div>
-                    <h3 class="feature-title">Port Forwarding</h3>
-                    <p class="feature-description">
-                        Access your home devices remotely with automatic port forwarding setup
-                    </p>
+                    <div class="feature-icon">🔐</div>
+                    <h3>256-bit Encryption</h3>
+                    <p>Military-grade security that keeps your data safe from hackers and surveillance.</p>
                 </div>
-
+                
                 <div class="feature-card">
-                    <div class="feature-icon">🔍</div>
-                    <h3 class="feature-title">Network Scanner</h3>
-                    <p class="feature-description">
-                        Discover all devices on your network including hidden IP cameras
-                    </p>
+                    <div class="feature-icon">🌍</div>
+                    <h3>4 Server Locations</h3>
+                    <p>USA (Texas, New York) and Canada (Toronto) for optimal speed and reliability.</p>
                 </div>
-
+                
                 <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3 class="feature-title">Zero Logs</h3>
-                    <p class="feature-description">
-                        We don't track, collect, or share your browsing data. Ever.
-                    </p>
+                    <div class="feature-icon">🚫</div>
+                    <h3>Zero Logging</h3>
+                    <p>We don't track, collect, or store any of your browsing data. Period.</p>
                 </div>
-
+                
                 <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
-                    <h3 class="feature-title">50+ Servers</h3>
-                    <p class="feature-description">
-                        Connect to servers worldwide for optimal speed and access
-                    </p>
+                    <div class="feature-icon">👨‍👩‍👧‍👦</div>
+                    <h3>Parental Controls</h3>
+                    <p>Schedule internet time, block categories, and protect kids online.</p>
                 </div>
-
+                
                 <div class="feature-card">
-                    <div class="feature-icon">🎮</div>
-                    <h3 class="feature-title">Gaming Optimized</h3>
-                    <p class="feature-description">
-                        Low-latency connections perfect for gaming and streaming
-                    </p>
+                    <div class="feature-icon">📡</div>
+                    <h3>Port Forwarding</h3>
+                    <p>Access security cameras, NAS, and home devices remotely.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Pricing Section -->
     <section class="pricing">
         <div class="container">
-            <h2 class="section-title">Choose Your Plan</h2>
-            <div class="pricing-grid">
-                <!-- Standard -->
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            
+            <div class="pricing-cards">
                 <div class="pricing-card">
-                    <div class="plan-name">Standard</div>
-                    <div class="plan-price">$9.99</div>
-                    <div class="plan-period">/month</div>
-                    <ul class="plan-features">
-                        <li>3 Devices</li>
-                        <li>All Locations</li>
-                        <li>Port Forwarding</li>
-                        <li>Network Scanner</li>
-                        <li>Email Support</li>
-                    </ul>
-                    <a href="/auth/register.php" class="btn btn-primary" style="width: 100%;">
-                        Get Started
-                    </a>
+                    <h3>Personal</h3>
+                    <div class="price">$9.97<span>/mo</span></div>
+                    <div class="price-note">or $99.97/year (2 months free)</div>
+                    <a href="/dashboard/signup.php?plan=personal" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Start Free Trial</a>
                 </div>
-
-                <!-- Pro (Featured) -->
-                <div class="pricing-card featured">
-                    <div class="plan-name">Pro</div>
-                    <div class="plan-price">$14.99</div>
-                    <div class="plan-period">/month</div>
-                    <ul class="plan-features">
-                        <li>5 Devices</li>
-                        <li>All Locations</li>
-                        <li>Port Forwarding</li>
-                        <li>Network Scanner</li>
-                        <li>Priority Support</li>
-                        <li>Advanced Analytics</li>
-                    </ul>
-                    <a href="/auth/register.php" class="btn btn-primary" style="width: 100%;">
-                        Most Popular
-                    </a>
+                
+                <div class="pricing-card popular">
+                    <span class="popular-badge">MOST POPULAR</span>
+                    <h3>Family</h3>
+                    <div class="price">$14.97<span>/mo</span></div>
+                    <div class="price-note">or $140.97/year (2 months free)</div>
+                    <a href="/dashboard/signup.php?plan=family" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Start Free Trial</a>
                 </div>
-
-                <!-- VIP -->
+                
                 <div class="pricing-card">
-                    <div class="plan-name">VIP</div>
-                    <div class="plan-price">$29.99</div>
-                    <div class="plan-period">/month</div>
-                    <ul class="plan-features">
-                        <li>Unlimited Devices</li>
-                        <li>Dedicated Server</li>
-                        <li>All Features</li>
-                        <li>24/7 VIP Support</li>
-                        <li>Premium Analytics</li>
-                        <li>Account Manager</li>
-                    </ul>
-                    <a href="/auth/register.php" class="btn btn-primary" style="width: 100%;">
-                        Go Premium
-                    </a>
+                    <h3>Dedicated Server</h3>
+                    <div class="price">$39.97<span>/mo</span></div>
+                    <div class="price-note">or $399.97/year (2 months free)</div>
+                    <a href="/dashboard/signup.php?plan=dedicated" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Start Free Trial</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-links">
-            <a href="/auth/login.php" class="footer-link">Sign In</a>
-            <a href="/auth/register.php" class="footer-link">Register</a>
-            <a href="mailto:support@truthvault.com" class="footer-link">Support</a>
-            <a href="mailto:paulhalonen@gmail.com" class="footer-link">Contact</a>
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 TrueVault VPN. All rights reserved.</p>
+            <p style="margin-top: 10px;">🛡️ Protecting your digital life since 2026</p>
         </div>
-        <p style="color: rgba(255,255,255,0.4); font-size: 14px;">
-            © 2026 TrueVault VPN. All rights reserved.
-        </p>
     </footer>
 </body>
 </html>
