@@ -293,6 +293,33 @@ $userName = $_SESSION['name'] ?? 'User';
                 🔑 Generate VPN Config
             </button>
         </form>
+        
+        <!-- Android Helper App Download (shows when mobile device selected or after config generation) -->
+        <div id="androidHelperSection" style="margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 12px; display: none;">
+            <h2 style="font-size: 20px; margin-bottom: 10px; color: #1976d2;">
+                📱 Android User? Download Helper App
+            </h2>
+            <p style="color: #555; margin-bottom: 15px; line-height: 1.6;">
+                The <strong>TrueVault Helper</strong> app solves the common ".conf.txt" file issue on Android. 
+                It lets you scan QR codes from screenshots and automatically fixes downloaded config files.
+            </p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="/downloads/TrueVault-Helper.apk" 
+                   download="TrueVault-Helper.apk"
+                   class="btn btn-primary" 
+                   style="background: #4caf50; text-decoration: none;">
+                    📥 Download Android Helper App
+                </a>
+                <a href="/downloads/README_APK_BUILD.md" 
+                   target="_blank"
+                   style="padding: 12px 20px; border: 2px solid #4caf50; color: #4caf50; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    ℹ️ Installation Help
+                </a>
+            </div>
+            <p style="margin-top: 15px; font-size: 13px; color: #777;">
+                <strong>Features:</strong> Scan QR from screenshots • Auto-fix .conf.txt files • One-tap import to WireGuard
+            </p>
+        </div>
     </div>
     
     <script>
@@ -308,6 +335,17 @@ $userName = $_SESSION['name'] ?? 'User';
         // Load servers on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadServers();
+            
+            // Show Android Helper section when mobile device type is selected
+            document.getElementById('deviceType').addEventListener('change', function() {
+                const androidHelperSection = document.getElementById('androidHelperSection');
+                if (this.value === 'mobile') {
+                    androidHelperSection.style.display = 'block';
+                    androidHelperSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    androidHelperSection.style.display = 'none';
+                }
+            });
         });
         
         /**
@@ -434,6 +472,19 @@ $userName = $_SESSION['name'] ?? 'User';
                 
                 // Download the config file
                 downloadConfig(data.config, deviceName);
+                
+                // Show Android Helper section if mobile device
+                if (deviceType === 'mobile') {
+                    document.getElementById('androidHelperSection').style.display = 'block';
+                    
+                    // Scroll to Android Helper section
+                    setTimeout(() => {
+                        document.getElementById('androidHelperSection').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                    }, 500);
+                }
                 
                 showStatus('success', '✅ Config generated! Download started. You can now switch servers anytime.');
                 generateBtn.textContent = '✅ Success! Generate Another';
