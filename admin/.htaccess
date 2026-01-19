@@ -1,0 +1,32 @@
+# Admin Panel - Security and Routing
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect config files
+<FilesMatch "config\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Force HTTPS (uncomment when SSL is active)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Session security
+php_flag session.cookie_httponly on
+php_flag session.cookie_secure on
+php_value session.gc_maxlifetime 3600
+
+# Disable PHP errors in production
+php_flag display_errors off
+php_flag display_startup_errors off

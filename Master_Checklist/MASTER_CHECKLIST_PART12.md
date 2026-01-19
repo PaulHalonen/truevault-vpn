@@ -1,741 +1,579 @@
-# MASTER CHECKLIST - PART 12: ENTERPRISE BUSINESS HUB
-**Estimated Time:** 40-60 hours (5-8 weeks)  
-**Prerequisites:** Parts 1-11 complete  
-**Blueprint Reference:** MASTER_BLUEPRINT/SECTION_23_ENTERPRISE_BUSINESS_HUB.md
+# MASTER CHECKLIST - PART 12: FRONTEND LANDING PAGES
+
+**Created:** January 18, 2026 - 9:50 PM CST  
+**Status:** ⏳ NOT STARTED  
+**Priority:** 🚨 CRITICAL - LAUNCH BLOCKER  
+**Estimated Time:** 5-6 hours  
 
 ---
 
-## 📋 TABLE OF CONTENTS
+## 📋 OVERVIEW
 
-- [Phase 12.1: Project Setup](#phase-121-project-setup)
-- [Phase 12.2: Database Initialization](#phase-122-database-initialization)
-- [Phase 12.3: Server Infrastructure](#phase-123-server-infrastructure)
-- [Phase 12.4: Authentication System](#phase-124-authentication-system)
-- [Phase 12.5: Employee Management API](#phase-125-employee-management-api)
-- [Phase 12.6: Time-Off System](#phase-126-time-off-system)
-- [Phase 12.7: VPN Device Management](#phase-127-vpn-device-management)
-- [Phase 12.8: Admin System](#phase-128-admin-system)
-- [Phase 12.9: DataForge Builder](#phase-129-dataforge-builder)
-- [Phase 12.10: WebSocket Real-Time](#phase-1210-websocket-real-time)
-- [Phase 12.11: Frontend Foundation](#phase-1211-frontend-foundation)
-- [Phase 12.12: Frontend Pages](#phase-1212-frontend-pages)
-- [Phase 12.13: Testing & Deployment](#phase-1213-testing--deployment)
+Build all public-facing landing pages that customers see BEFORE logging in.
 
----
+**Why This Was Missed:**
+- Part 8 built the **tools** (page builder, CMS)
+- But forgot to build the **product** (actual pages)
+- Classic mistake: confusing admin tools with customer experience
 
-## PHASE 12.1: PROJECT SETUP
-**Time:** 2-3 hours
-
-### 12.1.1 Create Project Structure
-- [ ] Create `enterprise-hub/` folder
-- [ ] Create `enterprise-hub/server/` folder
-- [ ] Create `enterprise-hub/frontend/` folder
-- [ ] Create `enterprise-hub/server/src/` folder
-- [ ] Create `enterprise-hub/server/database/` folder
-- [ ] Create `enterprise-hub/server/data/` folder (gitignored)
-
-**Verification:** Folder structure matches Section 23.12 File Structure
-
-### 12.1.2 Initialize Server Package
-- [ ] Create `server/package.json`:
-```json
-{
-  "name": "truevault-enterprise-server",
-  "version": "1.0.0",
-  "description": "TrueVault Enterprise Business Hub - Backend Server",
-  "main": "src/index.js",
-  "type": "module",
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
-    "db:init": "node src/scripts/init-db.js",
-    "db:seed": "node src/scripts/seed-db.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "better-sqlite3": "^9.4.3",
-    "bcrypt": "^5.1.1",
-    "jsonwebtoken": "^9.0.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
-    "zod": "^3.22.4",
-    "dotenv": "^16.4.1",
-    "socket.io": "^4.7.4",
-    "nodemailer": "^6.9.8",
-    "qrcode": "^1.5.3",
-    "uuid": "^9.0.1",
-    "pino": "^8.17.2",
-    "pino-pretty": "^10.3.1"
-  },
-  "engines": {
-    "node": ">=20.0.0"
-  }
-}
-```
-
-### 12.1.3 Create Environment Configuration
-- [ ] Create `server/.env.example` (see Appendix B in Section 23)
-- [ ] Create `server/.gitignore`:
-```
-node_modules/
-data/
-.env
-*.log
-```
-
-### 12.1.4 Install Dependencies
-- [ ] Run `cd server && npm install`
-- [ ] Verify all packages installed without errors
-
-**Verification:** `npm ls` shows all dependencies installed
+**What This Includes:**
+- Homepage with VPN education
+- Pricing page with USD/CAD pricing
+- Features page
+- About, Contact, Legal pages
+- Reusable components (header, footer)
+- Section templates for page builder
 
 ---
 
-## PHASE 12.2: DATABASE INITIALIZATION
-**Time:** 3-4 hours
+## 🎯 REQUIREMENTS FROM USER
 
-### 12.2.1 Create company.db Schema
-- [ ] Create `server/database/schema-company.sql`
-- [ ] Add roles table (see Section 23.4.1)
-- [ ] Add permissions table
-- [ ] Add role_permissions table
-- [ ] Add departments table
-- [ ] Add positions table
-- [ ] Add employees table with all columns
-- [ ] Add employee_emergency_contacts table
-- [ ] Add sessions table
-- [ ] Add password_resets table
-- [ ] Add invitations table
-- [ ] Add vpn_devices table
-- [ ] Add announcements table
-- [ ] Add company_settings table
-- [ ] Add notifications table
-- [ ] Add all indexes
+### **Pricing Requirements:**
+✅ Personal Plan: **$9.97 USD** / **$13.47 CAD**  
+✅ Family Plan: **$14.97 USD** / **$20.21 CAD**  
+✅ Dedicated Server: **$39.97 USD** / **$53.96 CAD**  
+✅ USD & CAD same font size (equal importance)  
+✅ Monthly/Annual toggle (2 months free on annual)  
+❌ **NO VIP tier advertised** (hidden internal only)  
 
-**Verification:** SQL file contains all tables from Section 23.4.1
-
-### 12.2.2 Create hr.db Schema
-- [ ] Create `server/database/schema-hr.sql`
-- [ ] Add compensation table
-- [ ] Add time_off_types table
-- [ ] Add time_off_balances table
-- [ ] Add time_off_requests table
-- [ ] Add documents table
-- [ ] Add review_cycles table
-- [ ] Add reviews table
-- [ ] Add hr_notes table
-- [ ] Add holidays table
-- [ ] Add all indexes
-
-**Verification:** SQL file contains all tables from Section 23.4.2
-
-### 12.2.3 Create dataforge.db Schema
-- [ ] Create `server/database/schema-dataforge.sql`
-- [ ] Add tables table
-- [ ] Add fields table
-- [ ] Add records table
-- [ ] Add table_permissions table
-- [ ] Add views table
-- [ ] Add templates table
-- [ ] Add all indexes
-
-**Verification:** SQL file contains all tables from Section 23.4.3
-
-### 12.2.4 Create audit.db Schema
-- [ ] Create `server/database/schema-audit.sql`
-- [ ] Add audit_log table
-- [ ] Add login_attempts table
-- [ ] Add all indexes
-
-**Verification:** SQL file contains all tables from Section 23.4.4
-
-### 12.2.5 Create Seed Data
-- [ ] Create `server/database/seed-data.sql`
-- [ ] Add 7 default roles (see Appendix A in Section 23)
-- [ ] Add 50+ permissions (see Section 23.5.2)
-- [ ] Add role_permissions mappings for each role
-- [ ] Add default time_off_types (6 types)
-- [ ] Add default company_settings
-
-**Verification:** Seed file contains all data from Appendix A
-
-### 12.2.6 Create Database Initialization Script
-- [ ] Create `server/src/scripts/init-db.js`
-- [ ] Read and execute each schema SQL file
-- [ ] Read and execute seed-data.sql
-- [ ] Handle errors gracefully
-- [ ] Log progress
-
-**Verification:** Running `npm run db:init` creates all 4 databases with tables
+### **Content Requirements:**
+✅ What is a VPN (education section)  
+✅ Why you need a VPN (privacy, security, freedom)  
+✅ All features listed  
+✅ Competitor comparison table  
+✅ Multiple CTAs (call-to-action)  
+✅ Trust badges  
 
 ---
 
-## PHASE 12.3: SERVER INFRASTRUCTURE
-**Time:** 4-5 hours
+## 🔧 TASK 12.1: Create Homepage (index.php)
 
-### 12.3.1 Create Database Configuration Module
-- [ ] Create `server/src/config/database.js`
-- [ ] Initialize better-sqlite3 connections for all 4 databases
-- [ ] Enable foreign keys
-- [ ] Export db objects: companyDb, hrDb, dataforgeDb, auditDb
+**Time:** 2 hours  
+**Lines:** ~600 lines  
+**File:** `/website/index.php`
 
-**Code Reference:**
-```javascript
-import Database from 'better-sqlite3';
-import path from 'path';
+### **Sections to Include:**
 
-const dbPath = process.env.DB_PATH || './data';
+**1. Hero Section**
+- [ ] Eye-catching headline
+- [ ] Subheadline explaining TrueVault
+- [ ] Primary CTA: "Start Free Trial"
+- [ ] Secondary CTA: "View Pricing"
+- [ ] Trust badges (7-day trial, no credit card, etc.)
 
-export const companyDb = new Database(path.join(dbPath, 'company.db'));
-companyDb.pragma('journal_mode = WAL');
-companyDb.pragma('foreign_keys = ON');
+**2. What is a VPN Section**
+- [ ] Simple explanation of VPN
+- [ ] Visual diagram (encrypted tunnel)
+- [ ] 3-4 key benefits highlighted
+- [ ] "Without VPN" vs "With VPN" comparison
 
-// Similar for hr, dataforge, audit databases
-```
+**3. Why You Need a VPN**
+- [ ] Privacy: Stop ISP tracking
+- [ ] Security: Protect on public WiFi
+- [ ] Freedom: Access geo-blocked content
+- [ ] Parental Controls: Protect kids online
+- [ ] Remote Access: Port forwarding for devices
 
-### 12.3.2 Create Environment Configuration
-- [ ] Create `server/src/config/env.js`
-- [ ] Load dotenv
-- [ ] Export configuration object with validation
+**4. Features Grid**
+- [ ] 15+ feature cards with icons
+- [ ] Each card: Icon, Title, Description
+- [ ] Features include:
+  - 256-bit encryption
+  - Zero logs policy
+  - Port forwarding
+  - Network scanner
+  - Parental controls with calendar
+  - Gaming server controls
+  - 4 server locations
+  - WireGuard protocol
+  - 2-click device setup
+  - Android helper app
+  - Family sharing
+  - 7-day free trial
+  - Email notifications
+  - Activity logs
+  - 24/7 support
 
-### 12.3.3 Create Error Handler Middleware
-- [ ] Create `server/src/middleware/errorHandler.js`
-- [ ] Create ApiError class with status codes
-- [ ] Create error factory functions (badRequest, unauthorized, etc.)
-- [ ] Create asyncHandler wrapper
-- [ ] Handle Zod validation errors
-- [ ] Handle SQLite errors
-- [ ] Handle JWT errors
-- [ ] Log errors with pino
+**5. Pricing Preview**
+- [ ] 3 pricing cards
+- [ ] Personal, Family, Dedicated
+- [ ] Monthly pricing only
+- [ ] "View Full Pricing" CTA
 
-**Code Reference:**
-```javascript
-export class ApiError extends Error {
-  constructor(status, message, details = null) {
-    super(message);
-    this.status = status;
-    this.details = details;
-  }
-}
+**6. Competitor Comparison Table**
+- [ ] TrueVault vs Traditional VPNs
+- [ ] Feature checklist (checkmarks for us, X for them)
+- [ ] Features to compare:
+  - Multi-IP addresses
+  - Persistent regional identities
+  - Personal certificate authority
+  - Family/Team mesh network
+  - Decentralized architecture
+  - AI-powered routing
+  - Port forwarding
+  - Network scanner
+  - Parental calendar controls
+  - You control the keys
 
-export const Errors = {
-  badRequest: (msg) => new ApiError(400, msg),
-  unauthorized: (msg = 'Unauthorized') => new ApiError(401, msg),
-  forbidden: (msg = 'Forbidden') => new ApiError(403, msg),
-  notFound: (msg = 'Not found') => new ApiError(404, msg),
-  conflict: (msg) => new ApiError(409, msg),
-  internal: (msg = 'Internal server error') => new ApiError(500, msg)
-};
-```
+**7. How It Works**
+- [ ] 3-step process
+- [ ] Step 1: Sign up (7-day trial)
+- [ ] Step 2: Download config (2-click setup)
+- [ ] Step 3: Connect & browse safely
+- [ ] Visual diagram
 
-### 12.3.4 Create Server Entry Point
-- [ ] Create `server/src/index.js`
-- [ ] Import and configure Express
-- [ ] Add helmet security headers
-- [ ] Add cors configuration
-- [ ] Add morgan logging
-- [ ] Add JSON body parser
-- [ ] Mount all route files
-- [ ] Add error handler middleware
-- [ ] Create HTTP server
-- [ ] Initialize Socket.io
-- [ ] Start server on configured port
+**8. Trust & Security**
+- [ ] Security badges
+- [ ] "No logs" policy highlight
+- [ ] WireGuard protocol badge
+- [ ] Server locations map
+- [ ] Testimonial quotes (if available)
 
-**Verification:** Server starts without errors on `npm run dev`
+**9. Final CTA Section**
+- [ ] Large heading: "Ready to protect your privacy?"
+- [ ] Subtext: "Start your 7-day free trial today"
+- [ ] Primary CTA button
+- [ ] "No credit card required" text
 
----
+**10. Footer**
+- [ ] Navigation links
+- [ ] Social media icons
+- [ ] Copyright
+- [ ] Contact email
+- [ ] Legal links (Terms, Privacy)
 
-## PHASE 12.4: AUTHENTICATION SYSTEM
-**Time:** 5-6 hours
+### **Code Structure:**
+```php
+<?php
+define('TRUEVAULT_INIT', true);
+require_once 'configs/config.php';
+require_once 'includes/Theme.php';
+require_once 'includes/Content.php';
 
-### 12.4.1 Create Auth Middleware
-- [ ] Create `server/src/middleware/auth.js`
-- [ ] Extract JWT from Authorization header
-- [ ] Verify token signature and expiration
-- [ ] Load session from database
-- [ ] Load employee with role and permissions
-- [ ] Attach user to request object
-- [ ] Export requireAuth middleware
-- [ ] Export requirePermission middleware factory
-- [ ] Export requireRole middleware factory
-
-**Code Reference:**
-```javascript
-export const requireAuth = async (req, res, next) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) return next(Errors.unauthorized('No token provided'));
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const session = companyDb.prepare('SELECT * FROM sessions WHERE id = ? AND is_active = 1').get(decoded.session_id);
-    if (!session) return next(Errors.unauthorized('Session invalid'));
+$theme = Theme::getActiveTheme();
+$colors = Theme::getAllColors();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><?= Content::get('site_title') ?> - Complete Digital Privacy</title>
+    <style>
+        /* Use theme colors from database */
+        :root {
+            --primary: <?= $colors['primary'] ?>;
+            --secondary: <?= $colors['secondary'] ?>;
+            /* ... all theme colors */
+        }
+        /* Responsive CSS */
+    </style>
+</head>
+<body>
+    <?php include 'includes/header.php'; ?>
     
-    const employee = companyDb.prepare(`
-      SELECT e.*, r.name as role_name, r.level as role_level
-      FROM employees e
-      JOIN roles r ON e.role_id = r.id
-      WHERE e.id = ? AND e.is_active = 1
-    `).get(decoded.sub);
+    <!-- Hero -->
+    <section class="hero">...</section>
     
-    const permissions = companyDb.prepare(`
-      SELECT p.name FROM permissions p
-      JOIN role_permissions rp ON p.id = rp.permission_id
-      WHERE rp.role_id = ?
-    `).all(employee.role_id).map(p => p.name);
+    <!-- What is VPN -->
+    <section class="what-is-vpn">...</section>
     
-    req.user = { ...employee, permissions };
-    next();
-  } catch (err) {
-    next(Errors.unauthorized('Invalid token'));
-  }
-};
-
-export const requirePermission = (permission) => (req, res, next) => {
-  if (!req.user.permissions.includes(permission)) {
-    return next(Errors.forbidden(`Missing permission: ${permission}`));
-  }
-  next();
-};
+    <!-- Why You Need VPN -->
+    <section class="why-vpn">...</section>
+    
+    <!-- Features -->
+    <section class="features">...</section>
+    
+    <!-- Pricing Preview -->
+    <section class="pricing-preview">...</section>
+    
+    <!-- Comparison Table -->
+    <section class="comparison">...</section>
+    
+    <!-- How It Works -->
+    <section class="how-it-works">...</section>
+    
+    <!-- Trust -->
+    <section class="trust">...</section>
+    
+    <!-- Final CTA -->
+    <section class="final-cta">...</section>
+    
+    <?php include 'includes/footer.php'; ?>
+</body>
+</html>
 ```
 
-### 12.4.2 Create Auth Routes
-- [ ] Create `server/src/routes/auth.js`
-- [ ] POST /login - Verify credentials, create session, return JWT
-- [ ] POST /logout - Invalidate session
-- [ ] GET /me - Return current user data
-- [ ] POST /password/change - Change password
-- [ ] POST /password/reset-request - Send reset email
-- [ ] POST /password/reset - Reset with token
-- [ ] POST /refresh - Refresh JWT token
-- [ ] GET /sessions - List user's sessions
-- [ ] DELETE /sessions/:id - Revoke session
-
-**See Section 23.6.1 for request/response formats**
-
-### 12.4.3 Create Audit Logging Middleware
-- [ ] Create `server/src/middleware/audit.js`
-- [ ] Log all create/update/delete operations
-- [ ] Record old values and new values
-- [ ] Include user ID, IP address, timestamp
-
-**Verification:** Login works, JWT returned, /me returns user data
+### **Verification:**
+- [ ] All 10 sections display
+- [ ] Theme colors apply
+- [ ] Responsive on mobile
+- [ ] All CTAs link correctly
+- [ ] Images load
+- [ ] No hardcoded values
+- [ ] Fast page load (<2 seconds)
 
 ---
 
-## PHASE 12.5: EMPLOYEE MANAGEMENT API
-**Time:** 4-5 hours
+## 🔧 TASK 12.2: Create Pricing Page (pricing.php)
 
-### 12.5.1 Create Employee Routes
-- [ ] Create `server/src/routes/employees.js`
-- [ ] GET / - List employees with search/filter/pagination
-- [ ] GET /:id - Get employee details
-- [ ] POST / - Create employee (HR+)
-- [ ] PATCH /:id - Update employee
-- [ ] POST /:id/deactivate - Deactivate employee (HR+)
-- [ ] POST /:id/emergency-contacts - Add emergency contact
-- [ ] DELETE /:id/emergency-contacts/:contactId - Remove contact
+**Time:** 1.5 hours  
+**Lines:** ~400 lines  
+**File:** `/website/pricing.php`
 
-**Permission Checks:**
-- View directory: employees.view
-- View details: employees.view.details
-- Create: employees.create
-- Update self: employees.update.own
-- Update others: employees.update
-- Deactivate: employees.deactivate
+### **Sections to Include:**
 
-**See Section 23.6.2 for request/response formats**
+**1. Hero Section**
+- [ ] "Simple, Transparent Pricing"
+- [ ] "No hidden fees. Cancel anytime."
+- [ ] Currency toggle: USD | CAD
+- [ ] Billing toggle: Monthly | Annual (save 2 months!)
 
-### 12.5.2 Implement Manager Access Control
-- [ ] Managers can only see direct reports
-- [ ] HR can see all employees
-- [ ] Employees can only see limited directory info
+**2. Pricing Cards (3 plans)**
 
-**Verification:** All employee endpoints work with correct permissions
+**Personal Plan:**
+- [ ] $9.97 USD / **$13.47 CAD** monthly
+- [ ] $99.70 USD / **$134.70 CAD** annual (2 months free)
+- [ ] 3 devices
+- [ ] All locations
+- [ ] Port forwarding
+- [ ] Network scanner
+- [ ] Email support
+- [ ] 7-day free trial
+- [ ] "Start Free Trial" CTA
 
----
+**Family Plan:**
+- [ ] $14.97 USD / **$20.21 CAD** monthly
+- [ ] $149.70 USD / **$202.10 CAD** annual (2 months free)
+- [ ] 10 devices
+- [ ] All locations
+- [ ] Port forwarding
+- [ ] Network scanner
+- [ ] Parental controls
+- [ ] Gaming controls
+- [ ] Calendar scheduling
+- [ ] Priority support
+- [ ] 7-day free trial
+- [ ] "Most Popular" badge
+- [ ] "Start Free Trial" CTA
 
-## PHASE 12.6: TIME-OFF SYSTEM
-**Time:** 4-5 hours
+**Dedicated Server:**
+- [ ] $39.97 USD / **$53.96 CAD** monthly
+- [ ] $399.70 USD / **$539.60 CAD** annual (2 months free)
+- [ ] Unlimited devices
+- [ ] Your own dedicated server
+- [ ] All features
+- [ ] Fastest speeds
+- [ ] 24/7 priority support
+- [ ] 7-day free trial
+- [ ] "Contact Sales" CTA
 
-### 12.6.1 Create Time-Off Routes
-- [ ] Create `server/src/routes/timeoff.js`
-- [ ] GET /types - List time-off types
-- [ ] GET /balances - Get user's balances
-- [ ] GET /requests - Get user's requests
-- [ ] POST /requests - Submit time-off request
-- [ ] POST /requests/:id/cancel - Cancel pending request
-- [ ] POST /requests/:id/review - Approve/deny (Manager+)
-- [ ] GET /team - Get team's requests (Manager+)
-- [ ] GET /calendar - Get team calendar view
+**3. Competitor Comparison Table**
+- [ ] Feature-by-feature comparison
+- [ ] TrueVault vs NordVPN vs ExpressVPN vs Surfshark
+- [ ] Rows for each feature:
+  - Price (monthly)
+  - Price (annual with discount)
+  - Number of devices
+  - Port forwarding
+  - Network scanner
+  - Parental controls
+  - Gaming controls
+  - Server locations
+  - Free trial
+  - Zero logs
+  - WireGuard protocol
+  - Android helper app
+  - Calendar scheduling
+  - Dedicated server option
+  - Family mesh network
+- [ ] Checkmarks ✓ for Yes, ✗ for No
+- [ ] Highlight TrueVault column
 
-**Business Logic:**
-- [ ] Calculate total days (accounting for half-days)
-- [ ] Check sufficient balance
-- [ ] Check for date overlaps
-- [ ] Auto-approve if type doesn't require approval
-- [ ] Update pending balance on submit
-- [ ] Update used balance on approval
-- [ ] Notify manager on submit
-- [ ] Notify employee on review
+**4. Feature Comparison Matrix**
+- [ ] All features listed
+- [ ] Which plan includes what
+- [ ] Visual checkmarks
 
-**See Section 23.6.3 for request/response formats**
+**5. FAQ Section**
+- [ ] "What's included in the free trial?"
+- [ ] "Can I cancel anytime?"
+- [ ] "Do you keep logs?"
+- [ ] "What payment methods do you accept?"
+- [ ] "Can I upgrade my plan later?"
+- [ ] "What's the difference between plans?"
+- [ ] "Is there a money-back guarantee?"
+- [ ] "How do I set up parental controls?"
 
-**Verification:** Can submit, approve, deny, and cancel time-off requests
+**6. Final CTA**
+- [ ] "Ready to get started?"
+- [ ] "Start your 7-day free trial"
+- [ ] "No credit card required"
 
----
+### **JavaScript for Toggles:**
+```javascript
+// Currency toggle
+const currencyToggle = document.getElementById('currency-toggle');
+currencyToggle.addEventListener('change', (e) => {
+    const currency = e.target.value;
+    document.querySelectorAll('.price-usd').forEach(el => {
+        el.style.display = currency === 'USD' ? 'inline' : 'none';
+    });
+    document.querySelectorAll('.price-cad').forEach(el => {
+        el.style.display = currency === 'CAD' ? 'inline' : 'none';
+    });
+});
 
-## PHASE 12.7: VPN DEVICE MANAGEMENT
-**Time:** 3-4 hours
-
-### 12.7.1 Create VPN Routes
-- [ ] Create `server/src/routes/vpn.js`
-- [ ] GET /devices - List user's devices
-- [ ] POST /devices - Add new device
-- [ ] GET /devices/:id/config - Get WireGuard config
-- [ ] DELETE /devices/:id - Remove device
-- [ ] GET /admin/devices - List all devices (Admin+)
-- [ ] POST /admin/devices/:id/revoke - Revoke device (Admin+)
-
-**Business Logic:**
-- [ ] Generate WireGuard key pair
-- [ ] Assign next available IP (10.0.0.2 - 10.0.0.254)
-- [ ] Enforce 5-device limit per user
-- [ ] Generate QR code for mobile config
-- [ ] Update WireGuard server config on add/remove
-
-**See Section 23.6.4 for request/response formats**
-
-**Verification:** Can add device, download config, see QR code
-
----
-
-## PHASE 12.8: ADMIN SYSTEM
-**Time:** 4-5 hours
-
-### 12.8.1 Create Admin Routes
-- [ ] Create `server/src/routes/admin.js`
-- [ ] GET /stats - Dashboard statistics
-- [ ] GET /users - List all users with filters
-- [ ] PATCH /users/:id/role - Change user role
-- [ ] GET /audit-logs - View audit logs with filters
-- [ ] POST /invitations - Send invitation
-- [ ] GET /invitations - List pending invitations
-- [ ] GET /roles - List all roles
-- [ ] GET /permissions - List all permissions
-- [ ] GET /departments - List departments
-- [ ] POST /departments - Create department
-- [ ] GET /settings - Get company settings
-- [ ] PATCH /settings - Update settings
-- [ ] POST /announcements - Create announcement
-
-**Permission Requirements:**
-- All require admin.* permissions (Admin+ role)
-- Role management requires admin.roles.manage
-- Settings requires admin.settings.manage
-
-**See Section 23.6.5 for request/response formats**
-
-**Verification:** Admin can manage users, view audit logs, update settings
-
----
-
-## PHASE 12.9: DATAFORGE BUILDER
-**Time:** 6-8 hours
-
-### 12.9.1 Create DataForge Routes
-- [ ] Create `server/src/routes/dataforge.js`
-- [ ] GET /tables - List accessible tables
-- [ ] GET /tables/:slug - Get table with fields
-- [ ] POST /tables - Create new table
-- [ ] PATCH /tables/:slug - Update table
-- [ ] DELETE /tables/:slug - Delete table (soft)
-- [ ] GET /tables/:slug/records - List records
-- [ ] POST /tables/:slug/records - Create record
-- [ ] PATCH /tables/:slug/records/:id - Update record
-- [ ] DELETE /tables/:slug/records/:id - Delete record
-- [ ] GET /templates - List templates
-- [ ] POST /templates/:id/use - Create from template
-
-**Permission Logic:**
-- [ ] Check table-level permissions (view/edit/full)
-- [ ] User-specific permissions override role permissions
-- [ ] Creator has full access by default
-
-**Field Validation:**
-- [ ] Validate required fields
-- [ ] Validate field types
-- [ ] Validate unique constraints
-- [ ] Execute formula fields
-
-**See Section 23.6.6 for request/response formats**
-
-### 12.9.2 Create Pre-Built Templates
-- [ ] Create 10 initial templates:
-  - Customers (CRM)
-  - Contacts (CRM)
-  - Projects
-  - Tasks
-  - Products
-  - Inventory
-  - Expenses
-  - Equipment
-  - Job Postings
-  - Applicants
-
-**Verification:** Can create table, add fields, add records, query with filters
-
----
-
-## PHASE 12.10: WEBSOCKET REAL-TIME
-**Time:** 3-4 hours
-
-### 12.10.1 Create WebSocket Handler
-- [ ] Create `server/src/websocket/handler.js`
-- [ ] Authenticate connection with JWT
-- [ ] Join user to rooms: user:{id}, role:{name}, department:{id}
-- [ ] Handle dataforge:join event (join table room)
-- [ ] Handle dataforge:leave event
-- [ ] Handle notification:read event
-
-### 12.10.2 Emit Events from API Routes
-- [ ] Announcement created → broadcast to all
-- [ ] Time-off reviewed → emit to user
-- [ ] Employee updated → emit to relevant rooms
-- [ ] DataForge record changed → emit to table room
-- [ ] Notification created → emit to user
-
-**See Section 23.8 for event formats**
-
-**Verification:** WebSocket connects, receives real-time updates
-
----
-
-## PHASE 12.11: FRONTEND FOUNDATION
-**Time:** 5-6 hours
-
-### 12.11.1 Initialize Frontend Project
-- [ ] Run `npm create vite@latest frontend -- --template react`
-- [ ] Install dependencies:
-```bash
-npm install @tanstack/react-query zustand react-router-dom
-npm install tailwindcss postcss autoprefixer
-npm install lucide-react recharts react-hook-form @hookform/resolvers zod
-npm install socket.io-client date-fns
-npm install -D @types/node
+// Billing toggle
+const billingToggle = document.getElementById('billing-toggle');
+billingToggle.addEventListener('change', (e) => {
+    const billing = e.target.value;
+    document.querySelectorAll('.price-monthly').forEach(el => {
+        el.style.display = billing === 'monthly' ? 'block' : 'none';
+    });
+    document.querySelectorAll('.price-annual').forEach(el => {
+        el.style.display = billing === 'annual' ? 'block' : 'none';
+    });
+});
 ```
 
-### 12.11.2 Configure Tailwind
-- [ ] Run `npx tailwindcss init -p`
-- [ ] Configure tailwind.config.js
-- [ ] Add Tailwind directives to index.css
-
-### 12.11.3 Install shadcn/ui
-- [ ] Run `npx shadcn-ui@latest init`
-- [ ] Install components: button, input, card, badge, avatar, dropdown-menu, dialog, sheet, tabs, table, form, select, calendar, toast
-
-### 12.11.4 Create Core Hooks
-- [ ] Create `src/hooks/useAuth.js` - Auth state management
-- [ ] Create `src/hooks/usePermissions.js` - Permission checking
-- [ ] Create `src/hooks/useWebSocket.js` - WebSocket connection
-- [ ] Create `src/api/client.js` - Axios/fetch wrapper with auth
-
-### 12.11.5 Create Layout Components
-- [ ] Create `src/components/layout/Sidebar.jsx`
-- [ ] Create `src/components/layout/Header.jsx`
-- [ ] Create `src/components/layout/Layout.jsx`
-- [ ] Create `src/components/shared/PermissionGate.jsx`
-- [ ] Create `src/components/shared/Loading.jsx`
-
-### 12.11.6 Set Up Routing
-- [ ] Create `src/App.jsx` with React Router
-- [ ] Define all routes from Section 23.9.1
-- [ ] Add auth protection to routes
-- [ ] Add permission protection to routes
-
-**Verification:** Frontend builds, shows login page
+### **Verification:**
+- [ ] Currency toggle works
+- [ ] Billing toggle works
+- [ ] Prices display correctly
+- [ ] USD & CAD same font size
+- [ ] Comparison table readable
+- [ ] FAQ answers helpful
+- [ ] All CTAs work
+- [ ] Mobile responsive
 
 ---
 
-## PHASE 12.12: FRONTEND PAGES
-**Time:** 12-15 hours
+## 🔧 TASK 12.3: Create Features Page (features.php)
 
-### 12.12.1 Authentication Pages
-- [ ] Create `src/pages/Login.jsx`
-- [ ] Create `src/pages/AcceptInvite.jsx`
-- [ ] Create `src/pages/ResetPassword.jsx`
+**Time:** 1 hour  
+**Lines:** ~350 lines  
+**File:** `/website/features.php`
 
-### 12.12.2 Dashboard
-- [ ] Create `src/pages/Dashboard.jsx`
-- [ ] Show role-appropriate content
-- [ ] Show announcements
-- [ ] Show pending approvals (Manager+)
-- [ ] Show recent activity
+### **Sections to Include:**
 
-### 12.12.3 My Section (Self-Service)
-- [ ] Create `src/pages/my/Profile.jsx`
-- [ ] Create `src/pages/my/TimeOff.jsx`
-- [ ] Create `src/pages/my/Devices.jsx`
-- [ ] Create `src/pages/my/Notifications.jsx`
+**1. Hero**
+- [ ] "Everything You Need for Complete Privacy"
 
-### 12.12.4 Directory
-- [ ] Create `src/pages/Directory.jsx`
-- [ ] Create `src/pages/EmployeeProfile.jsx`
+**2. Core VPN Features**
+- [ ] 256-bit Military Encryption
+- [ ] Zero Logs Policy
+- [ ] WireGuard Protocol
+- [ ] 4 Server Locations
+- [ ] Unlimited Bandwidth
+- [ ] Kill Switch
+- [ ] DNS Leak Protection
 
-### 12.12.5 HR Section
-- [ ] Create `src/pages/hr/Employees.jsx`
-- [ ] Create `src/pages/hr/EmployeeDetail.jsx`
-- [ ] Create `src/pages/hr/TimeOff.jsx`
-- [ ] Create `src/pages/hr/Documents.jsx`
-- [ ] Create `src/pages/hr/Reviews.jsx`
+**3. Advanced Features**
+- [ ] Port Forwarding (detailed explanation)
+- [ ] Network Scanner (screenshot)
+- [ ] 2-Click Device Setup
+- [ ] Android Helper App
 
-### 12.12.6 Manager Section
-- [ ] Create `src/pages/manager/Team.jsx`
-- [ ] Create `src/pages/manager/TimeOffApprovals.jsx`
+**4. Parental Controls**
+- [ ] Calendar Scheduling (screenshot)
+- [ ] Time Windows
+- [ ] Gaming Controls (Xbox, PS, Steam, Nintendo)
+- [ ] Whitelist/Blacklist
+- [ ] Weekly Reports
 
-### 12.12.7 Admin Section
-- [ ] Create `src/pages/admin/Users.jsx`
-- [ ] Create `src/pages/admin/Roles.jsx`
-- [ ] Create `src/pages/admin/Departments.jsx`
-- [ ] Create `src/pages/admin/Settings.jsx`
-- [ ] Create `src/pages/admin/AuditLog.jsx`
-- [ ] Create `src/pages/admin/VPN.jsx`
+**5. Family Features**
+- [ ] Up to 10 devices
+- [ ] Family mesh network
+- [ ] Shared port forwarding
+- [ ] Individual profiles
 
-### 12.12.8 Owner Section
-- [ ] Create `src/pages/owner/Billing.jsx`
-- [ ] Create `src/pages/owner/Transfer.jsx`
+**6. Business Features (Dedicated Server)**
+- [ ] Your own server
+- [ ] Unlimited devices
+- [ ] Fastest speeds
+- [ ] Priority support
 
-### 12.12.9 DataForge Section
-- [ ] Create `src/pages/dataforge/TableList.jsx`
-- [ ] Create `src/pages/dataforge/TableView.jsx`
-- [ ] Create `src/pages/dataforge/TableBuilder.jsx`
-- [ ] Create `src/pages/dataforge/RecordForm.jsx`
+**7. Security Features**
+- [ ] Military-grade encryption
+- [ ] No logs policy
+- [ ] Perfect forward secrecy
+- [ ] Secure core servers
 
-**Verification:** All pages render, navigation works, data displays
+**8. CTA**
+- [ ] "Try all features free for 7 days"
 
----
-
-## PHASE 12.13: TESTING & DEPLOYMENT
-**Time:** 4-6 hours
-
-### 12.13.1 Testing Checklist
-
-**Authentication Tests:**
-- [ ] Can login with valid credentials
-- [ ] Cannot login with invalid credentials
-- [ ] Cannot login with deactivated account
-- [ ] JWT token expires correctly
-- [ ] Refresh token works
-- [ ] Logout invalidates session
-- [ ] Password reset flow works
-
-**Permission Tests:**
-- [ ] Employee can only access self-service
-- [ ] Manager can see direct reports
-- [ ] HR can access HR module
-- [ ] HR Staff cannot see salary
-- [ ] HR Admin can see salary
-- [ ] Admin can manage users
-- [ ] Owner has full access
-
-**Time-Off Tests:**
-- [ ] Can submit request
-- [ ] Cannot submit if insufficient balance
-- [ ] Manager can approve/deny
-- [ ] Balance updates correctly
-- [ ] Notifications sent
-
-**VPN Tests:**
-- [ ] Can add device (max 5)
-- [ ] Config downloads correctly
-- [ ] QR code generates
-- [ ] Can remove device
-- [ ] Admin can revoke any device
-
-**DataForge Tests:**
-- [ ] Can create table
-- [ ] Can add fields
-- [ ] Can add records
-- [ ] Validation works
-- [ ] Permissions enforced
-- [ ] Search/filter works
-
-### 12.13.2 Build Frontend
-- [ ] Run `npm run build`
-- [ ] Verify dist folder created
-- [ ] Test production build locally
-
-### 12.13.3 Server Deployment Preparation
-- [ ] Create systemd service file
-- [ ] Configure Nginx reverse proxy
-- [ ] Set up SSL with Let's Encrypt
-- [ ] Configure firewall rules
-- [ ] Set environment variables
-
-### 12.13.4 Documentation
-- [ ] Update README.md with setup instructions
-- [ ] Document API endpoints
-- [ ] Create admin guide
-- [ ] Create user guide
-
-**Verification:** All tests pass, builds succeed, deployment ready
+### **Verification:**
+- [ ] All features explained
+- [ ] Screenshots included
+- [ ] Technical details accurate
+- [ ] Benefits clear
+- [ ] CTAs work
 
 ---
 
-## ✅ COMPLETION CHECKLIST
+## 🔧 TASK 12.4: Create About/Contact/Legal Pages
 
-### Part 12 Complete When:
+**Time:** 1 hour  
+**Lines:** ~300 lines total  
 
-**Backend:**
-- [ ] All 4 databases created and seeded
-- [ ] Server starts without errors
-- [ ] All API endpoints working
-- [ ] WebSocket connects and emits events
-- [ ] Permissions enforced correctly
+### **about.php:**
+- [ ] Company mission
+- [ ] Why we built TrueVault
+- [ ] Our values (privacy, transparency, simplicity)
+- [ ] Team (if applicable)
 
-**Frontend:**
-- [ ] All pages render correctly
-- [ ] Login/logout works
-- [ ] Role-based navigation
-- [ ] Real-time updates working
-- [ ] Forms validate and submit
+### **contact.php:**
+- [ ] Contact form
+- [ ] Support email: paulhalonen@gmail.com
+- [ ] Response time expectations
+- [ ] FAQ link
 
-**Features:**
-- [ ] Employee directory works
-- [ ] Time-off system complete
-- [ ] VPN devices manageable
-- [ ] Admin panel functional
-- [ ] DataForge creates/manages tables
+### **terms.php:**
+- [ ] Terms of service
+- [ ] User responsibilities
+- [ ] Service limitations
+- [ ] Cancellation policy
+- [ ] Payment terms
 
----
+### **privacy.php:**
+- [ ] Privacy policy
+- [ ] What data we collect (minimal!)
+- [ ] How we use data
+- [ ] Third parties (PayPal only)
+- [ ] Data retention
+- [ ] Your rights
 
-## 📊 PROGRESS TRACKING
-
-| Phase | Items | Complete | Status |
-|-------|-------|----------|--------|
-| 12.1 Project Setup | 8 | 0 | ⬜ Not Started |
-| 12.2 Database Init | 18 | 0 | ⬜ Not Started |
-| 12.3 Server Infrastructure | 12 | 0 | ⬜ Not Started |
-| 12.4 Authentication | 10 | 0 | ⬜ Not Started |
-| 12.5 Employee API | 8 | 0 | ⬜ Not Started |
-| 12.6 Time-Off System | 14 | 0 | ⬜ Not Started |
-| 12.7 VPN Devices | 10 | 0 | ⬜ Not Started |
-| 12.8 Admin System | 14 | 0 | ⬜ Not Started |
-| 12.9 DataForge | 15 | 0 | ⬜ Not Started |
-| 12.10 WebSocket | 8 | 0 | ⬜ Not Started |
-| 12.11 Frontend Foundation | 18 | 0 | ⬜ Not Started |
-| 12.12 Frontend Pages | 25 | 0 | ⬜ Not Started |
-| 12.13 Testing & Deploy | 20 | 0 | ⬜ Not Started |
-| **TOTAL** | **180** | **0** | **0%** |
+### **404.php:**
+- [ ] "Page not found"
+- [ ] Search box
+- [ ] Popular links
+- [ ] Home button
 
 ---
 
-## 🔗 RELATED DOCUMENTS
+## 🔧 TASK 12.5: Create Reusable Components
 
-- **Blueprint:** `MASTER_BLUEPRINT/SECTION_23_ENTERPRISE_BUSINESS_HUB.md`
-- **Previous Parts:** Parts 1-11 (Consumer VPN)
-- **Progress:** Update this file as tasks are completed
+**Time:** 30 minutes  
+**Lines:** ~200 lines total  
+
+### **includes/header.php:**
+```php
+<header class="site-header">
+    <div class="container">
+        <div class="logo">
+            <a href="/"><?= Content::get('site_title') ?></a>
+        </div>
+        <nav class="main-nav">
+            <a href="/">Home</a>
+            <a href="/features.php">Features</a>
+            <a href="/pricing.php">Pricing</a>
+            <a href="/about.php">About</a>
+            <a href="/contact.php">Contact</a>
+        </nav>
+        <div class="header-cta">
+            <a href="/auth/login.php" class="btn-secondary">Sign In</a>
+            <a href="/auth/register.php" class="btn-primary">Start Free Trial</a>
+        </div>
+    </div>
+</header>
+```
+
+### **includes/footer.php:**
+```php
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Product</h4>
+                <a href="/features.php">Features</a>
+                <a href="/pricing.php">Pricing</a>
+                <a href="/downloads/">Apps</a>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="/about.php">About</a>
+                <a href="/contact.php">Contact</a>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <a href="/terms.php">Terms</a>
+                <a href="/privacy.php">Privacy</a>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <a href="mailto:paulhalonen@gmail.com">Email Support</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 <?= Content::get('site_title') ?>. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+```
+
+---
+
+## 📊 COMPLETION CHECKLIST
+
+### **Pages:**
+- [ ] index.php (homepage)
+- [ ] pricing.php (detailed pricing)
+- [ ] features.php (all features)
+- [ ] about.php (company info)
+- [ ] contact.php (support)
+- [ ] terms.php (legal)
+- [ ] privacy.php (legal)
+- [ ] 404.php (error)
+
+### **Components:**
+- [ ] includes/header.php
+- [ ] includes/footer.php
+
+### **Content:**
+- [ ] VPN explanation written
+- [ ] Features described
+- [ ] Pricing accurate
+- [ ] FAQ answers written
+- [ ] Legal documents written
+
+### **Testing:**
+- [ ] All pages load
+- [ ] Theme colors apply
+- [ ] Mobile responsive
+- [ ] Links work
+- [ ] Forms submit
+- [ ] CTAs functional
+- [ ] No hardcoded values
+- [ ] Fast load times
+
+---
+
+## ⏱️ TIME ESTIMATE
+
+**Total Time:** 5-6 hours
+
+**Breakdown:**
+- Homepage: 2 hours
+- Pricing: 1.5 hours
+- Features: 1 hour
+- Other pages: 1 hour
+- Components: 30 minutes
+
+**Total Lines:** ~2,350 lines
+
+---
+
+## 🚀 PRIORITY
+
+**CRITICAL - LAUNCH BLOCKER**
+
+Without these pages:
+- ❌ No one can learn about TrueVault
+- ❌ No one can see pricing
+- ❌ No one can sign up
+- ❌ Website appears broken
+
+**Must complete before launch!**
 
 ---
 

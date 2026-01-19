@@ -1,0 +1,48 @@
+# Enterprise Business Hub - Security and Configuration
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect config files
+<FilesMatch "config\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect database files
+<FilesMatch "\.(db|sqlite)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Cache control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+</IfModule>
+
+# PHP security settings
+php_flag display_errors off
+php_flag log_errors on
+php_value max_execution_time 300
+php_value memory_limit 256M
+
+# File upload limits
+php_value upload_max_filesize 50M
+php_value post_max_size 50M

@@ -60,6 +60,8 @@ TrueVault VPN uses **9 separate SQLite databases** instead of one monolithic dat
 
 ## 💡 WHY SQLITE?
 
+**CRITICAL:** Use SQLite3 PHP class (NOT PDO)! Server has SQLite3 extension enabled.
+
 ### **Advantages of SQLite**
 
 ✅ **Zero Configuration**
