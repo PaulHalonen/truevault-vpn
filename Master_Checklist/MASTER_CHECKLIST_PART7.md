@@ -755,3 +755,574 @@ function isAccessAllowed($userId, $deviceId, $domain, $currentTime) {
 **NOTE:** This is a MAJOR feature that transforms TrueVault into a family internet safety solution.
 No other VPN offers calendar-based parental controls with this level of sophistication.
 
+
+
+---
+
+## THEME SYSTEM & DATABASE SETUP SESSION (4-5 hours) - ADDED JAN 18, 2026
+
+**Blueprint Reference:** SECTION_24_THEME_AND_PAGE_BUILDER.md
+
+### **Goal:** Build 100% database-driven theme and content system
+
+**Why This Matters:**
+- **6 million dollar goal** requires business transfer-readiness
+- New owner with ZERO technical knowledge must run this
+- NO hardcoded values anywhere
+- Point-and-click customization
+- 30-minute business handoff
+
+**What We're Building:**
+- Theme management database
+- Theme helper classes
+- 12 pre-built themes
+- Seasonal auto-switching
+- Global settings system
+- 100% database-driven frontend
+
+---
+
+### **Task 7.Y.1: Create Theme Management Tables**
+**Lines:** ~200 lines  
+**Database:** New file `/databases/themes.db`
+
+- [ ] Create `/databases/themes.db` database file
+- [ ] Create 9 new tables (see blueprint SECTION_24)
+- [ ] Add to setup script or create separate setup
+
+**Tables to Create:**
+
+```sql
+-- Theme definitions
+CREATE TABLE themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    description TEXT,
+    preview_image TEXT,
+    style TEXT NOT NULL, -- 'light', 'medium', 'dark'
+    is_active INTEGER DEFAULT 0,
+    is_seasonal INTEGER DEFAULT 0,
+    season TEXT, -- 'winter', 'spring', 'summer', 'fall', null
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Color palettes
+CREATE TABLE theme_colors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    theme_id INTEGER NOT NULL,
+    color_key TEXT NOT NULL, -- 'primary', 'secondary', 'accent', etc.
+    color_value TEXT NOT NULL, -- Hex code
+    FOREIGN KEY (theme_id) REFERENCES themes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_theme_colors ON theme_colors(theme_id, color_key);
+
+-- Theme settings
+CREATE TABLE theme_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    theme_id INTEGER NOT NULL,
+    setting_key TEXT NOT NULL,
+    setting_value TEXT NOT NULL,
+    setting_type TEXT NOT NULL, -- 'text', 'number', 'boolean', 'json'
+    FOREIGN KEY (theme_id) REFERENCES themes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_theme_settings ON theme_settings(theme_id, setting_key);
+
+-- Page definitions
+CREATE TABLE pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL UNIQUE, -- URL path
+    title TEXT NOT NULL,
+    meta_description TEXT,
+    meta_keywords TEXT,
+    is_public INTEGER DEFAULT 1, -- 1 = anyone, 0 = logged in only
+    is_active INTEGER DEFAULT 1,
+    layout_template TEXT NOT NULL, -- 'default', 'blank', 'landing'
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Page content blocks
+CREATE TABLE page_sections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_id INTEGER NOT NULL,
+    section_type TEXT NOT NULL, -- 'hero', 'features', 'pricing', etc.
+    section_data TEXT NOT NULL, -- JSON content
+    sort_order INTEGER DEFAULT 0,
+    is_visible INTEGER DEFAULT 1,
+    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_page_sections ON page_sections(page_id, sort_order);
+
+-- Global site settings
+CREATE TABLE site_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setting_key TEXT NOT NULL UNIQUE,
+    setting_value TEXT NOT NULL,
+    setting_type TEXT NOT NULL, -- 'text', 'number', 'boolean', 'json', 'image'
+    category TEXT, -- 'general', 'branding', 'seo', 'social'
+    description TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Navigation menus
+CREATE TABLE navigation_menus (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    menu_location TEXT NOT NULL, -- 'header', 'footer', 'sidebar'
+    label TEXT NOT NULL,
+    url TEXT NOT NULL,
+    target TEXT DEFAULT '_self', -- '_self' or '_blank'
+    icon TEXT, -- Icon class or emoji
+    parent_id INTEGER, -- For dropdowns
+    sort_order INTEGER DEFAULT 0,
+    is_visible INTEGER DEFAULT 1,
+    required_role TEXT -- null, 'user', 'admin'
+);
+
+CREATE INDEX idx_navigation_menus ON navigation_menus(menu_location, sort_order);
+
+-- Content versioning
+CREATE TABLE page_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_id INTEGER NOT NULL,
+    revision_data TEXT NOT NULL, -- Full page JSON
+    created_by INTEGER, -- Admin user ID
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+);
+
+-- Media library
+CREATE TABLE media_library (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    filename TEXT NOT NULL,
+    original_filename TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_type TEXT NOT NULL, -- 'image', 'video', 'document'
+    file_size INTEGER NOT NULL, -- bytes
+    mime_type TEXT,
+    alt_text TEXT,
+    uploaded_by INTEGER,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Verification:**
+- [ ] Database created
+- [ ] All 9 tables exist
+- [ ] Indexes created
+- [ ] Foreign keys working
+
+---
+
+### **Task 7.Y.2: Insert 12 Pre-built Themes**
+**Lines:** ~300 lines  
+**Database:** themes.db
+
+- [ ] Insert 12 theme records
+- [ ] Insert color palettes for each theme (11 colors × 12 themes = 132 color records)
+- [ ] Insert theme settings for each
+
+**Themes to Create:**
+
+**Base Themes (3):**
+1. `default_light` - Clean white background, blue accent
+2. `default_medium` - Soft gray tones, purple accent
+3. `default_dark` - Deep blue/purple gradient (CURRENT)
+
+**Winter Themes (2):**
+4. `winter_light` - Snow white, ice blue
+5. `winter_dark` - Midnight blue, snowflake effects
+
+**Spring Themes (2):**
+6. `spring_light` - Pastel greens, floral pink
+7. `spring_dark` - Deep forest green, nature
+
+**Summer Themes (2):**
+8. `summer_light` - Bright sunshine yellow, ocean blue
+9. `summer_dark` - Deep ocean blue, sunset orange
+
+**Fall Themes (2):**
+10. `fall_light` - Warm orange, golden brown
+11. `fall_dark` - Deep burgundy, autumn red
+
+**VIP Theme (1):**
+12. `vip_gold` - Gold gradient, black background (for VIP users only)
+
+**Color Keys (11 per theme):**
+- `primary` - Main brand color
+- `secondary` - Secondary brand color
+- `accent` - Accent/highlight color
+- `background` - Page background
+- `surface` - Card/panel background
+- `text_primary` - Main text color
+- `text_secondary` - Muted text
+- `success` - Green
+- `warning` - Yellow
+- `error` - Red
+- `info` - Blue
+
+**Verification:**
+- [ ] 12 themes inserted
+- [ ] 132 color records inserted
+- [ ] default_dark is set as active
+- [ ] Seasonal themes flagged correctly
+
+---
+
+### **Task 7.Y.3: Insert Global Site Settings**
+**Lines:** ~100 lines  
+**Database:** themes.db (site_settings table)
+
+- [ ] Insert 25+ essential site settings
+- [ ] All current hardcoded values moved to database
+
+**Settings to Insert:**
+
+**General:**
+- `site_title` = "TrueVault VPN"
+- `site_tagline` = "Your Complete Digital Fortress"
+- `site_logo` = "/assets/logo.png"
+- `site_favicon` = "/assets/favicon.ico"
+- `contact_email` = "support@vpn.the-truth-publishing.com"
+- `support_email` = "support@vpn.the-truth-publishing.com"
+- `admin_email` = "admin@vpn.the-truth-publishing.com"
+- `company_name` = "TrueVault VPN"
+- `company_address` = "(to be filled by owner)"
+- `support_phone` = "(to be filled by owner)"
+
+**Branding:**
+- `active_theme_id` = 3 (default_dark)
+- `enable_seasonal_themes` = 1
+- `logo_width` = 180
+- `logo_height` = 50
+
+**SEO:**
+- `meta_description` = "Advanced VPN with parental controls, port forwarding, and camera dashboard"
+- `meta_keywords` = "VPN, privacy, security, parental controls, port forwarding"
+- `google_analytics_id` = ""
+
+**Social Media:**
+- `facebook_url` = ""
+- `twitter_url` = ""
+- `linkedin_url` = ""
+- `youtube_url` = ""
+
+**Features:**
+- `maintenance_mode` = 0
+- `enable_registration` = 1
+- `enable_free_trial` = 1
+- `trial_days` = 7
+
+**Pricing (for display):**
+- `price_standard` = 9.99
+- `price_pro` = 14.99
+- `currency_symbol` = "$"
+
+**Verification:**
+- [ ] All settings inserted
+- [ ] Can query settings
+- [ ] Values make sense
+
+---
+
+### **Task 7.Y.4: Create Theme Helper Class**
+**Lines:** ~250 lines  
+**File:** `/includes/Theme.php`
+
+- [ ] Create Theme.php class
+- [ ] Methods for theme management
+- [ ] Caching for performance
+- [ ] Upload and test
+
+**Key Methods:**
+
+```php
+class Theme {
+    // Get active theme
+    public static function getActiveTheme()
+    
+    // Get color with fallback
+    public static function getColor($key, $fallback = '#667eea')
+    
+    // Get setting with fallback
+    public static function getSetting($key, $fallback = '')
+    
+    // Switch theme
+    public static function switchTheme($themeId)
+    
+    // List all themes
+    public static function listThemes($style = null, $seasonal = null)
+    
+    // Auto-switch seasonal
+    public static function autoSwitchSeasonal()
+    
+    // Determine current season
+    public static function getCurrentSeason()
+    
+    // Clear theme cache
+    public static function clearCache()
+}
+```
+
+**Caching Strategy:**
+- Cache theme data in PHP session
+- Cache expires after 1 hour
+- Clear on theme switch
+- Reduces database queries
+
+**Verification:**
+- [ ] Class loads without errors
+- [ ] Can get active theme
+- [ ] Can get colors
+- [ ] Can switch themes
+- [ ] Cache works
+
+---
+
+### **Task 7.Y.5: Create Content Helper Class**
+**Lines:** ~150 lines  
+**File:** `/includes/Content.php`
+
+- [ ] Create Content.php class
+- [ ] Methods for site settings
+- [ ] Shortcode support (optional)
+- [ ] Upload and test
+
+**Key Methods:**
+
+```php
+class Content {
+    // Get site setting
+    public static function get($key, $fallback = '')
+    
+    // Set site setting
+    public static function set($key, $value, $type = 'text')
+    
+    // Get multiple settings at once
+    public static function getMany($keys)
+    
+    // Check if setting exists
+    public static function exists($key)
+    
+    // Delete setting
+    public static function delete($key)
+    
+    // Get all settings by category
+    public static function getByCategory($category)
+}
+```
+
+**Usage Examples:**
+
+```php
+// Instead of hardcoding:
+$siteTitle = "TrueVault VPN"; // BAD
+
+// Use database:
+$siteTitle = Content::get('site_title'); // GOOD
+
+// With fallback:
+$phone = Content::get('support_phone', '1-800-VPN-HELP');
+
+// Set value:
+Content::set('site_title', 'New Title');
+```
+
+**Verification:**
+- [ ] Class loads without errors
+- [ ] Can get settings
+- [ ] Can set settings
+- [ ] Fallbacks work
+- [ ] Category filtering works
+
+---
+
+### **Task 7.Y.6: Create PageBuilder Helper Class**
+**Lines:** ~300 lines  
+**File:** `/includes/PageBuilder.php`
+
+- [ ] Create PageBuilder.php class
+- [ ] Methods for page/section management
+- [ ] JSON handling
+- [ ] Upload and test
+
+**Key Methods:**
+
+```php
+class PageBuilder {
+    // Get page by slug
+    public static function getPage($slug)
+    
+    // Get all sections for page
+    public static function getSections($pageId)
+    
+    // Add section to page
+    public static function addSection($pageId, $type, $data, $order = null)
+    
+    // Update section
+    public static function updateSection($sectionId, $data)
+    
+    // Delete section
+    public static function deleteSection($sectionId)
+    
+    // Reorder sections
+    public static function reorderSections($pageId, $orderArray)
+    
+    // Render page
+    public static function render($slug)
+    
+    // Save revision
+    public static function saveRevision($pageId, $adminId)
+    
+    // Get revisions
+    public static function getRevisions($pageId, $limit = 10)
+    
+    // Restore revision
+    public static function restoreRevision($revisionId)
+}
+```
+
+**Section Types Supported:**
+- `hero` - Hero banner
+- `features` - Feature grid
+- `pricing` - Pricing cards
+- `testimonials` - Customer quotes
+- `cta` - Call-to-action
+- `text` - Rich text
+- `image` - Image gallery
+- `video` - Video embed
+- `faq` - FAQ accordion
+- `stats` - Statistics
+- `form` - Contact form
+
+**Verification:**
+- [ ] Class loads without errors
+- [ ] Can get pages
+- [ ] Can add/edit/delete sections
+- [ ] JSON parsing works
+- [ ] Reordering works
+
+---
+
+### **Task 7.Y.7: Update Database Helper to Support themes.db**
+**Lines:** ~20 lines  
+**File:** `/includes/Database.php`
+
+- [ ] Add themes.db to connection pool
+- [ ] Update getInstance() method
+- [ ] Test connection
+- [ ] Upload
+
+**Add to Database.php:**
+
+```php
+private static $databases = [
+    'users' => '/databases/users.db',
+    'devices' => '/databases/devices.db',
+    'servers' => '/databases/servers.db',
+    'billing' => '/databases/billing.db',
+    'port_forwards' => '/databases/port_forwards.db',
+    'parental_controls' => '/databases/parental_controls.db',
+    'admin' => '/databases/admin.db',
+    'logs' => '/databases/logs.db',
+    'support' => '/databases/support.db',
+    'themes' => '/databases/themes.db', // ADD THIS LINE
+];
+```
+
+**Verification:**
+- [ ] Can connect to themes.db
+- [ ] All helper classes work with new DB
+- [ ] No connection errors
+
+---
+
+### **Task 7.Y.8: Create Seasonal Theme Cron Job**
+**Lines:** ~80 lines  
+**File:** `/cron/switch-seasonal-theme.php`
+
+- [ ] Create cron script
+- [ ] Check if seasonal themes enabled
+- [ ] Determine current season
+- [ ] Switch to appropriate theme
+- [ ] Log changes
+- [ ] Upload
+
+**Cron Schedule:** Daily at 2 AM
+
+```bash
+0 2 * * * /usr/bin/php /path/to/cron/switch-seasonal-theme.php
+```
+
+**Season Detection:**
+- Winter: Dec 1 - Feb 28/29
+- Spring: Mar 1 - May 31
+- Summer: Jun 1 - Aug 31
+- Fall: Sep 1 - Nov 30
+
+**Logic:**
+
+```php
+// Pseudo-code
+if (Content::get('enable_seasonal_themes') == 1) {
+    $currentSeason = Theme::getCurrentSeason();
+    $activeTheme = Theme::getActiveTheme();
+    
+    // Only switch if current theme isn't seasonal for this season
+    if ($activeTheme['season'] != $currentSeason) {
+        // Find seasonal theme matching current base style
+        $newTheme = Theme::getSeasonalTheme($currentSeason, $activeTheme['style']);
+        Theme::switchTheme($newTheme['id']);
+        
+        // Log change
+        error_log("Auto-switched to {$currentSeason} theme");
+    }
+}
+```
+
+**Verification:**
+- [ ] Cron job runs without errors
+- [ ] Seasons detected correctly
+- [ ] Theme switches automatically
+- [ ] Logs recorded
+
+---
+
+### **Testing Checklist for Theme System:**
+
+- [ ] Database created successfully
+- [ ] All 12 themes present
+- [ ] Color palettes complete (132 colors)
+- [ ] Site settings populated (25+ settings)
+- [ ] Theme::getActiveTheme() works
+- [ ] Theme::getColor() returns correct hex
+- [ ] Theme::switchTheme() changes active theme
+- [ ] Content::get() returns settings
+- [ ] Content::set() updates settings
+- [ ] PageBuilder::getPage() loads pages
+- [ ] Seasonal auto-switch works
+- [ ] Cache improves performance
+- [ ] No hardcoded values in frontend
+
+---
+
+**Total Lines for Theme System:** ~1,400 lines
+
+**Time Estimate:** 4-5 hours
+
+**Priority:** CRITICAL - Required for business transfer and 6M goal
+
+**Dependencies:**
+- Database.php ✅ Complete
+- Admin authentication ✅ Complete
+
+**Next:** Part 8 will build the frontend pages and page builder UI
+
+---
+
+**END OF PART 7 ADDITIONS**

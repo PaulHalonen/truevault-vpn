@@ -110,6 +110,10 @@ try {
     );
     $stmt->execute([$deviceId, $userId]);
     
+    // Log activity
+    require_once __DIR__ . '/../../includes/Integration.php';
+    Integration::logActivity($userId, 'device_deleted', "Device '{$device['device_name']}' deleted");
+    
     // ============================================
     // RETURN SUCCESS RESPONSE
     // ============================================

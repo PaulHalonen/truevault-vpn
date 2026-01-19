@@ -295,6 +295,10 @@ try {
     
     $insertedId = $devicesConn->lastInsertId();
     
+    // Log activity
+    require_once __DIR__ . '/../../includes/Integration.php';
+    Integration::logActivity($userId, 'device_created', "Device '$deviceName' created on {$server['name']} server");
+    
     // ============================================
     // STEP 8: GENERATE WIREGUARD CONFIG FILE
     // ============================================

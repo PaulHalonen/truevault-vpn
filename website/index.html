@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueVault VPN - Your Complete Digital Fortress</title>
+    <meta name="description" content="Advanced VPN service with port forwarding, network scanning, and dedicated servers for VIP users.">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1a;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .hero-content {
+            max-width: 900px;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 24px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 36px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .features {
+            padding: 100px 20px;
+            background: #1a1a2e;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            font-weight: 700;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-8px);
+            border-color: #667eea;
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 24px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .feature-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+        }
+
+        .pricing {
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            border-color: #667eea;
+            transform: translateY(-8px);
+        }
+
+        .pricing-card.featured {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        }
+
+        .plan-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .plan-price {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .plan-period {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .plan-features li:before {
+            content: "✓ ";
+            color: #00ff88;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .footer {
+            padding: 60px 20px;
+            background: #0f0f1a;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero-subtitle {
+                font-size: 18px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>🔐 TrueVault VPN</h1>
+            <p class="hero-subtitle">
+                Your Complete Digital Fortress - Advanced VPN with Port Forwarding, 
+                Network Scanning, and Dedicated Servers
+            </p>
+            <div class="cta-buttons">
+                <a href="/auth/register.php" class="btn btn-primary">Start Free Trial</a>
+                <a href="/auth/login.php" class="btn btn-secondary">Sign In</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Revolutionary Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">256-bit Encryption</h3>
+                    <p class="feature-description">
+                        Military-grade encryption protects all your data with WireGuard protocol
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3 class="feature-title">Port Forwarding</h3>
+                    <p class="feature-description">
+                        Access your home devices remotely with automatic port forwarding setup
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3 class="feature-title">Network Scanner</h3>
+                    <p class="feature-description">
+                        Discover all devices on your network including hidden IP cameras
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Zero Logs</h3>
+                    <p class="feature-description">
+                        We don't track, collect, or share your browsing data. Ever.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">50+ Servers</h3>
+                    <p class="feature-description">
+                        Connect to servers worldwide for optimal speed and access
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3 class="feature-title">Gaming Optimized</h3>
+                    <p class="feature-description">
+                        Low-latency connections perfect for gaming and streaming
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing">
+        <div class="container">
+            <h2 class="section-title">Choose Your Plan</h2>
+            <div class="pricing-grid">
+                <!-- Standard -->
+                <div class="pricing-card">
+                    <div class="plan-name">Standard</div>
+                    <div class="plan-price">$9.99</div>
+                    <div class="plan-period">/month</div>
+                    <ul class="plan-features">
+                        <li>3 Devices</li>
+                        <li>All Locations</li>
+                        <li>Port Forwarding</li>
+                        <li>Network Scanner</li>
+                        <li>Email Support</li>
+                    </ul>
+                    <a href="/auth/register.php" class="btn btn-primary" style="width: 100%;">
+                        Get Started
+                    </a>
+                </div>
+
+                <!-- Pro (Featured) -->
+                <div class="pricing-card featured">
+                    <div class="plan-name">Pro</div>
+                    <div class="plan-price">$14.99</div>
+                    <div class="plan-period">/month</div>
+                    <ul class="plan-features">
+                        <li>5 Devices</li>
+                        <li>All Locations</li>
+                        <li>Port Forwarding</li>
+                        <li>Network Scanner</li>
+                        <li>Priority Support</li>
+                        <li>Advanced Analytics</li>
+                    </ul>
+                    <a href="/auth/register.php" class="btn btn-primary" style="width: 100%;">
+                        Most Popular
+                    </a>
+                </div>
+
+                <!-- VIP -->
+                <div class="pricing-card">
+                    <div class="plan-name">VIP</div>
+                    <div class="plan-price">$29.99</div>
+                    <div class="plan-period">/month</div>
+                    <ul class="plan-features">
+                        <li>Unlimited Devices</li>
+                        <li>Dedicated Server</li>
+                        <li>All Features</li>
+                        <li>24/7 VIP Support</li>
+                        <li>Premium Analytics</li>
+                        <li>Account Manager</li>
+                    </ul>
+                    <a href="/auth/register.php" class="btn btn-primary" style="width: 100%;">
+                        Go Premium
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/auth/login.php" class="footer-link">Sign In</a>
+            <a href="/auth/register.php" class="footer-link">Register</a>
+            <a href="mailto:support@truthvault.com" class="footer-link">Support</a>
+            <a href="mailto:paulhalonen@gmail.com" class="footer-link">Contact</a>
+        </div>
+        <p style="color: rgba(255,255,255,0.4); font-size: 14px;">
+            © 2026 TrueVault VPN. All rights reserved.
+        </p>
+    </footer>
+</body>
+</html>

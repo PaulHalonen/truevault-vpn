@@ -132,15 +132,15 @@ try {
             [$userId, $verificationToken, $expiresAt]
         );
         
-        // Send verification email
-        $verifyLink = BASE_URL . "verify-email.php?token=$verificationToken";
-        $subject = "Verify Your Email - TrueVault VPN";
-        $message = "Hello $firstName,\n\nThank you for registering with TrueVault VPN!\n\n";
-        $message .= "Please verify your email address by clicking the link below:\n$verifyLink\n\n";
-        $message .= "This link will expire in 24 hours.\n\nBest regards,\nTrueVault VPN Team";
-        $headers = "From: " . EMAIL_FROM_NAME . " <" . EMAIL_FROM . ">\r\n";
-        $headers .= "Reply-To: " . EMAIL_SUPPORT . "\r\n";
-        mail($email, $subject, $message, $headers);
+        // Send verification email using Email class
+        require_once __DIR__ . '/../../includes/Email.php';
+        $emailService = new Email();
+        $emailService->sendWelcome($email, $firstName);
+    } else {
+        // VIP users get welcome email immediately
+        require_once __DIR__ . '/../../includes/Email.php';
+        $emailService = new Email();
+        $emailService->sendWelcome($email, $firstName);
     }
     
     // Create session

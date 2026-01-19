@@ -162,6 +162,10 @@ try {
     );
     $stmt->execute([$newServerId, $deviceId, $userId]);
     
+    // Log activity
+    require_once __DIR__ . '/../../includes/Integration.php';
+    Integration::logActivity($userId, 'device_switched_server', "Device '{$device['device_name']}' switched to {$newServer['name']} server");
+    
     // ============================================
     // GENERATE NEW CONFIG FOR NEW SERVER
     // ============================================

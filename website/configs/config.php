@@ -76,6 +76,7 @@ define('DB_PORT_FORWARDS', DB_PATH . 'port_forwards.db');
 define('DB_PARENTAL_CONTROLS', DB_PATH . 'parental_controls.db');
 define('DB_ADMIN', DB_PATH . 'admin.db');
 define('DB_LOGS', DB_PATH . 'logs.db');
+define('DB_THEMES', DB_PATH . 'themes.db');
 
 // ============================================
 // SESSION SETTINGS

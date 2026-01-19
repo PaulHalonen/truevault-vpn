@@ -343,6 +343,9 @@ $paymentStatus = $_GET['status'] ?? null;
 </head>
 <body>
     <div class="container">
+        <!-- Navigation -->
+        <?php include __DIR__ . '/../includes/navigation.php'; ?>
+        
         <!-- Header -->
         <div class="header">
             <div class="header-top">
