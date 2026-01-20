@@ -780,3 +780,297 @@ function renderSection($section) {
 
 Now continuing with original Part 8 completion checklist...
 
+
+---
+
+## 🎨 UPDATED THEME SYSTEM REQUIREMENTS (JAN 20, 2026)
+
+**User Decision:** Theme system with 20+ pre-built themes + GrapesJS visual editor
+
+---
+
+### **ADDITION TO PART 8: EXPANDED THEME SYSTEM**
+
+**Changes from Original:**
+- 12 themes → 20+ themes
+- Add GrapesJS visual page/theme editor
+- Add React theme preview components
+- Add template style system (Basic, Formal, Executive)
+- Add seasonal + holiday themes
+
+---
+
+### **20+ PRE-BUILT THEMES TO CREATE:**
+
+**Seasonal Themes (4):**
+1. Winter Frost → Blues, whites, cool tones
+2. Summer Breeze → Yellows, oranges, warm tones  
+3. Autumn Harvest → Browns, oranges, earthy
+4. Spring Bloom → Greens, pinks, pastels
+
+**Holiday Themes (8):**
+1. Christmas Joy → Red, green, gold
+2. Thanksgiving Warmth → Orange, brown, cream
+3. Halloween Spooky → Orange, black, purple
+4. Easter Pastel → Pink, blue, yellow
+5. Valentine Romance → Red, pink, white
+6. Independence Day → Red, white, blue
+7. New Year Celebration → Gold, silver, black
+8. St. Patrick's Day → Green, gold, white
+
+**Standard Themes (4):**
+1. Professional Blue → Corporate, trustworthy
+2. Modern Dark → Sleek, contemporary
+3. Classic Light → Timeless, elegant
+4. Minimal White → Clean, spacious
+
+**Color Scheme Themes (4):**
+1. Ocean Blue
+2. Forest Green
+3. Royal Purple
+4. Sunset Orange
+
+**TOTAL: 20 themes** (expandable)
+
+---
+
+### **Task 8.Z.10: Add GrapesJS Visual Editor**
+**NEW TASK** - Lines: ~500 lines  
+**File:** `/admin/theme-visual-editor.php`
+
+**Purpose:** Visual drag-and-drop editor for pages and themes using GrapesJS
+
+- [ ] Install GrapesJS library
+- [ ] Create editor interface
+- [ ] Add custom blocks (hero, features, pricing, etc.)
+- [ ] Add style manager for theme variables
+- [ ] Add layer manager
+- [ ] Save/load functionality
+- [ ] Live preview
+- [ ] Export HTML/CSS
+
+**GrapesJS Configuration:**
+```javascript
+const editor = grapesjs.init({
+  container: '#gjs',
+  fromElement: true,
+  plugins: ['gjs-blocks-basic', 'gjs-preset-webpage'],
+  pluginsOpts: {
+    'gjs-blocks-basic': {},
+    'gjs-preset-webpage': {}
+  },
+  storageManager: {
+    type: 'remote',
+    autosave: true,
+    autoload: true,
+    stepsBeforeSave: 1,
+    urlStore: '/api/themes/save.php',
+    urlLoad: '/api/themes/load.php',
+  },
+  styleManager: {
+    sectors: [{
+      name: 'Theme Colors',
+      open: true,
+      properties: [
+        {property: 'color-primary', name: 'Primary Color', type: 'color'},
+        {property: 'color-secondary', name: 'Secondary Color', type: 'color'},
+        {property: 'color-accent', name: 'Accent Color', type: 'color'},
+        // ... all 10 theme colors
+      ]
+    }]
+  }
+});
+```
+
+**Files to Create:**
+- [ ] /admin/theme-visual-editor.php
+- [ ] /assets/js/grapes-editor.js
+- [ ] /assets/css/grapes-editor.css
+- [ ] /api/themes/save.php
+- [ ] /api/themes/load.php
+
+**Verification:**
+- [ ] GrapesJS loads
+- [ ] Can drag blocks
+- [ ] Can edit styles
+- [ ] Can save changes
+- [ ] Changes reflect on site
+
+---
+
+### **Task 8.Z.11: Add React Theme Preview**
+**NEW TASK** - Lines: ~300 lines  
+**File:** `/assets/js/theme-preview.jsx`
+
+**Purpose:** React component for live theme preview before activating
+
+- [ ] Install React + ReactDOM
+- [ ] Create ThemePreview component
+- [ ] Load theme variables
+- [ ] Render sample page elements
+- [ ] Live color updates
+- [ ] Font preview
+- [ ] Spacing preview
+- [ ] Export component
+
+**React Component:**
+```jsx
+import React, { useState, useEffect } from 'react';
+
+const ThemePreview = ({ themeId }) => {
+  const [theme, setTheme] = useState(null);
+  
+  useEffect(() => {
+    fetch(`/api/themes/get.php?id=${themeId}`)
+      .then(r => r.json())
+      .then(data => setTheme(data.theme));
+  }, [themeId]);
+  
+  if (!theme) return <div>Loading...</div>;
+  
+  return (
+    <div style={{
+      '--primary': theme.colors.primary,
+      '--secondary': theme.colors.secondary,
+      '--accent': theme.colors.accent,
+      '--bg': theme.colors.background,
+      '--text': theme.colors.text,
+    }}>
+      {/* Sample page with theme applied */}
+      <header style={{ background: 'var(--primary)', color: 'var(--bg)' }}>
+        <h1 style={{ fontFamily: theme.fonts.heading }}>TrueVault VPN</h1>
+      </header>
+      <section>
+        <h2 style={{ color: 'var(--secondary)' }}>Features</h2>
+        <p style={{ fontFamily: theme.fonts.body }}>Sample body text...</p>
+        <button style={{ background: 'var(--accent)' }}>Sign Up</button>
+      </section>
+    </div>
+  );
+};
+
+export default ThemePreview;
+```
+
+**Files to Create:**
+- [ ] /assets/js/theme-preview.jsx
+- [ ] /assets/js/build-react.sh (build script)
+- [ ] /api/themes/get.php
+
+**Verification:**
+- [ ] React component renders
+- [ ] Theme preview accurate
+- [ ] Live updates work
+- [ ] All colors visible
+
+---
+
+### **Task 8.Z.12: Create All 20+ Themes in Database**
+**NEW TASK** - Lines: ~800 lines total  
+**File:** `/admin/setup-themes.php` (run once)
+
+**Purpose:** Pre-populate admin.db with 20+ themes
+
+- [ ] Create setup script
+- [ ] Define all 20 theme configurations
+- [ ] Insert into admin.db → themes table
+- [ ] Set default theme (Professional Blue)
+- [ ] Upload and run once
+
+**Theme Structure (Example - Winter Frost):**
+```php
+$themes[] = [
+  'name' => 'winter-frost',
+  'display_name' => 'Winter Frost',
+  'category' => 'seasonal',
+  'season' => 'winter',
+  'style' => 'light',
+  'colors' => json_encode([
+    'primary' => '#0099cc',
+    'secondary' => '#66ccff',
+    'accent' => '#0066aa',
+    'background' => '#f0f8ff',
+    'text' => '#1a1a2e',
+    'text_light' => '#4a5568',
+    'border' => '#d0e8f2',
+    'success' => '#00cc88',
+    'warning' => '#ffaa00',
+    'danger' => '#cc0044'
+  ]),
+  'fonts' => json_encode([
+    'heading' => 'Poppins, sans-serif',
+    'body' => 'Inter, sans-serif',
+    'mono' => 'Fira Code, monospace'
+  ]),
+  'spacing' => json_encode([
+    'xs' => '4px',
+    'sm' => '8px',
+    'md' => '16px',
+    'lg' => '24px',
+    'xl' => '32px'
+  ]),
+  'borders' => json_encode([
+    'radius_sm' => '6px',
+    'radius_md' => '10px',
+    'radius_lg' => '18px',
+    'width' => '1px'
+  ]),
+  'shadows' => json_encode([
+    'sm' => '0 2px 4px rgba(0,153,204,0.1)',
+    'md' => '0 4px 8px rgba(0,153,204,0.15)',
+    'lg' => '0 8px 16px rgba(0,153,204,0.2)'
+  ]),
+  'preview_image' => '/assets/images/themes/winter-frost.png',
+  'is_active' => 0,
+  'created_at' => date('Y-m-d H:i:s')
+];
+```
+
+**All 20 Themes to Define:**
+- [ ] Winter Frost
+- [ ] Summer Breeze
+- [ ] Autumn Harvest
+- [ ] Spring Bloom
+- [ ] Christmas Joy
+- [ ] Thanksgiving Warmth
+- [ ] Halloween Spooky
+- [ ] Easter Pastel
+- [ ] Valentine Romance
+- [ ] Independence Day
+- [ ] New Year Celebration
+- [ ] St. Patrick's Day
+- [ ] Professional Blue
+- [ ] Modern Dark
+- [ ] Classic Light
+- [ ] Minimal White
+- [ ] Ocean Blue
+- [ ] Forest Green
+- [ ] Royal Purple
+- [ ] Sunset Orange
+
+**Verification:**
+- [ ] Script runs without errors
+- [ ] All 20 themes in database
+- [ ] Can activate each theme
+- [ ] Preview images load
+
+---
+
+### **UPDATED Part 8 Summary:**
+
+**Original Tasks:** Theme manager with 12 themes ✅  
+**New Tasks Added:**
+- GrapesJS visual editor
+- React theme preview
+- 20+ pre-built themes (expanded from 12)
+- Template style system
+
+**Total Time for Part 8:** 12-15 hours (increased from 8-10)
+
+**Technologies Added:**
+- GrapesJS (visual editor)
+- React (theme preview)
+- Color picker libraries
+- Font libraries
+
+---

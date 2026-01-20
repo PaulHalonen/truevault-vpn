@@ -460,3 +460,231 @@ function showHelpBubble(event) {
 ---
 
 **END OF PART 16 CHECKLIST - TUTORIAL SYSTEM**
+
+---
+
+## 🔄 CRITICAL UPDATES - JANUARY 20, 2026
+
+**USER DECISION:** Part 16 support system = SAME as Part 7 support system
+
+**Integration:**
+- Part 7 creates backend APIs (/api/support/)
+- Part 7 creates admin interface (/admin/support-tickets.php)
+- Part 7 creates user dashboard (/dashboard/support.php)
+- **Part 16 adds public portal** (/support/) for non-logged-in users
+
+**All use the SAME support.db database**
+
+---
+
+### **UNIFIED SUPPORT SYSTEM ARCHITECTURE:**
+
+**Backend (Part 7):**
+- /api/support/create-ticket.php
+- /api/support/list-tickets.php
+- /api/support/update-ticket.php
+- /api/support/close-ticket.php
+
+**Admin Interface (Part 7):**
+- /admin/support-tickets.php (manage all tickets)
+
+**User Dashboard (Part 7):**
+- /dashboard/support.php (logged-in users view their tickets)
+
+**Public Portal (Part 16):**
+- /support/index.php (knowledge base homepage)
+- /support/kb.php (browse articles)
+- /support/submit.php (submit ticket without login)
+- /support/api.php (public API wrapper)
+- /support/config.php (portal settings)
+
+---
+
+### **UPDATED TASK 16.1: Create Public Support Portal Homepage**
+
+**File:** `/support/index.php`
+**Time:** 2 hours
+**Lines:** ~400 lines
+**Database:** support.db (from Part 7)
+
+**Purpose:** Public-facing support portal for:
+- Browsing knowledge base (before logging in)
+- Submitting tickets (guest users)
+- Searching articles
+- Viewing FAQs
+
+**Interface Sections:**
+
+**1. Hero Section:**
+```php
+<div class="support-hero">
+  <h1>How can we help you?</h1>
+  <input type="text" id="searchArticles" placeholder="Search knowledge base...">
+</div>
+```
+
+**2. Popular Articles (from KB):**
+```php
+<?php
+$popular = $db->query("
+  SELECT * FROM knowledge_base 
+  WHERE is_published = 1 
+  ORDER BY view_count DESC 
+  LIMIT 6
+")->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($popular as $article):
+?>
+<div class="kb-card">
+  <h3><?= htmlspecialchars($article['title']) ?></h3>
+  <p><?= htmlspecialchars($article['excerpt']) ?></p>
+  <a href="/support/kb.php?id=<?= $article['id'] ?>">Read more →</a>
+</div>
+<?php endforeach; ?>
+```
+
+**3. Categories:**
+- Getting Started
+- Billing & Payments
+- Technical Support
+- Account Management
+- Troubleshooting
+- VIP Features
+
+**4. Quick Actions:**
+- Browse Knowledge Base
+- Submit Ticket
+- Check Ticket Status
+- Contact Support
+
+**Automation Integration:**
+- Search suggests KB articles before ticket submission
+- Auto-categorize tickets based on keywords
+- Auto-assign priority (VIP users = high)
+- Auto-suggest solutions from KB
+
+---
+
+### **UPDATED TASK 16.2: Knowledge Base Browser**
+
+**File:** `/support/kb.php`
+**Time:** 3 hours
+**Lines:** ~500 lines
+
+**Purpose:** Browse and search knowledge base articles
+
+**Features:**
+- Category browser
+- Article search (full-text)
+- Related articles
+- Article voting (helpful/not helpful)
+- Print-friendly view
+- Share article link
+
+**Auto-Resolution:**
+When user searches KB before submitting ticket:
+1. Find matching articles
+2. Show top 3 matches
+3. Ask "Did this solve your problem?"
+4. If YES → No ticket created (auto-resolved)
+5. If NO → Pre-fill ticket with context
+
+**Example:**
+```php
+// User searches "cannot connect"
+$matches = $db->query("
+  SELECT * FROM knowledge_base 
+  WHERE 
+    title LIKE '%cannot connect%' OR 
+    content LIKE '%cannot connect%' OR
+    tags LIKE '%connection%'
+  ORDER BY relevance DESC
+  LIMIT 3
+")->fetchAll();
+
+if (count($matches) > 0) {
+  echo "<div class='suggested-solutions'>";
+  echo "<h3>We found these articles that might help:</h3>";
+  foreach ($matches as $match) {
+    // Show article
+  }
+  echo "<p>Did this solve your problem?</p>";
+  echo "<button onclick='solved()'>Yes, I'm good!</button>";
+  echo "<button onclick='createTicket()'>No, I need more help</button>";
+  echo "</div>";
+}
+```
+
+---
+
+### **UPDATED TASK 16.3: Guest Ticket Submission**
+
+**File:** `/support/submit.php`
+**Time:** 2 hours
+**Lines:** ~350 lines
+
+**Purpose:** Allow non-logged-in users to submit tickets
+
+**Form Fields:**
+- Name
+- Email
+- Subject
+- Description
+- Category (dropdown)
+- Priority (auto-detected or manual)
+- Attachments (optional)
+
+**Auto-Features:**
+- KB article suggestions as user types
+- Email verification (send verification link)
+- Auto-categorization based on keywords
+- VIP detection (check email against VIP list)
+- Spam protection (CAPTCHA)
+
+**Workflow:**
+1. User fills form
+2. KB articles suggested based on description
+3. User clicks "Submit Ticket"
+4. Email verification sent
+5. User clicks link in email
+6. Ticket created in support.db
+7. Confirmation email sent
+8. Admin notified (if VIP or urgent)
+
+**Integration with Part 7:**
+- Uses same /api/support/create-ticket.php
+- Stores in same support.db
+- Triggers same automation workflows
+- Admin sees ticket in /admin/support-tickets.php
+
+---
+
+### **UPDATED Part 16 Summary:**
+
+**Clarification:** Part 16 is the PUBLIC PORTAL for Part 7's support system
+
+**Part 7 (Backend):**
+- API endpoints
+- Admin interface
+- User dashboard (logged-in)
+- Automation workflows
+
+**Part 16 (Frontend):**
+- Public portal (guest access)
+- Knowledge base browser
+- Guest ticket submission
+- KB search
+
+**Same Database:** support.db (shared)
+
+**Integration Points:**
+- Part 16 calls Part 7's APIs
+- Part 16 uses Part 7's automation
+- Part 16 tickets appear in Part 7's admin
+- Part 7 KB articles shown in Part 16 portal
+
+**Time Estimate:**
+- Original: 4-5 hours
+- Updated: 4-5 hours (no change, just clarification)
+
+---

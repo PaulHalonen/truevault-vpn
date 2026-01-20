@@ -578,3 +578,332 @@ Without these pages:
 ---
 
 **END OF PART 12 CHECKLIST**
+
+---
+
+## 🔄 CRITICAL UPDATES - JANUARY 20, 2026
+
+**USER DECISION:** All landing pages MUST be:
+1. PHP files (NOT .html)
+2. Database-driven (NOT hardcoded)
+3. Integrated with theme system (Part 8)
+4. Fully functional (NO placeholders)
+
+---
+
+### **CORRECTED FILE NAMES:**
+
+**WRONG (Original Checklist):**
+- ❌ index.html
+- ❌ pricing.html  
+- ❌ features.html
+- ❌ about.html
+- ❌ contact.html
+- ❌ privacy.html
+- ❌ terms.html
+- ❌ refund.html
+
+**CORRECT (Updated):**
+- ✅ index.php
+- ✅ pricing.php
+- ✅ features.php
+- ✅ about.php
+- ✅ contact.php
+- ✅ privacy.php
+- ✅ terms.php
+- ✅ refund.php
+
+---
+
+### **DATABASE-DRIVEN REQUIREMENTS:**
+
+**Every page MUST:**
+1. Pull content from admin.db
+2. Pull theme variables from admin.db
+3. Pull navigation from admin.db
+4. Pull settings from admin.db
+5. NO hardcoded strings ANYWHERE
+
+**Example - WRONG (Hardcoded):**
+```php
+<h1>Welcome to TrueVault VPN</h1>
+<p>Your privacy matters.</p>
+<button>Sign Up Now</button>
+```
+
+**Example - CORRECT (Database-Driven):**
+```php
+<?php
+require_once '../configs/config.php';
+require_once '../includes/Database.php';
+require_once '../includes/Theme.php';
+
+$db = new Database();
+$theme = new Theme();
+
+// Get page content
+$page = $db->getPageContent('homepage');
+$settings = $db->getSettings();
+$activeTheme = $theme->getActive();
+
+// Get hero content
+$hero = $page['sections']['hero'];
+?>
+
+<style>
+:root {
+  --primary: <?= $activeTheme['colors']['primary'] ?>;
+  --secondary: <?= $activeTheme['colors']['secondary'] ?>;
+  --accent: <?= $activeTheme['colors']['accent'] ?>;
+  --bg: <?= $activeTheme['colors']['background'] ?>;
+  --text: <?= $activeTheme['colors']['text'] ?>;
+}
+</style>
+
+<h1 style="font-family: <?= $activeTheme['fonts']['heading'] ?>">
+  <?= htmlspecialchars($hero['headline']) ?>
+</h1>
+<p><?= htmlspecialchars($hero['subheadline']) ?></p>
+<button style="background: var(--primary)">
+  <?= htmlspecialchars($settings['cta_button_text']) ?>
+</button>
+```
+
+---
+
+### **UPDATED TASK 12.1: Create Homepage (index.php)**
+
+**File:** `/index.php` (NOT /website/index.php - root level!)
+**Time:** 3 hours (increased)
+**Lines:** ~800 lines (increased for DB integration)
+
+**Purpose:** Database-driven homepage pulling all content from admin.db
+
+**Structure:**
+```php
+<?php
+// ----- CONFIG & INCLUDES -----
+require_once 'configs/config.php';
+require_once 'includes/Database.php';
+require_once 'includes/Theme.php';
+
+// ----- DATA LOADING -----
+$db = new Database();
+$theme = new Theme();
+
+// Load page content
+$page = $db->query("
+  SELECT * FROM pages 
+  WHERE page_key = 'homepage' 
+  LIMIT 1
+")->fetch(PDO::FETCH_ASSOC);
+
+$sections = json_decode($page['sections'], true);
+$settings = $db->getAllSettings();
+$activeTheme = $theme->getActive();
+
+// Load navigation
+$nav = $db->query("
+  SELECT * FROM navigation 
+  WHERE location = 'header' 
+  AND is_active = 1 
+  ORDER BY sort_order ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+
+// ----- HEAD -----
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= htmlspecialchars($settings['site_title']) ?> - <?= htmlspecialchars($page['meta_title']) ?></title>
+  <meta name="description" content="<?= htmlspecialchars($page['meta_description']) ?>">
+  
+  <!-- Dynamic Theme CSS -->
+  <style>
+  :root {
+    --primary: <?= $activeTheme['colors']['primary'] ?>;
+    --secondary: <?= $activeTheme['colors']['secondary'] ?>;
+    --accent: <?= $activeTheme['colors']['accent'] ?>;
+    --bg: <?= $activeTheme['colors']['background'] ?>;
+    --text: <?= $activeTheme['colors']['text'] ?>;
+    --text-light: <?= $activeTheme['colors']['text_light'] ?>;
+    --border: <?= $activeTheme['colors']['border'] ?>;
+    --success: <?= $activeTheme['colors']['success'] ?>;
+    --warning: <?= $activeTheme['colors']['warning'] ?>;
+    --danger: <?= $activeTheme['colors']['danger'] ?>;
+    
+    --font-heading: <?= $activeTheme['fonts']['heading'] ?>;
+    --font-body: <?= $activeTheme['fonts']['body'] ?>;
+    --font-mono: <?= $activeTheme['fonts']['mono'] ?>;
+    
+    --spacing-xs: <?= $activeTheme['spacing']['xs'] ?>;
+    --spacing-sm: <?= $activeTheme['spacing']['sm'] ?>;
+    --spacing-md: <?= $activeTheme['spacing']['md'] ?>;
+    --spacing-lg: <?= $activeTheme['spacing']['lg'] ?>;
+    --spacing-xl: <?= $activeTheme['spacing']['xl'] ?>;
+    
+    --radius-sm: <?= $activeTheme['borders']['radius_sm'] ?>;
+    --radius-md: <?= $activeTheme['borders']['radius_md'] ?>;
+    --radius-lg: <?= $activeTheme['borders']['radius_lg'] ?>;
+    
+    --shadow-sm: <?= $activeTheme['shadows']['sm'] ?>;
+    --shadow-md: <?= $activeTheme['shadows']['md'] ?>;
+    --shadow-lg: <?= $activeTheme['shadows']['lg'] ?>;
+  }
+  
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--text);
+    background: var(--bg);
+  }
+  
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+  }
+  
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* ... more dynamic styles ... */
+  </style>
+</head>
+<body>
+
+<!-- HEADER (from database) -->
+<?php include 'templates/header.php'; ?>
+
+<!-- HERO SECTION (from database) -->
+<section class="hero">
+  <h1><?= htmlspecialchars($sections['hero']['headline']) ?></h1>
+  <p><?= htmlspecialchars($sections['hero']['subheadline']) ?></p>
+  <button class="btn-primary">
+    <?= htmlspecialchars($settings['cta_primary_text']) ?>
+  </button>
+</section>
+
+<!-- More sections... -->
+
+<?php include 'templates/footer.php'; ?>
+</body>
+</html>
+```
+
+**Database Tables Required:**
+
+**pages table:**
+```sql
+CREATE TABLE pages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  page_key TEXT UNIQUE NOT NULL,
+  page_title TEXT NOT NULL,
+  meta_title TEXT,
+  meta_description TEXT,
+  sections TEXT, -- JSON
+  is_published INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**settings table:**
+```sql
+CREATE TABLE settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  setting_key TEXT UNIQUE NOT NULL,
+  setting_value TEXT,
+  setting_type TEXT DEFAULT 'text',
+  category TEXT,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Example settings:**
+- site_title = "TrueVault VPN"
+- site_logo = "/assets/images/logo.png"
+- cta_primary_text = "Start Free Trial"
+- cta_secondary_text = "View Pricing"
+- support_email = "admin@the-truth-publishing.com"
+- ... (100+ settings)
+
+**Steps:**
+- [ ] Create database tables (pages, settings, navigation)
+- [ ] Populate with default content
+- [ ] Create index.php with DB integration
+- [ ] Create header.php template
+- [ ] Create footer.php template
+- [ ] Create section templates (hero, features, pricing)
+- [ ] Test theme switching
+- [ ] Test content editing from admin
+
+**Verification:**
+- [ ] Page loads without errors
+- [ ] All content from database
+- [ ] Theme colors applied
+- [ ] Fonts correct
+- [ ] Can edit content via admin
+- [ ] Can switch themes
+- [ ] Logo changeable
+- [ ] Site name changeable
+
+---
+
+### **UPDATED TASK 12.2: Create Pricing Page (pricing.php)**
+
+**Same approach as index.php:**
+- Database-driven content
+- Theme integration
+- USD/CAD pricing from database
+- Monthly/Annual toggle
+- No hardcoded strings
+
+---
+
+### **ALL Part 12 Pages (8 total):**
+
+1. ✅ index.php - Homepage
+2. ✅ pricing.php - Pricing page
+3. ✅ features.php - Features page
+4. ✅ about.php - About page
+5. ✅ contact.php - Contact form
+6. ✅ privacy.php - Privacy policy
+7. ✅ terms.php - Terms of service
+8. ✅ refund.php - Refund policy
+
+**Each page:**
+- PHP file (not HTML)
+- Database-driven
+- Theme integration
+- Header/footer templates
+- No hardcoded content
+
+---
+
+### **UPDATED Part 12 Summary:**
+
+**Original Time:** 5-6 hours
+**Updated Time:** 8-10 hours (database integration adds complexity)
+
+**Files Changed:**
+- .html → .php (8 files)
+- Added database queries
+- Added theme integration
+- Added template system
+
+**New Requirements:**
+- Database tables for pages/settings
+- Template files (header, footer, sections)
+- Admin interface to edit pages
+- Theme switching functional
+
+---

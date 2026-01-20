@@ -620,3 +620,287 @@ CREATE TABLE IF NOT EXISTS table_relationships (
 ---
 
 **END OF PART 13 CHECKLIST - DATABASE BUILDER**
+
+---
+
+## 🔄 CRITICAL UPDATES - JANUARY 20, 2026
+
+**USER DECISION:** Database Builder = **DataForge** (FileMaker Pro Alternative)
+
+**Key Requirements:**
+1. Full database management tool
+2. Visual table designer
+3. Create/update/change ANY database
+4. Template library with multiple styles
+5. Template categories: Marketing, Email, VPN, Forms
+6. Template styles: Basic, Formal, Executive
+
+---
+
+### **DATAFORGE SPECIFICATIONS:**
+
+**What DataForge Does:**
+- Create custom databases visually
+- Design tables with drag-and-drop
+- CRUD interface for all data
+- Template library (100+ templates)
+- Export/import databases
+- FileMaker Pro-style functionality
+
+**Template System:**
+
+**Categories:**
+1. **Marketing** (50+ templates)
+   - Social media posts
+   - Email campaigns
+   - Ad copy
+   - Press releases
+   - Blog posts
+
+2. **Email** (30+ templates)
+   - Onboarding emails
+   - Billing emails
+   - Support emails
+   - Retention emails
+   - VIP emails
+
+3. **VPN** (20+ templates)
+   - WireGuard configs
+   - Server setups
+   - Port forwarding rules
+   - Parental controls
+
+4. **Forms** (58+ templates)
+   - Contact forms
+   - Support tickets
+   - Survey forms
+   - Order forms
+   - Registration forms
+
+**Style Variants (for each template):**
+- **Basic** → Simple, clean, minimal
+- **Formal** → Professional, structured
+- **Executive** → Premium, polished
+
+**Example:**
+- Marketing → Social Post → Christmas Sale
+  - Basic style (plain text)
+  - Formal style (professional layout)
+  - Executive style (premium graphics)
+
+---
+
+### **UPDATED TASK 13.1: Create DataForge Visual Designer**
+
+**File:** `/database-builder/designer.php`
+**Time:** 8-10 hours (increased)
+**Lines:** ~1200 lines
+
+**Interface Sections:**
+
+**1. Table Designer:**
+- Drag-and-drop field creator
+- Field types: TEXT, INTEGER, REAL, BLOB, BOOLEAN, DATE, JSON
+- Field properties: Name, Type, Required, Default, Unique
+- Relationship builder (foreign keys)
+- Index creator
+- Save table schema
+
+**2. Data Manager:**
+- CRUD interface for records
+- Grid view (spreadsheet-like)
+- Form view (detailed)
+- Filter/search
+- Export to CSV/JSON
+- Import from CSV/JSON
+
+**3. Template Library:**
+- Category browser (Marketing, Email, VPN, Forms)
+- Style selector (Basic, Formal, Executive)
+- Preview modal
+- Insert template
+- Customize template
+- Save custom templates
+
+**Example Template Structure:**
+```json
+{
+  "id": "marketing_social_christmas",
+  "category": "marketing",
+  "subcategory": "social_media",
+  "name": "Christmas Sale Post",
+  "description": "Holiday sale announcement for social media",
+  "styles": {
+    "basic": {
+      "content": "🎄 Christmas Sale! Get 50% off VPN plans...",
+      "format": "text"
+    },
+    "formal": {
+      "content": "Season's Greetings! We're pleased to announce...",
+      "format": "text"
+    },
+    "executive": {
+      "content": "Exclusive Holiday Offer for Our Valued Customers...",
+      "format": "html",
+      "template": "<div class='premium'>...</div>"
+    }
+  },
+  "variables": ["discount_percent", "sale_end_date", "product_name"],
+  "tags": ["holiday", "christmas", "sale", "social"]
+}
+```
+
+**Database Schema for Templates:**
+```sql
+CREATE TABLE dataforge_templates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  template_key TEXT UNIQUE NOT NULL,
+  category TEXT NOT NULL,
+  subcategory TEXT,
+  name TEXT NOT NULL,
+  description TEXT,
+  styles TEXT, -- JSON with basic/formal/executive
+  variables TEXT, -- JSON array
+  tags TEXT, -- JSON array
+  preview_image TEXT,
+  usage_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+### **UPDATED TASK 13.2: Create Template Library**
+
+**File:** `/database-builder/templates.php`
+**Time:** 6-8 hours
+**Lines:** ~800 lines
+
+**Interface:**
+- Category tabs (Marketing, Email, VPN, Forms)
+- Template grid with previews
+- Style selector dropdown
+- Search/filter
+- Preview modal
+- Insert button
+- Customize button
+
+**Pre-Built Templates to Create (150+ total):**
+
+**Marketing Templates (50):**
+- Social media posts (Facebook, Twitter, LinkedIn, Instagram)
+- Email campaigns (newsletters, promotions, announcements)
+- Ad copy (Google Ads, Facebook Ads)
+- Press releases
+- Blog post templates
+
+**Email Templates (30):**
+- Onboarding (welcome, setup, follow-up)
+- Billing (payment success, failed, reminder)
+- Support (ticket received, resolved, satisfaction)
+- Retention (cancellation survey, win-back)
+- VIP (welcome package, premium features)
+
+**VPN Templates (20):**
+- WireGuard configs (device-specific)
+- Server setup scripts
+- Port forwarding rules
+- Parental control schedules
+- Network scanner configs
+
+**Form Templates (58):**
+- Contact forms
+- Support tickets
+- Survey forms
+- Order forms
+- Registration forms
+- Feedback forms
+- Quote requests
+- Appointment booking
+
+**Each template has 3 styles:**
+- Basic (plain text, minimal)
+- Formal (structured, professional)
+- Executive (premium, polished)
+
+---
+
+### **UPDATED TASK 13.3: Template Style System**
+
+**Purpose:** Allow users to choose between Basic, Formal, Executive for any template
+
+**Implementation:**
+```php
+// Example: Load template with style
+$template = $db->query("
+  SELECT * FROM dataforge_templates 
+  WHERE template_key = ?
+", ['marketing_social_christmas'])->fetch();
+
+$styles = json_decode($template['styles'], true);
+
+// User selects style
+$selectedStyle = $_POST['style']; // 'basic', 'formal', or 'executive'
+$content = $styles[$selectedStyle]['content'];
+
+// Replace variables
+$variables = json_decode($template['variables'], true);
+foreach ($variables as $var) {
+  $content = str_replace('{' . $var . '}', $_POST[$var], $content);
+}
+
+// Output
+echo $content;
+```
+
+**Style Characteristics:**
+
+**Basic:**
+- Plain text
+- Minimal formatting
+- Direct/simple language
+- No graphics
+- Fast to use
+
+**Formal:**
+- Professional structure
+- Business-appropriate
+- Headers/sections
+- Simple graphics
+- Corporate tone
+
+**Executive:**
+- Premium presentation
+- Polished design
+- High-end graphics
+- Sophisticated language
+- Impressive visuals
+
+---
+
+### **UPDATED Part 13 Summary:**
+
+**Original:** Database Builder (simple)
+**Updated:** DataForge - FileMaker Pro Alternative
+
+**Features:**
+- Visual table designer
+- CRUD interface
+- Template library (150+ templates)
+- 3 style variants (Basic, Formal, Executive)
+- Export/import
+- Relationship builder
+- Index management
+
+**Time Estimate:**
+- Original: 6-8 hours
+- Updated: 15-20 hours (full FileMaker alternative)
+
+**Files:**
+- /database-builder/designer.php
+- /database-builder/data-manager.php
+- /database-builder/templates.php
+- /database-builder/api/*.php (10+ API endpoints)
+- /databases/dataforge.db (separate database)
+
+---
