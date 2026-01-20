@@ -53,6 +53,36 @@ Mode: LIVE (production)
 Webhook URL: https://vpn.the-truth-publishing.com/api/paypal-webhook.php
 ```
 
+### **Email Configuration**
+
+**Customer Communications:**
+```
+SMTP Server: the-truth-publishing.com
+SMTP Port: 465 (SSL)
+SMTP Username: admin@the-truth-publishing.com
+SMTP Password: A'ndassiAthena8
+From Address: admin@the-truth-publishing.com
+From Name: TrueVault VPN Team
+
+IMAP Server: the-truth-publishing.com
+IMAP Port: 993 (SSL)
+```
+
+**Purpose:**
+- Send payment receipts
+- Send welcome emails
+- Send subscription reminders
+- Send cancellation confirmations
+- All customer-facing communications
+
+**Business Operations (Separate Account):**
+```
+Account: paulhalonen@gmail.com
+Purpose: Contabo notifications, server provisioning ONLY
+Direction: RECEIVE ONLY (system parses)
+Access: Gmail API preferred, IMAP fallback
+```
+
 ---
 
 ## 🔌 PAYPAL LIVE API

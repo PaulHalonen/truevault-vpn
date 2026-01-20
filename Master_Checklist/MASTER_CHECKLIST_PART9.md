@@ -432,6 +432,195 @@ Before starting PART 9, ensure:
 
 ---
 
+## 🔧 TASK 9.7: Payment & Email Integration
+
+**Time Estimate:** 3 hours
+
+### 9.7.1 Configure Customer Email (SMTP/IMAP)
+- [ ] Access email settings in hosting control panel
+- [ ] Verify admin@the-truth-publishing.com exists
+- [ ] Test SMTP sending:
+  ```php
+  mail('test@example.com', 'Test', 'Body', 
+    'From: admin@the-truth-publishing.com');
+  ```
+- [ ] Document SMTP settings:
+  - Server: the-truth-publishing.com
+  - Port: 465 (SSL)
+  - Username: admin@the-truth-publishing.com
+  - Password: A'ndassiAthena8
+- [ ] Test IMAP receiving (if needed for support tickets)
+- [ ] Create email template table in vpn.db
+- [ ] Add default templates (welcome, receipt, etc.)
+
+### 9.7.2 Configure PayPal Webhook
+- [ ] Log into PayPal developer dashboard
+- [ ] Navigate to Apps & Credentials
+- [ ] Select live app: MyApp_ConnectionPoint_Systems_Inc
+- [ ] Verify webhook URL: https://vpn.the-truth-publishing.com/api/paypal-webhook.php
+- [ ] Verify webhook ID: 46924926WL757580D
+- [ ] Ensure these events are subscribed:
+  - BILLING.SUBSCRIPTION.ACTIVATED
+  - PAYMENT.SALE.COMPLETED
+  - PAYMENT.SALE.DENIED
+  - BILLING.SUBSCRIPTION.CANCELLED
+  - BILLING.SUBSCRIPTION.SUSPENDED
+  - PAYMENT.SALE.REFUNDED
+- [ ] Test webhook delivery (PayPal simulator)
+
+### 9.7.3 Create Webhook Handler
+- [ ] Create /api/paypal-webhook.php
+- [ ] Implement webhook signature verification
+- [ ] Create event routing switch statement
+- [ ] Implement handleSubscriptionActivated()
+- [ ] Implement handlePaymentCompleted()
+- [ ] Implement handlePaymentFailed()
+- [ ] Implement handleSubscriptionCancelled()
+- [ ] Log all webhook events to automation.db
+- [ ] Test with PayPal webhook simulator
+
+### 9.7.4 Gmail API Setup (for Contabo emails)
+- [ ] Go to Google Cloud Console
+- [ ] Enable Gmail API for paulhalonen@gmail.com
+- [ ] Create OAuth 2.0 credentials
+- [ ] Download credentials.json
+- [ ] Store securely on server
+- [ ] Test authentication flow
+- [ ] Grant gmail.readonly scope
+- [ ] Create email parser script: /admin/provisioning/gmail-parser.php
+- [ ] Test parsing Contabo email format
+
+---
+
+## 🔧 TASK 9.8: Server Auto-Provisioning
+
+**Time Estimate:** 4 hours
+
+### 9.8.1 Contabo API Integration
+- [ ] Research Contabo API documentation
+- [ ] Request API access from Contabo support
+- [ ] Store API credentials in database (encrypted)
+- [ ] Create /api/contabo-api.php wrapper
+- [ ] Implement purchaseVPS() function
+- [ ] Implement getServerStatus() function
+- [ ] Test API calls in sandbox/test mode
+- [ ] Verify purchase flow works
+
+### 9.8.2 Deploy Server Scripts
+- [ ] Upload server-scripts/install-wireguard.sh to web server
+- [ ] Upload server-scripts/create-client-config.sh to web server
+- [ ] Make scripts executable (chmod +x)
+- [ ] Test scripts on a test Contabo server
+- [ ] Verify .conf file generation works
+- [ ] Verify email delivery of .conf files
+
+### 9.8.3 Complete Provisioning Workflow
+- [ ] Verify auto-provision.php exists in /admin/provisioning/
+- [ ] Test change-server-password.py:
+  ```bash
+  python3 change-server-password.py TEST_IP TEST_PASS
+  ```
+- [ ] Install Python dependencies:
+  ```bash
+  pip install paramiko
+  ```
+- [ ] Install PHP SSH2 extension:
+  ```bash
+  sudo apt install php-ssh2
+  ```
+- [ ] Test full workflow end-to-end:
+  1. Manually trigger with test data
+  2. Verify password changes
+  3. Verify WireGuard installs
+  4. Verify .conf generated
+  5. Verify email sent
+  6. Verify database updated
+- [ ] Document any errors encountered
+- [ ] Create troubleshooting guide
+
+### 9.8.4 Integrate with PayPal Webhook
+- [ ] Detect "dedicated" plan in webhook handler
+- [ ] Extract customer location preference
+- [ ] Trigger auto-provision.php when dedicated payment received
+- [ ] Pass parameters: customer_id, email, location
+- [ ] Log provisioning attempts
+- [ ] Handle errors gracefully
+- [ ] Send error notifications to admin if provisioning fails
+
+---
+
+## 🔧 TASK 9.9: Admin Troubleshooting Panel
+
+**Time Estimate:** 2 hours
+
+### 9.9.1 Create Diagnostic Panel
+- [ ] Create /admin/troubleshooting/diagnostics-panel.php
+- [ ] Design GUI with buttons for common fixes
+- [ ] Add sections:
+  - Server Status Overview
+  - Quick Fix Buttons
+  - Diagnostic Information
+  - Manual Intervention Options
+- [ ] Style with database-driven theme (from themes.db)
+
+### 9.9.2 Create Fix Scripts
+- [ ] Create /admin/troubleshooting/fix-scripts/ directory
+- [ ] Create restart-wireguard.sh:
+  ```bash
+  systemctl restart wg-quick@wg0
+  systemctl status wg-quick@wg0
+  ```
+- [ ] Create reset-firewall.sh:
+  ```bash
+  ufw --force reset
+  ufw allow 22/tcp
+  ufw allow 51820/udp
+  ufw --force enable
+  ```
+- [ ] Create regenerate-keys.sh {customer_id}
+- [ ] Create reboot-server.sh (with customer notification)
+- [ ] Make all scripts executable
+- [ ] Test each script on test server
+
+### 9.9.3 Integrate GUI with Scripts
+- [ ] Create PHP endpoints to trigger scripts via SSH
+- [ ] Implement AJAX calls from buttons
+- [ ] Show script output in real-time
+- [ ] Log all admin actions
+- [ ] Add confirmation dialogs for destructive actions
+- [ ] Test all buttons work correctly
+
+---
+
+## 🔧 TASK 9.10: Automation Workflows
+
+**Time Estimate:** 2 hours
+
+### 9.10.1 Create Automation Database
+- [ ] Create automation.db
+- [ ] Create table: automation_workflows
+- [ ] Create table: automation_logs
+- [ ] Create table: scheduled_tasks
+- [ ] Add default workflows:
+  - New subscription activation
+  - Dedicated server provisioning
+  - Payment failure escalation
+  - Monthly billing reminder
+
+### 9.10.2 Create Automation Engine
+- [ ] Create /api/automation-engine.php
+- [ ] Implement workflow processor
+- [ ] Implement retry logic for failed tasks
+- [ ] Implement task scheduling
+- [ ] Create cron job:
+  ```cron
+  */5 * * * * php /path/to/api/automation-engine.php
+  ```
+- [ ] Test workflow execution
+- [ ] Verify logs are written correctly
+
+---
+
 ## 🧪 TESTING CHECKLIST
 
 - [ ] Ping all 4 servers
