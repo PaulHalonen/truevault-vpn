@@ -1,199 +1,140 @@
 # MASTER CHECKLIST - PART 8: THEME SYSTEM + VISUAL EDITOR
 
-**Created:** January 18, 2026 - 11:35 PM CST  
+**Created:** January 18, 2026 - 9:30 PM CST  
 **Updated:** January 20, 2026 - User Decision #6 Applied
 **Status:** ⏳ NOT STARTED  
-**Priority:** 🟡 HIGH - Business Transfer Requirement  
-**Estimated Time:** 15-18 hours (increased for 20+ themes + GrapesJS + React)
+**Priority:** 🟡 HIGH - Critical for business transferability  
+**Estimated Time:** 15-18 hours (increased for GrapesJS + 20+ themes)
 
 ---
 
 ## 📋 OVERVIEW
 
-Build complete theme management system with 20+ pre-built themes, visual editor (GrapesJS), and React preview components.
+Build complete theme management system with 20+ pre-built themes, visual editor, and automatic seasonal switching.
 
 **CRITICAL USER DECISION:**
-Theme system MUST include:
-1. ✅ 20+ pre-built themes (NOT just 3-4)
-2. ✅ GrapesJS visual editor (drag-and-drop)
-3. ✅ React preview components (live theme preview)
-4. ✅ Seasonal auto-switching
-5. ✅ Holiday themes
-6. ✅ Complete customization via GUI
+- 20+ pre-built themes (NOT just 12)
+- GrapesJS visual editor integration
+- React preview components
+- Seasonal auto-switching
+- Holiday themes included
+- Complete visual customization (NO code required)
 
 **Why This Matters:**
-- New owner changes theme in 30 seconds
-- NO coding required
-- Seasonal themes auto-switch
-- Visual editor for customization
-- Professional appearance instantly
+- New owner changes entire look in 30 minutes
+- Seasonal themes auto-switch (Winter, Summer, Fall, Spring)
+- Holiday themes ready (Christmas, Halloween, etc.)
+- GrapesJS allows drag-and-drop customization
+- Business transfer = just activate different theme
 
 ---
 
-## 📊 THEME CATEGORIES (20+ THEMES)
+## 🎨 THEME CATEGORIES (20+ THEMES)
 
-### **Seasonal Themes (4):**
-1. **Winter Frost** - Cool blues, whites, icy tones
-2. **Summer Breeze** - Warm yellows, oranges, sunny
-3. **Autumn Harvest** - Browns, oranges, earthy
-4. **Spring Bloom** - Greens, pinks, pastels
+### **Seasonal Themes (4)**
+1. Winter Frost - Blues, whites, cool tones
+2. Summer Breeze - Yellows, oranges, warm tones  
+3. Autumn Harvest - Browns, oranges, earthy
+4. Spring Bloom - Greens, pinks, pastels
 
-### **Holiday Themes (8):**
-1. **Christmas Joy** - Red, green, gold
-2. **Thanksgiving Warmth** - Orange, brown, cream
-3. **Halloween Spooky** - Orange, black, purple
-4. **Easter Pastel** - Pink, blue, yellow
-5. **Valentine Romance** - Red, pink, white
-6. **Independence Day** - Red, white, blue
-7. **New Year Celebration** - Gold, silver, black
-8. **St. Patrick's Day** - Green, gold, white
+### **Holiday Themes (8)**
+1. Christmas Joy - Red, green, gold
+2. Thanksgiving Warmth - Orange, brown, cream
+3. Halloween Spooky - Orange, black, purple
+4. Easter Pastel - Pink, blue, yellow
+5. Valentine Romance - Red, pink, white
+6. Independence Day - Red, white, blue
+7. New Year Celebration - Gold, silver, black
+8. St. Patrick's Day - Green, gold, white
 
-### **Standard Professional (4):**
-1. **Professional Blue** - Corporate, trustworthy
-2. **Modern Dark** - Sleek, contemporary
-3. **Classic Light** - Timeless, elegant
-4. **Minimal White** - Clean, spacious
+### **Standard Business Themes (4)**
+1. Professional Blue - Corporate, trustworthy
+2. Modern Dark - Sleek, contemporary
+3. Classic Light - Timeless, elegant
+4. Minimal White - Clean, spacious
 
-### **Color Scheme Themes (4):**
-1. **Ocean Blue** - Deep blues, aqua accents
-2. **Forest Green** - Natural greens, earth tones
-3. **Royal Purple** - Rich purples, gold accents
-4. **Sunset Orange** - Warm oranges, coral
+### **Color Scheme Themes (4)**
+1. Ocean Blue - Blues and teals
+2. Forest Green - Greens and browns
+3. Royal Purple - Purples and golds
+4. Sunset Orange - Oranges and reds
 
-**Total:** 20 pre-built themes
+**Total: 20 pre-built themes**
 
 ---
 
 ## 💾 TASK 8.1: Create Theme Database Schema
 
 **Time:** 45 minutes  
+**Lines:** ~200 lines  
 **File:** `/databases/setup-themes.php`
 
-**Create themes table in admin.db:**
+**Create admin.db themes table:**
 
 ```sql
 CREATE TABLE IF NOT EXISTS themes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    theme_name TEXT NOT NULL UNIQUE,
+    theme_name TEXT UNIQUE NOT NULL,
     display_name TEXT NOT NULL,
-    category TEXT NOT NULL,              -- 'seasonal', 'holiday', 'standard', 'color'
-    season TEXT,                          -- 'winter', 'spring', 'summer', 'fall'
-    style TEXT DEFAULT 'light',          -- 'light', 'medium', 'dark'
-    colors TEXT NOT NULL,                 -- JSON: {primary, secondary, accent, etc.}
+    category TEXT NOT NULL,              -- 'seasonal', 'holiday', 'standard', 'color_scheme'
+    season TEXT,                          -- 'winter', 'summer', 'fall', 'spring' (if seasonal)
+    holiday TEXT,                         -- 'christmas', 'halloween', etc. (if holiday)
+    colors TEXT NOT NULL,                 -- JSON: {primary, secondary, accent, bg, etc.}
     fonts TEXT NOT NULL,                  -- JSON: {heading, body, mono}
     spacing TEXT NOT NULL,                -- JSON: {xs, sm, md, lg, xl}
-    borders TEXT NOT NULL,                -- JSON: {radius_sm, radius_md, radius_lg, width}
+    borders TEXT NOT NULL,                -- JSON: {radius_sm, radius_md, radius_lg}
     shadows TEXT NOT NULL,                -- JSON: {sm, md, lg}
-    preview_image TEXT,                   -- Path to preview screenshot
     is_active INTEGER DEFAULT 0,
-    is_seasonal INTEGER DEFAULT 0,        -- Auto-switch based on season?
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    is_default INTEGER DEFAULT 0,
+    preview_image TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TABLE IF NOT EXISTS theme_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    setting_key TEXT UNIQUE NOT NULL,
-    setting_value TEXT,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Insert Theme Settings:**
-```sql
-INSERT INTO theme_settings (setting_key, setting_value) VALUES
-('enable_seasonal_switching', '1'),
-('current_season', 'winter'),
-('default_theme', 'professional_blue');
 ```
 
 **Verification:**
-- [ ] themes table created
-- [ ] theme_settings table created
-- [ ] Settings seeded
+- [ ] themes table created in admin.db
+- [ ] Can insert theme data
+- [ ] JSON fields valid
 
 ---
 
-## 🎨 TASK 8.2: Seed 20+ Pre-Built Themes
+## 🌈 TASK 8.2: Seed 20+ Themes
 
-**Time:** 2 hours  
+**Time:** 1.5 hours  
+**Lines:** ~600 lines  
 **File:** `/databases/seed-themes.php`
 
-**Insert ALL 20 themes with complete JSON configs:**
+**Seed ALL 20+ themes with complete data:**
 
-### **Example Theme Data Structure:**
 ```php
 <?php
+require_once '../configs/config.php';
+
+$db = new PDO('sqlite:../databases/admin.db');
+
+// SEASONAL THEMES (4)
 $themes = [
-    // SEASONAL THEMES (4)
     [
         'theme_name' => 'winter_frost',
         'display_name' => 'Winter Frost',
         'category' => 'seasonal',
         'season' => 'winter',
-        'style' => 'light',
         'colors' => json_encode([
-            'primary' => '#3B82F6',      // Blue
-            'secondary' => '#60A5FA',    // Light blue
-            'accent' => '#93C5FD',       // Ice blue
-            'background' => '#F0F9FF',   // Very light blue
-            'surface' => '#FFFFFF',      // White
-            'text' => '#1E3A8A',        // Dark blue
-            'text_light' => '#3B82F6',  // Blue
-            'border' => '#DBEAFE',       // Light blue border
-            'success' => '#10B981',
-            'warning' => '#F59E0B',
-            'danger' => '#EF4444'
-        ]),
-        'fonts' => json_encode([
-            'heading' => 'Poppins, sans-serif',
-            'body' => 'Inter, sans-serif',
-            'mono' => 'Fira Code, monospace'
-        ]),
-        'spacing' => json_encode([
-            'xs' => '4px',
-            'sm' => '8px',
-            'md' => '16px',
-            'lg' => '24px',
-            'xl' => '48px'
-        ]),
-        'borders' => json_encode([
-            'radius_sm' => '4px',
-            'radius_md' => '8px',
-            'radius_lg' => '16px',
-            'width' => '1px'
-        ]),
-        'shadows' => json_encode([
-            'sm' => '0 1px 3px rgba(0,0,0,0.12)',
-            'md' => '0 4px 6px rgba(0,0,0,0.1)',
-            'lg' => '0 10px 15px rgba(0,0,0,0.1)'
-        ]),
-        'is_seasonal' => 1
-    ],
-    
-    // SUMMER BREEZE
-    [
-        'theme_name' => 'summer_breeze',
-        'display_name' => 'Summer Breeze',
-        'category' => 'seasonal',
-        'season' => 'summer',
-        'style' => 'light',
-        'colors' => json_encode([
-            'primary' => '#F59E0B',      // Orange
-            'secondary' => '#FBBF24',    // Yellow
-            'accent' => '#FCD34D',       // Light yellow
-            'background' => '#FFFBEB',   // Cream
+            'primary' => '#4A90E2',
+            'secondary' => '#89CFF0',
+            'accent' => '#E8F4F8',
+            'background' => '#F0F8FF',
             'surface' => '#FFFFFF',
-            'text' => '#78350F',        // Brown
-            'text_light' => '#92400E',
-            'border' => '#FEF3C7',
-            'success' => '#10B981',
-            'warning' => '#F59E0B',
-            'danger' => '#EF4444'
+            'text' => '#2C3E50',
+            'text_light' => '#7F8C8D',
+            'border' => '#D0E8F2',
+            'success' => '#2ECC71',
+            'warning' => '#F39C12',
+            'danger' => '#E74C3C'
         ]),
         'fonts' => json_encode([
-            'heading' => 'Poppins, sans-serif',
-            'body' => 'Inter, sans-serif',
+            'heading' => 'Montserrat, sans-serif',
+            'body' => 'Open Sans, sans-serif',
             'mono' => 'Fira Code, monospace'
         ]),
         'spacing' => json_encode([
@@ -201,995 +142,619 @@ $themes = [
             'sm' => '8px',
             'md' => '16px',
             'lg' => '24px',
-            'xl' => '48px'
+            'xl' => '32px'
         ]),
         'borders' => json_encode([
             'radius_sm' => '4px',
             'radius_md' => '8px',
-            'radius_lg' => '16px',
-            'width' => '1px'
+            'radius_lg' => '16px'
         ]),
         'shadows' => json_encode([
-            'sm' => '0 1px 3px rgba(0,0,0,0.12)',
-            'md' => '0 4px 6px rgba(0,0,0,0.1)',
-            'lg' => '0 10px 15px rgba(0,0,0,0.1)'
+            'sm' => '0 2px 4px rgba(74, 144, 226, 0.1)',
+            'md' => '0 4px 8px rgba(74, 144, 226, 0.15)',
+            'lg' => '0 8px 16px rgba(74, 144, 226, 0.2)'
         ]),
-        'is_seasonal' => 1
+        'preview_image' => '/assets/themes/winter_frost.png'
     ],
     
-    // AUTUMN HARVEST
-    [
-        'theme_name' => 'autumn_harvest',
-        'display_name' => 'Autumn Harvest',
-        'category' => 'seasonal',
-        'season' => 'fall',
-        'style' => 'medium',
-        'colors' => json_encode([
-            'primary' => '#D97706',      // Dark orange
-            'secondary' => '#B45309',    // Brown
-            'accent' => '#F59E0B',       // Orange
-            'background' => '#FEF3C7',   // Light cream
-            'surface' => '#FFFBEB',
-            'text' => '#78350F',
-            'text_light' => '#92400E',
-            'border' => '#FDE68A',
-            'success' => '#10B981',
-            'warning' => '#F59E0B',
-            'danger' => '#EF4444'
-        ]),
-        'fonts' => json_encode([
-            'heading' => 'Poppins, sans-serif',
-            'body' => 'Inter, sans-serif',
-            'mono' => 'Fira Code, monospace'
-        ]),
-        'spacing' => json_encode([
-            'xs' => '4px',
-            'sm' => '8px',
-            'md' => '16px',
-            'lg' => '24px',
-            'xl' => '48px'
-        ]),
-        'borders' => json_encode([
-            'radius_sm' => '4px',
-            'radius_md' => '8px',
-            'radius_lg' => '16px',
-            'width' => '1px'
-        ]),
-        'shadows' => json_encode([
-            'sm' => '0 1px 3px rgba(0,0,0,0.12)',
-            'md' => '0 4px 6px rgba(0,0,0,0.1)',
-            'lg' => '0 10px 15px rgba(0,0,0,0.1)'
-        ]),
-        'is_seasonal' => 1
-    ],
-    
-    // SPRING BLOOM
-    [
-        'theme_name' => 'spring_bloom',
-        'display_name' => 'Spring Bloom',
-        'category' => 'seasonal',
-        'season' => 'spring',
-        'style' => 'light',
-        'colors' => json_encode([
-            'primary' => '#10B981',      // Green
-            'secondary' => '#34D399',    // Light green
-            'accent' => '#F472B6',       // Pink
-            'background' => '#F0FDF4',   // Very light green
-            'surface' => '#FFFFFF',
-            'text' => '#065F46',        // Dark green
-            'text_light' => '#059669',
-            'border' => '#D1FAE5',
-            'success' => '#10B981',
-            'warning' => '#F59E0B',
-            'danger' => '#EF4444'
-        ]),
-        'fonts' => json_encode([
-            'heading' => 'Poppins, sans-serif',
-            'body' => 'Inter, sans-serif',
-            'mono' => 'Fira Code, monospace'
-        ]),
-        'spacing' => json_encode([
-            'xs' => '4px',
-            'sm' => '8px',
-            'md' => '16px',
-            'lg' => '24px',
-            'xl' => '48px'
-        ]),
-        'borders' => json_encode([
-            'radius_sm' => '4px',
-            'radius_md' => '8px',
-            'radius_lg' => '16px',
-            'width' => '1px'
-        ]),
-        'shadows' => json_encode([
-            'sm' => '0 1px 3px rgba(0,0,0,0.12)',
-            'md' => '0 4px 6px rgba(0,0,0,0.1)',
-            'lg' => '0 10px 15px rgba(0,0,0,0.1)'
-        ]),
-        'is_seasonal' => 1
-    ],
-    
-    // HOLIDAY THEMES (8) - Christmas
-    [
-        'theme_name' => 'christmas_joy',
-        'display_name' => 'Christmas Joy',
-        'category' => 'holiday',
-        'season' => null,
-        'style' => 'medium',
-        'colors' => json_encode([
-            'primary' => '#DC2626',      // Red
-            'secondary' => '#059669',    // Green
-            'accent' => '#F59E0B',       // Gold
-            'background' => '#FEF2F2',   // Light red
-            'surface' => '#FFFFFF',
-            'text' => '#7F1D1D',
-            'text_light' => '#991B1B',
-            'border' => '#FECACA',
-            'success' => '#059669',
-            'warning' => '#F59E0B',
-            'danger' => '#DC2626'
-        ]),
-        'fonts' => json_encode([
-            'heading' => 'Poppins, sans-serif',
-            'body' => 'Inter, sans-serif',
-            'mono' => 'Fira Code, monospace'
-        ]),
-        'spacing' => json_encode([
-            'xs' => '4px',
-            'sm' => '8px',
-            'md' => '16px',
-            'lg' => '24px',
-            'xl' => '48px'
-        ]),
-        'borders' => json_encode([
-            'radius_sm' => '4px',
-            'radius_md' => '8px',
-            'radius_lg' => '16px',
-            'width' => '1px'
-        ]),
-        'shadows' => json_encode([
-            'sm' => '0 1px 3px rgba(0,0,0,0.12)',
-            'md' => '0 4px 6px rgba(0,0,0,0.1)',
-            'lg' => '0 10px 15px rgba(0,0,0,0.1)'
-        ]),
-        'is_seasonal' => 0
-    ],
-    
-    // Continue for ALL 20 themes...
-    // (I'll include the seed script that generates all 20)
+    // Continue for all 20+ themes...
 ];
 
-// Insert all themes
 foreach ($themes as $theme) {
-    $db->insert('themes', $theme);
+    $db->prepare("INSERT INTO themes (...) VALUES (...)")->execute($theme);
 }
 ```
+
+**All 20 Themes to Seed:**
+- [ ] Winter Frost
+- [ ] Summer Breeze
+- [ ] Autumn Harvest
+- [ ] Spring Bloom
+- [ ] Christmas Joy
+- [ ] Thanksgiving Warmth
+- [ ] Halloween Spooky
+- [ ] Easter Pastel
+- [ ] Valentine Romance
+- [ ] Independence Day
+- [ ] New Year Celebration
+- [ ] St. Patrick's Day
+- [ ] Professional Blue (DEFAULT)
+- [ ] Modern Dark
+- [ ] Classic Light
+- [ ] Minimal White
+- [ ] Ocean Blue
+- [ ] Forest Green
+- [ ] Royal Purple
+- [ ] Sunset Orange
 
 **Verification:**
 - [ ] All 20 themes inserted
-- [ ] Each theme has complete JSON config
-- [ ] Preview images generated
-- [ ] Can query themes by category
+- [ ] Professional Blue set as default
+- [ ] Each theme has complete color palette
+- [ ] Preview images exist
 
 ---
 
-## 🖼️ TASK 8.3: Theme Manager Admin Interface
+## 🎨 TASK 8.3: Create Theme Manager Admin Page
 
-**Time:** 3 hours  
-**File:** `/admin/themes.php`
+**Time:** 2 hours  
+**Lines:** ~500 lines  
+**File:** `/admin/theme-manager.php`
 
-**Complete theme management dashboard:**
+**Features:**
+- View all 20+ themes grouped by category
+- Activate any theme with one click
+- Preview themes before activating
+- Edit theme colors/fonts/spacing
+- Enable/disable seasonal auto-switching
+- Export/import themes
 
+**Code Structure:**
 ```php
 <?php
-require_once '../includes/auth.php';
-requireAdmin();
+// Header with current active theme
+$activeTheme = $db->getActiveTheme();
 
-$db = new Database();
-
-// Get all themes
-$themes = $db->query("SELECT * FROM themes ORDER BY category, display_name")->fetchAll();
-$activeTheme = $db->query("SELECT * FROM themes WHERE is_active = 1 LIMIT 1")->fetch();
-$settings = $db->query("SELECT * FROM theme_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+// Get themes by category
+$seasonal = $db->getThemesByCategory('seasonal');
+$holiday = $db->getThemesByCategory('holiday');
+$standard = $db->getThemesByCategory('standard');
+$colorSchemes = $db->getThemesByCategory('color_scheme');
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Theme Manager</title>
-    <style>
-    /* Theme manager styles */
-    .themes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        padding: 20px;
-    }
-    
-    .theme-card {
-        border: 2px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 15px;
-        background: white;
-        transition: all 0.3s;
-    }
-    
-    .theme-card:hover {
-        border-color: #3B82F6;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .theme-card.active {
-        border-color: #10B981;
-        background: #F0FDF4;
-    }
-    
-    .theme-preview {
-        width: 100%;
-        height: 180px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-    }
-    
-    .theme-meta {
-        display: flex;
-        gap: 8px;
-        margin-top: 10px;
-    }
-    
-    .badge {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .badge-seasonal {
-        background: #DBEAFE;
-        color: #1E40AF;
-    }
-    
-    .badge-holiday {
-        background: #FEE2E2;
-        color: #991B1B;
-    }
-    
-    .badge-active {
-        background: #D1FAE5;
-        color: #065F46;
-    }
-    </style>
-</head>
-<body>
-
-<div class="admin-container">
-    <h1>Theme Manager</h1>
-    
-    <!-- Seasonal Switching Toggle -->
-    <div class="seasonal-toggle">
-        <label>
-            <input type="checkbox" id="enableSeasonal" 
-                   <?= $settings['enable_seasonal_switching'] ? 'checked' : '' ?>>
-            Automatically switch themes based on season
-        </label>
-        <p>Current season: <strong><?= ucfirst($settings['current_season']) ?></strong></p>
-    </div>
-    
-    <!-- Active Theme -->
-    <div class="active-theme-section">
-        <h2>Active Theme</h2>
-        <div class="theme-card active">
-            <div class="theme-preview" style="<?= generatePreviewStyle($activeTheme) ?>"></div>
-            <h3><?= $activeTheme['display_name'] ?></h3>
-            <div class="theme-meta">
-                <span class="badge badge-active">✓ Active</span>
-                <?php if ($activeTheme['is_seasonal']): ?>
-                    <span class="badge badge-seasonal">🍂 <?= ucfirst($activeTheme['season']) ?></span>
-                <?php endif; ?>
-            </div>
-            <button onclick="editTheme(<?= $activeTheme['id'] ?>)">Edit Colors</button>
-            <button onclick="customizeTheme(<?= $activeTheme['id'] ?>)">Visual Editor</button>
-        </div>
-    </div>
-    
-    <!-- All Themes Grid -->
-    <h2>All Themes (<?= count($themes) ?>)</h2>
-    
-    <div class="category-tabs">
-        <button data-category="all" class="active">All (<?= count($themes) ?>)</button>
-        <button data-category="seasonal">Seasonal (4)</button>
-        <button data-category="holiday">Holidays (8)</button>
-        <button data-category="standard">Standard (4)</button>
-        <button data-category="color">Colors (4)</button>
-    </div>
-    
-    <div class="themes-grid">
-        <?php foreach ($themes as $theme): ?>
-        <div class="theme-card" data-category="<?= $theme['category'] ?>">
-            <div class="theme-preview" style="<?= generatePreviewStyle($theme) ?>"></div>
-            <h3><?= $theme['display_name'] ?></h3>
-            
-            <div class="theme-meta">
-                <?php if ($theme['category'] === 'seasonal'): ?>
-                    <span class="badge badge-seasonal">🍂 <?= ucfirst($theme['season']) ?></span>
-                <?php elseif ($theme['category'] === 'holiday'): ?>
-                    <span class="badge badge-holiday">🎉 Holiday</span>
-                <?php endif; ?>
-                
-                <span class="badge" style="background: #F3F4F6; color: #374151;">
-                    <?= ucfirst($theme['style']) ?>
-                </span>
-            </div>
-            
-            <div class="theme-actions">
-                <button onclick="previewTheme(<?= $theme['id'] ?>)">Preview</button>
-                <button onclick="activateTheme(<?= $theme['id'] ?>)">Activate</button>
-                <button onclick="editTheme(<?= $theme['id'] ?>)">Edit</button>
-                <button onclick="customizeTheme(<?= $theme['id'] ?>)">Customize</button>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
+<!-- Show active theme -->
+<div class="active-theme">
+    <h2>Active: <?= $activeTheme['display_name'] ?></h2>
+    <button onclick="editTheme(<?= $activeTheme['id'] ?>)">Edit</button>
 </div>
 
-<script>
-// Category filtering
-document.querySelectorAll('.category-tabs button').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const category = e.target.dataset.category;
-        
-        // Update active tab
-        document.querySelectorAll('.category-tabs button').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        
-        // Filter cards
-        document.querySelectorAll('.theme-card').forEach(card => {
-            if (category === 'all' || card.dataset.category === category) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    });
-});
+<!-- Seasonal auto-switch toggle -->
+<label>
+    <input type="checkbox" id="seasonalAuto">
+    Auto-switch themes by season
+</label>
 
-// Preview theme
-function previewTheme(themeId) {
-    window.open(`/preview-theme.php?id=${themeId}`, '_blank');
-}
+<!-- Theme grid by category -->
+<h3>Seasonal Themes</h3>
+<div class="theme-grid">
+    <?php foreach ($seasonal as $theme): ?>
+        <div class="theme-card" data-id="<?= $theme['id'] ?>">
+            <img src="<?= $theme['preview_image'] ?>">
+            <h4><?= $theme['display_name'] ?></h4>
+            <button onclick="activateTheme(<?= $theme['id'] ?>)">Activate</button>
+        </div>
+    <?php endforeach; ?>
+</div>
 
-// Activate theme
-async function activateTheme(themeId) {
-    if (!confirm('Activate this theme? This will change the site appearance immediately.')) return;
-    
-    const response = await fetch('/api/themes/activate.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({theme_id: themeId})
-    });
-    
-    const data = await response.json();
-    if (data.success) {
-        alert('Theme activated!');
-        location.reload();
-    }
-}
-
-// Edit theme colors
-function editTheme(themeId) {
-    window.location.href = `/admin/theme-editor.php?id=${themeId}`;
-}
-
-// Visual customizer (GrapesJS)
-function customizeTheme(themeId) {
-    window.location.href = `/admin/theme-customizer.php?id=${themeId}`;
-}
-
-// Seasonal toggle
-document.getElementById('enableSeasonal').addEventListener('change', async (e) => {
-    const response = await fetch('/api/themes/settings.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            enable_seasonal_switching: e.target.checked ? 1 : 0
-        })
-    });
-    
-    const data = await response.json();
-    if (data.success) {
-        alert('Seasonal switching ' + (e.target.checked ? 'enabled' : 'disabled'));
-    }
-});
-</script>
-
-</body>
-</html>
-
-<?php
-function generatePreviewStyle($theme) {
-    $colors = json_decode($theme['colors'], true);
-    return sprintf(
-        "background: linear-gradient(135deg, %s, %s);",
-        $colors['primary'],
-        $colors['secondary']
-    );
-}
-?>
+<!-- Repeat for other categories... -->
 ```
 
 **Verification:**
-- [ ] Theme grid displays 20 themes
-- [ ] Category tabs filter correctly
-- [ ] Preview opens in new tab
-- [ ] Activate button works
-- [ ] Seasonal toggle functional
+- [ ] All 20+ themes displayed
+- [ ] Grouped correctly by category
+- [ ] Active theme highlighted
+- [ ] Can activate any theme
+- [ ] Can preview themes
+- [ ] Seasonal toggle works
 
 ---
 
-## 🎨 TASK 8.4: GrapesJS Visual Theme Editor
+## 🖌️ TASK 8.4: Create Visual Theme Editor (GrapesJS)
 
-**Time:** 4 hours  
-**File:** `/admin/theme-customizer.php`
+**Time:** 3 hours  
+**Lines:** ~800 lines  
+**File:** `/admin/theme-editor.php`
 
-**Integrate GrapesJS for visual theme editing:**
+**GrapesJS Integration for WYSIWYG editing:**
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Theme Customizer - GrapesJS</title>
-    
-    <!-- GrapesJS CDN -->
     <link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css">
-    <script src="https://unpkg.com/grapesjs"></script>
-    
-    <!-- GrapesJS Plugins -->
-    <script src="https://unpkg.com/grapesjs-preset-webpage"></script>
-    
-    <style>
-    body, html {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-    }
-    
-    #gjs {
-        border: 3px solid #444;
-        height: 100vh;
-        width: 100%;
-    }
-    
-    .gjs-one-bg {
-        background-color: #1f2937;
-    }
-    
-    .gjs-two-color {
-        color: #e5e7eb;
-    }
-    </style>
 </head>
 <body>
-
-<div id="gjs"></div>
-
-<script>
-const themeId = <?= $_GET['id'] ?? 0 ?>;
-
-// Load current theme
-let currentTheme;
-fetch(`/api/themes/get.php?id=${themeId}`)
-    .then(r => r.json())
-    .then(data => {
-        currentTheme = data.theme;
-        initializeEditor();
-    });
-
-function initializeEditor() {
+    <div id="editor-header">
+        <h2>Editing: <?= $theme['display_name'] ?></h2>
+        <button onclick="saveTheme()">Save</button>
+    </div>
+    
+    <!-- Color Panel -->
+    <div id="color-panel">
+        <h3>Colors</h3>
+        <div class="color-group">
+            <label>Primary</label>
+            <input type="color" id="color-primary" value="<?= $colors['primary'] ?>">
+            <input type="text" id="color-primary-hex" value="<?= $colors['primary'] ?>">
+        </div>
+        <!-- Repeat for all 11 colors... -->
+    </div>
+    
+    <!-- GrapesJS Canvas -->
+    <div id="gjs"></div>
+    
+    <script src="https://unpkg.com/grapesjs"></script>
+    <script>
     const editor = grapesjs.init({
         container: '#gjs',
+        fromElement: true,
         height: '100%',
-        width: 'auto',
+        plugins: ['gjs-preset-webpage']
+    });
+    
+    // Live preview update when colors change
+    function updatePreview() {
+        const cssVars = {
+            '--primary': document.getElementById('color-primary').value,
+            // ... all other colors
+        };
         
-        plugins: ['gjs-preset-webpage'],
-        pluginsOpts: {
-            'gjs-preset-webpage': {}
-        },
-        
-        storageManager: {
-            type: 'remote',
-            autosave: true,
-            autoload: true,
-            stepsBeforeSave: 1,
-            
-            // Custom storage
-            urlStore: `/api/themes/save-design.php?id=${themeId}`,
-            urlLoad: `/api/themes/load-design.php?id=${themeId}`,
-            
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        },
-        
-        assetManager: {
-            upload: `/api/themes/upload-asset.php?id=${themeId}`,
-            uploadName: 'files',
-            assets: currentTheme.assets || []
-        },
-        
-        styleManager: {
-            sectors: [
-                {
-                    name: 'Theme Colors',
-                    open: true,
-                    buildProps: ['primary-color', 'secondary-color', 'accent-color', 'background-color', 'text-color']
-                },
-                {
-                    name: 'Typography',
-                    open: false,
-                    buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'line-height']
-                },
-                {
-                    name: 'Spacing',
-                    open: false,
-                    buildProps: ['margin', 'padding']
-                },
-                {
-                    name: 'Borders',
-                    open: false,
-                    buildProps: ['border-radius', 'border', 'box-shadow']
-                }
-            ]
-        },
-        
-        canvas: {
-            styles: [
-                '/assets/css/theme-base.css'
-            ],
-            scripts: [
-                '/assets/js/theme-preview.js'
-            ]
+        // Apply to iframe
+        const iframe = editor.Canvas.getFrameEl();
+        for (const [key, val] of Object.entries(cssVars)) {
+            iframe.contentDocument.documentElement.style.setProperty(key, val);
         }
-    });
-    
-    // Add custom theme properties
-    editor.StyleManager.addProperty('Theme Colors', {
-        name: 'Primary Color',
-        property: '--primary',
-        type: 'color',
-        defaults: currentTheme.colors.primary
-    });
-    
-    editor.StyleManager.addProperty('Theme Colors', {
-        name: 'Secondary Color',
-        property: '--secondary',
-        type: 'color',
-        defaults: currentTheme.colors.secondary
-    });
-    
-    // Add more properties for all theme variables...
-    
-    // Save button
-    editor.Panels.addButton('options', {
-        id: 'save-theme',
-        className: 'fa fa-floppy-o',
-        command: 'save-theme',
-        attributes: { title: 'Save Theme' }
-    });
-    
-    editor.Commands.add('save-theme', {
-        run(editor, sender) {
-            sender.set('active');
-            editor.store();
-            alert('Theme saved!');
-            sender.set('active', false);
-        }
-    });
-    
-    // Apply theme button
-    editor.Panels.addButton('options', {
-        id: 'apply-theme',
-        className: 'fa fa-check',
-        command: 'apply-theme',
-        attributes: { title: 'Apply to Site' }
-    });
-    
-    editor.Commands.add('apply-theme', {
-        run(editor, sender) {
-            if (!confirm('Apply this theme to the live site?')) return;
-            
-            // Save and activate
-            editor.store();
-            fetch(`/api/themes/activate.php`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({theme_id: themeId})
-            }).then(() => {
-                alert('Theme applied to site!');
-            });
-        }
-    });
-}
-</script>
-
+    }
+    </script>
 </body>
 </html>
 ```
 
 **Features:**
-- Drag-and-drop page builder
-- Visual color picker
-- Typography controls
-- Spacing editor
-- Border/shadow customization
-- Live preview
-- Save to database
-- Export theme
+- Color pickers for all 11 colors
+- Font family dropdowns
+- Spacing sliders (xs, sm, md, lg, xl)
+- Border radius sliders (sm, md, lg)
+- Live preview in GrapesJS
+- Save button updates database
+- Reset button reverts to default
 
 **Verification:**
-- [ ] GrapesJS loads
-- [ ] Can edit colors visually
-- [ ] Can modify typography
-- [ ] Can adjust spacing
-- [ ] Changes save to database
-- [ ] Can apply to live site
+- [ ] GrapesJS loads correctly
+- [ ] Color pickers sync with hex inputs
+- [ ] Live preview updates in real-time
+- [ ] Font selectors work
+- [ ] Spacing sliders work
+- [ ] Border radius sliders work
+- [ ] Save button persists changes
+- [ ] Reset button reverts changes
 
 ---
 
-## ⚛️ TASK 8.5: React Theme Preview Component
+## ⚛️ TASK 8.5: Create React Theme Preview Component
 
 **Time:** 2 hours  
+**Lines:** ~400 lines  
 **File:** `/assets/js/ThemePreview.jsx`
 
-**Create React component for live theme preview:**
+**React component for live theme preview:**
 
 ```jsx
 import React, { useState, useEffect } from 'react';
 
-function ThemePreview({ themeId }) {
+export default function ThemePreview({ themeId }) {
     const [theme, setTheme] = useState(null);
-    const [loading, setLoading] = useState(true);
     
     useEffect(() => {
-        // Load theme data
         fetch(`/api/themes/get.php?id=${themeId}`)
-            .then(r => r.json())
-            .then(data => {
-                setTheme(data.theme);
-                setLoading(false);
-            });
+            .then(res => res.json())
+            .then(data => setTheme(data.theme));
     }, [themeId]);
     
-    if (loading) return <div>Loading preview...</div>;
+    if (!theme) return <div>Loading...</div>;
     
     const colors = JSON.parse(theme.colors);
     const fonts = JSON.parse(theme.fonts);
-    const spacing = JSON.parse(theme.spacing);
-    const borders = JSON.parse(theme.borders);
-    const shadows = JSON.parse(theme.shadows);
-    
-    // Generate CSS variables
-    const style = {
-        '--primary': colors.primary,
-        '--secondary': colors.secondary,
-        '--accent': colors.accent,
-        '--background': colors.background,
-        '--text': colors.text,
-        '--font-heading': fonts.heading,
-        '--font-body': fonts.body,
-        '--spacing-md': spacing.md,
-        '--radius-md': borders.radius_md,
-        '--shadow-md': shadows.md
-    };
     
     return (
-        <div className="theme-preview-container" style={style}>
-            <div className="preview-header" style={{
-                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                padding: spacing.lg,
-                color: 'white',
-                fontFamily: fonts.heading
-            }}>
-                <h1>TrueVault VPN</h1>
-                <p>Your Complete Digital Fortress</p>
-                <button style={{
-                    background: colors.accent,
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    borderRadius: borders.radius_md,
-                    border: 'none',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    boxShadow: shadows.md
-                }}>
-                    Start Free Trial
-                </button>
-            </div>
-            
-            <div className="preview-content" style={{
-                padding: spacing.lg,
-                background: colors.background,
-                fontFamily: fonts.body
-            }}>
-                <div className="feature-cards" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: spacing.md
-                }}>
-                    {['Port Forwarding', 'Camera Dashboard', 'Parental Controls'].map(feature => (
-                        <div key={feature} style={{
-                            background: colors.surface,
-                            padding: spacing.md,
-                            borderRadius: borders.radius_md,
-                            boxShadow: shadows.sm,
-                            border: `1px solid ${colors.border}`
-                        }}>
-                            <h3 style={{
-                                color: colors.primary,
-                                fontFamily: fonts.heading,
-                                marginBottom: spacing.sm
-                            }}>
-                                {feature}
-                            </h3>
-                            <p style={{ color: colors.text }}>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
+        <div style={{
+            '--primary': colors.primary,
+            '--secondary': colors.secondary,
+            '--accent': colors.accent,
+            fontFamily: fonts.body
+        }}>
+            <Hero />
+            <Features />
+            <Pricing />
+            <Footer />
         </div>
     );
 }
 
-export default ThemePreview;
+function Hero() {
+    return (
+        <section className="hero" style={{
+            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            color: 'white',
+            padding: '60px 20px',
+            textAlign: 'center'
+        }}>
+            <h1 style={{ fontSize: '3rem' }}>Welcome to TrueVault VPN</h1>
+            <p style={{ fontSize: '1.5rem' }}>Your Complete Digital Fortress</p>
+            <button style={{
+                background: 'white',
+                color: 'var(--primary)',
+                padding: '15px 30px',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1.1rem',
+                cursor: 'pointer'
+            }}>
+                Get Started
+            </button>
+        </section>
+    );
+}
+
+// Features, Pricing, Footer components...
 ```
 
 **Verification:**
 - [ ] React component renders
-- [ ] Theme variables applied
-- [ ] Colors show correctly
-- [ ] Fonts load properly
-- [ ] Spacing accurate
+- [ ] Theme colors applied correctly
+- [ ] Theme fonts applied correctly
+- [ ] All sections visible (Hero, Features, Pricing, Footer)
 - [ ] Responsive layout
+- [ ] Live updates when theme changes
 
 ---
 
-## 🔧 TASK 8.6: Theme API Endpoints
+## 🔌 TASK 8.6: Create Theme Management APIs
 
-**Time:** 2 hours  
-**Files:** Create 7 API endpoints
+**Time:** 1.5 hours  
+**Lines:** ~300 lines  
+**Files:** 4 API endpoints
 
-### **1. /api/themes/get.php**
+**File 1: /api/themes/activate.php**
 ```php
 <?php
-require_once '../../includes/Database.php';
-$db = new Database();
-
-$themeId = $_GET['id'] ?? null;
-
-if ($themeId) {
-    $theme = $db->query("SELECT * FROM themes WHERE id = ?", [$themeId])->fetch();
-    
-    if ($theme) {
-        // Parse JSON fields
-        $theme['colors'] = json_decode($theme['colors'], true);
-        $theme['fonts'] = json_decode($theme['fonts'], true);
-        $theme['spacing'] = json_decode($theme['spacing'], true);
-        $theme['borders'] = json_decode($theme['borders'], true);
-        $theme['shadows'] = json_decode($theme['shadows'], true);
-        
-        echo json_encode(['success' => true, 'theme' => $theme]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Theme not found']);
-    }
-} else {
-    echo json_encode(['success' => false, 'error' => 'Missing theme ID']);
-}
-```
-
-### **2. /api/themes/activate.php**
-```php
-<?php
-require_once '../../includes/Database.php';
-requireAdmin();
-
-$data = json_decode(file_get_contents('php://input'), true);
-$themeId = $data['theme_id'] ?? null;
-
-if ($themeId) {
-    $db = new Database();
-    
-    // Deactivate all themes
-    $db->execute("UPDATE themes SET is_active = 0");
-    
-    // Activate selected theme
-    $db->execute("UPDATE themes SET is_active = 1 WHERE id = ?", [$themeId]);
-    
-    echo json_encode(['success' => true]);
-} else {
-    echo json_encode(['success' => false, 'error' => 'Missing theme ID']);
-}
-```
-
-### **3. /api/themes/update-colors.php**
-```php
-<?php
-require_once '../../includes/Database.php';
+require_once '../../configs/config.php';
 requireAdmin();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $themeId = $data['theme_id'];
-$colors = $data['colors'];
 
-$db = new Database();
-$db->execute(
-    "UPDATE themes SET colors = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [json_encode($colors), $themeId]
-);
+$db = new PDO('sqlite:../../databases/admin.db');
+
+// Deactivate all themes
+$db->exec("UPDATE themes SET is_active = 0");
+
+// Activate selected theme
+$stmt = $db->prepare("UPDATE themes SET is_active = 1 WHERE id = ?");
+$stmt->execute([$themeId]);
 
 echo json_encode(['success' => true]);
 ```
 
-### **4-7. More endpoints...**
-- save-design.php (GrapesJS storage)
-- load-design.php (GrapesJS loading)
-- settings.php (seasonal switching)
-- export.php (theme export)
+**File 2: /api/themes/update.php**
+```php
+<?php
+// Update theme colors, fonts, spacing, borders
+$data = json_decode(file_get_contents('php://input'), true);
+
+$db->prepare("UPDATE themes SET 
+    colors = ?, 
+    fonts = ?, 
+    borders = ? 
+    WHERE id = ?")->execute([
+    json_encode($data['colors']),
+    json_encode($data['fonts']),
+    json_encode($data['borders']),
+    $data['theme_id']
+]);
+```
+
+**File 3: /api/themes/get.php**
+```php
+<?php
+// Return theme data for preview
+$themeId = $_GET['id'];
+$theme = $db->query("SELECT * FROM themes WHERE id = $themeId")->fetch();
+echo json_encode(['theme' => $theme]);
+```
+
+**File 4: /api/themes/export.php**
+```php
+<?php
+// Export theme as JSON file
+$theme = $db->query("SELECT * FROM themes WHERE id = ?")->fetch();
+header('Content-Type: application/json');
+header('Content-Disposition: attachment; filename="' . $theme['theme_name'] . '.json"');
+echo json_encode($theme, JSON_PRETTY_PRINT);
+```
 
 **Verification:**
-- [ ] All 7 endpoints created
-- [ ] GET requests work
-- [ ] POST requests work
-- [ ] Admin auth required
-- [ ] JSON responses valid
+- [ ] activate.php works
+- [ ] update.php persists changes
+- [ ] get.php returns theme data
+- [ ] export.php downloads JSON
 
 ---
 
-## 🌡️ TASK 8.7: Seasonal Auto-Switching
+## ⏰ TASK 8.7: Create Seasonal Auto-Switch Cron Job
 
-**Time:** 1 hour  
-**File:** `/includes/SeasonalThemes.php`
+**Time:** 45 minutes  
+**Lines:** ~150 lines  
+**File:** `/cron/seasonal-theme-switch.php`
 
-**Auto-detect season and switch theme:**
+**Automatically switches theme based on current season:**
 
 ```php
 <?php
-class SeasonalThemes {
-    public static function getCurrentSeason() {
-        $month = date('n'); // 1-12
-        
-        if ($month >= 3 && $month <= 5) return 'spring';
-        if ($month >= 6 && $month <= 8) return 'summer';
-        if ($month >= 9 && $month <= 11) return 'fall';
-        return 'winter';
-    }
-    
-    public static function checkAndSwitch() {
-        $db = new Database();
-        
-        // Check if seasonal switching enabled
-        $enabled = $db->query(
-            "SELECT setting_value FROM theme_settings WHERE setting_key = 'enable_seasonal_switching'"
-        )->fetchColumn();
-        
-        if (!$enabled) return false;
-        
-        // Get current season
-        $currentSeason = self::getCurrentSeason();
-        
-        // Check stored season
-        $storedSeason = $db->query(
-            "SELECT setting_value FROM theme_settings WHERE setting_key = 'current_season'"
-        )->fetchColumn();
-        
-        // If season changed, switch theme
-        if ($currentSeason !== $storedSeason) {
-            // Find theme for this season
-            $theme = $db->query(
-                "SELECT id FROM themes WHERE season = ? AND is_seasonal = 1 LIMIT 1",
-                [$currentSeason]
-            )->fetch();
-            
-            if ($theme) {
-                // Deactivate all
-                $db->execute("UPDATE themes SET is_active = 0");
-                
-                // Activate seasonal theme
-                $db->execute("UPDATE themes SET is_active = 1 WHERE id = ?", [$theme['id']]);
-                
-                // Update stored season
-                $db->execute(
-                    "UPDATE theme_settings SET setting_value = ? WHERE setting_key = 'current_season'",
-                    [$currentSeason]
-                );
-                
-                return true;
-            }
-        }
-        
-        return false;
-    }
+/**
+ * Seasonal Theme Auto-Switcher
+ * Run daily: 0 0 * * * php /path/to/cron/seasonal-theme-switch.php
+ */
+
+require_once __DIR__ . '/../configs/config.php';
+
+$db = new PDO('sqlite:' . __DIR__ . '/../databases/admin.db');
+
+// Check if auto-switch enabled
+$setting = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'seasonal_auto_switch'")->fetchColumn();
+
+if ($setting !== '1') {
+    exit("Seasonal auto-switch disabled\n");
 }
 
-// Run on every page load (in config.php)
-SeasonalThemes::checkAndSwitch();
+// Determine current season
+function getCurrentSeason() {
+    $month = date('n');
+    if ($month >= 3 && $month <= 5) return 'spring';
+    if ($month >= 6 && $month <= 8) return 'summer';
+    if ($month >= 9 && $month <= 11) return 'fall';
+    return 'winter';
+}
+
+$season = getCurrentSeason();
+
+// Get seasonal theme
+$theme = $db->query("SELECT * FROM themes WHERE season = '$season' LIMIT 1")->fetch();
+
+if (!$theme) {
+    exit("No theme found for $season\n");
+}
+
+// Check if already active
+$active = $db->query("SELECT id FROM themes WHERE is_active = 1")->fetchColumn();
+
+if ($active == $theme['id']) {
+    exit("Theme already active\n");
+}
+
+// Switch theme
+$db->exec("UPDATE themes SET is_active = 0");
+$db->prepare("UPDATE themes SET is_active = 1 WHERE id = ?")->execute([$theme['id']]);
+
+echo "✅ Switched to " . $theme['display_name'] . " for $season\n";
 ```
 
-**Cron Job (optional):**
+**Setup Cron:**
 ```bash
-# Check daily at midnight
-0 0 * * * php /path/to/check-seasonal-themes.php
+# Add to crontab
+0 0 * * * php /home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/cron/seasonal-theme-switch.php
 ```
 
 **Verification:**
-- [ ] Detects current season correctly
-- [ ] Switches theme when season changes
-- [ ] Respects enable/disable setting
-- [ ] Updates stored season
+- [ ] Cron script created
+- [ ] Detects season correctly
+- [ ] Switches theme automatically
+- [ ] Logs to admin.db
+- [ ] Respects enabled/disabled setting
+
+---
+
+## 👁️ TASK 8.8: Create Theme Preview Page
+
+**Time:** 1 hour  
+**Lines:** ~250 lines  
+**File:** `/preview-theme.php`
+
+**Standalone preview page for testing themes before activation:**
+
+```php
+<?php
+require_once 'configs/config.php';
+
+$themeId = $_GET['id'];
+$db = new PDO('sqlite:databases/admin.db');
+$theme = $db->query("SELECT * FROM themes WHERE id = $themeId")->fetch();
+
+$colors = json_decode($theme['colors'], true);
+$fonts = json_decode($theme['fonts'], true);
+$spacing = json_decode($theme['spacing'], true);
+$borders = json_decode($theme['borders'], true);
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Preview: <?= $theme['display_name'] ?></title>
+    <style>
+    :root {
+        <?php foreach ($colors as $name => $value): ?>
+        --<?= str_replace('_', '-', $name) ?>: <?= $value ?>;
+        <?php endforeach; ?>
+        
+        --font-heading: <?= $fonts['heading'] ?>;
+        --font-body: <?= $fonts['body'] ?>;
+        
+        --spacing-xs: <?= $spacing['xs'] ?>;
+        --spacing-sm: <?= $spacing['sm'] ?>;
+        --spacing-md: <?= $spacing['md'] ?>;
+        --spacing-lg: <?= $spacing['lg'] ?>;
+        --spacing-xl: <?= $spacing['xl'] ?>;
+        
+        --radius-sm: <?= $borders['radius_sm'] ?>;
+        --radius-md: <?= $borders['radius_md'] ?>;
+        --radius-lg: <?= $borders['radius_lg'] ?>;
+    }
+    
+    body {
+        margin: 0;
+        font-family: var(--font-body);
+        background: var(--background);
+        color: var(--text);
+    }
+    
+    .preview-banner {
+        background: #ff9800;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    .hero {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: var(--spacing-xl);
+        text-align: center;
+    }
+    
+    .hero h1 {
+        font-family: var(--font-heading);
+        font-size: 3rem;
+    }
+    
+    .btn {
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--radius-md);
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: white;
+        color: var(--primary);
+    }
+    
+    .features {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
+        padding: var(--spacing-xl);
+    }
+    
+    .feature-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+    }
+    </style>
+</head>
+<body>
+    <div class="preview-banner">
+        🎨 THEME PREVIEW: <?= $theme['display_name'] ?>
+    </div>
+    
+    <div class="hero">
+        <h1>Welcome to TrueVault VPN</h1>
+        <p>Your Complete Digital Fortress</p>
+        <button class="btn btn-primary">Get Started</button>
+    </div>
+    
+    <div class="features">
+        <div class="feature-card">
+            <h3>🔒 Secure</h3>
+            <p>Military-grade encryption</p>
+        </div>
+        <div class="feature-card">
+            <h3>⚡ Fast</h3>
+            <p>Lightning speeds</p>
+        </div>
+        <div class="feature-card">
+            <h3>🌍 Global</h3>
+            <p>4 server locations</p>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+**Verification:**
+- [ ] Preview page loads
+- [ ] Theme colors applied
+- [ ] Theme fonts applied
+- [ ] All UI elements visible
+- [ ] Preview banner shows theme name
 
 ---
 
 ## ✅ FINAL VERIFICATION - PART 8
 
 **Database:**
-- [ ] themes table exists
-- [ ] theme_settings table exists
+- [ ] themes table created in admin.db
 - [ ] 20+ themes seeded
-- [ ] All themes have complete JSON
+- [ ] Professional Blue is default
 
-**Admin Interface:**
-- [ ] Theme manager loads
-- [ ] Shows all 20 themes
-- [ ] Category filtering works
-- [ ] Preview opens
-- [ ] Activate works
-- [ ] Seasonal toggle works
+**Admin Pages:**
+- [ ] Theme manager displays all themes
+- [ ] Themes grouped by category
+- [ ] Can activate themes
+- [ ] Seasonal auto-switch toggle works
 
-**Visual Editors:**
-- [ ] Color editor modal functional
+**Visual Editor:**
 - [ ] GrapesJS loads
-- [ ] Can edit visually
-- [ ] Changes save
-- [ ] Can apply to site
+- [ ] Color pickers work
+- [ ] Live preview updates
+- [ ] Save button works
 
-**React Preview:**
-- [ ] Component renders
-- [ ] Shows live preview
-- [ ] Theme variables applied
-- [ ] Updates dynamically
+**React Component:**
+- [ ] Theme preview component renders
+- [ ] Shows accurate theme representation
 
-**API Endpoints:**
-- [ ] All 7 endpoints work
-- [ ] Admin auth enforced
-- [ ] JSON responses valid
+**APIs:**
+- [ ] activate.php works
+- [ ] update.php works
+- [ ] get.php works
+- [ ] export.php works
 
-**Seasonal Auto-Switching:**
-- [ ] Detects season correctly
-- [ ] Switches automatically
-- [ ] Toggle works
-- [ ] Stored season updates
+**Automation:**
+- [ ] Cron job created
+- [ ] Seasonal switching works
 
-**Business Transfer:**
-- [ ] New owner can switch themes instantly
-- [ ] Can customize colors via GUI
-- [ ] Can use visual editor
-- [ ] NO coding required
-- [ ] 30-second theme change
+**Preview:**
+- [ ] Preview page works
+- [ ] All themes previewable
 
 ---
 
-## 📊 TIME ESTIMATE
+## 📊 TIME & LINE ESTIMATE
 
-**Part 8 Total:** 15-18 hours (increased from 5-6)
+**Part 8 Total:** 15-18 hours
 
 **Breakdown:**
 - Task 8.1: Database schema (45 min)
-- Task 8.2: Seed 20 themes (2 hrs)
-- Task 8.3: Theme manager UI (3 hrs)
-- Task 8.4: GrapesJS integration (4 hrs)
+- Task 8.2: Seed 20+ themes (1.5 hrs)
+- Task 8.3: Theme manager (2 hrs)
+- Task 8.4: GrapesJS editor (3 hrs)
 - Task 8.5: React preview (2 hrs)
-- Task 8.6: API endpoints (2 hrs)
-- Task 8.7: Seasonal switching (1 hr)
+- Task 8.6: APIs (1.5 hrs)
+- Task 8.7: Cron job (45 min)
+- Task 8.8: Preview page (1 hr)
+- Testing & refinement (3-4 hrs)
 
 **Total Lines:** ~4,500 lines
 
@@ -1197,14 +762,15 @@ SeasonalThemes::checkAndSwitch();
 
 ## 🎯 CRITICAL SUCCESS FACTORS
 
-✅ 20+ pre-built themes (NOT 3-4)  
+✅ 20+ pre-built themes  
 ✅ GrapesJS visual editor  
 ✅ React preview components  
 ✅ Seasonal auto-switching  
-✅ Holiday themes  
-✅ Complete GUI customization  
-✅ NO coding required  
-✅ 30-second theme switching  
+✅ Holiday themes included  
+✅ Complete visual customization (NO code!)  
+✅ Business transfer ready  
 
-**THIS IS THE COMPLETE THEME SYSTEM!**
+---
+
+**END OF PART 8 CHECKLIST**
 

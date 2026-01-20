@@ -1,714 +1,815 @@
 # SECTION 24: THEME MANAGEMENT & PAGE BUILDER SYSTEM
 
 **Created:** January 18, 2026  
+**Updated:** January 20, 2026 - User Decision #6 Applied
 **Priority:** CRITICAL  
-**Purpose:** 100% database-driven frontend with theme management and page builder  
+**Purpose:** 100% database-driven frontend with theme management and GrapesJS editor  
 **Philosophy:** **ZERO HARDCODED VALUES** - Everything customizable without touching code  
+
+---
+
+## ⚠️ CRITICAL USER DECISION UPDATE
+
+**CHANGED:** 20+ themes (NOT 12!)
+**CHANGED:** GrapesJS visual editor integration
+**CHANGED:** React preview components
+**CHANGED:** All themes in 4 categories
+**NEW:** Holiday themes included
 
 ---
 
 ## 📋 TABLE OF CONTENTS
 
 1. [System Overview](#overview)
-2. [Core Principles](#principles)
+2. [Theme Categories (20+ Themes)](#theme-categories)
 3. [Database Architecture](#database)
 4. [Theme System](#themes)
-5. [Page Builder](#page-builder)
-6. [Content Management](#cms)
-7. [Implementation Guide](#implementation)
+5. [GrapesJS Visual Editor](#grapes-editor)
+6. [React Preview Component](#react-preview)
+7. [Seasonal Auto-Switching](#seasonal)
+8. [Implementation Guide](#implementation)
 
 ---
 
 ## 🎯 SYSTEM OVERVIEW
 
-### **The Problem with Traditional Sites**
+### **What We're Building - UPDATED**
 
-Most websites have **hardcoded** values:
-```php
-// BAD - Hardcoded
-$primaryColor = "#667eea";
-$siteTitle = "TrueVault VPN";
-$heroText = "Welcome to TrueVault";
-```
-
-**Problems:**
-- New owner must edit PHP files
-- Requires coding knowledge
-- Risk of breaking site
-- No business transferability
-
-### **TrueVault Solution: 100% Database-Driven**
-
-```php
-// GOOD - Database driven
-$primaryColor = Settings::get('theme_primary_color');
-$siteTitle = Settings::get('site_title');
-$heroText = Content::get('home_hero_text');
-```
-
-**Benefits:**
-- Edit everything from admin panel
-- No code knowledge required
-- Safe changes (can't break site)
-- Business transfer in 30 minutes
-- Multiple themes ready to switch
-- Seasonal themes automated
+1. **20+ Pre-built Themes** (NOT 12 - increased!)
+2. **4 Theme Categories** (Seasonal, Holiday, Standard, Color)
+3. **GrapesJS Visual Editor** (Drag-and-drop customization)
+4. **React Preview Components** (Live theme preview)
+5. **Seasonal Auto-Switching** (Automatic theme rotation)
+6. **Holiday Themes** (Christmas, Halloween, etc.)
+7. **100% Database-Driven** (Zero hardcoded values)
+8. **Business Transfer Ready** (30-minute handoff)
 
 ---
 
-## ⚖️ CORE PRINCIPLES
+## 🎨 THEME CATEGORIES (20+ THEMES)
 
-### **1. ZERO HARDCODED VALUES**
+### **Category 1: Seasonal Themes (4)**
+Auto-switch based on calendar month
 
-**NEVER:**
-```php
-<h1 style="color: #667eea">TrueVault VPN</h1>
-```
+1. **Winter Frost** (Dec 1 - Feb 28)
+   - Colors: Icy blues, whites, cool tones
+   - Feel: Snow, frost, cool winter
 
-**ALWAYS:**
-```php
-<h1 style="color: <?= Theme::color('primary') ?>"><?= Content::get('site_title') ?></h1>
-```
+2. **Summer Breeze** (Jun 1 - Aug 31)
+   - Colors: Warm yellows, oranges, bright
+   - Feel: Sunshine, warmth, energy
 
-### **2. THEME INHERITANCE**
+3. **Autumn Harvest** (Sep 1 - Nov 30)
+   - Colors: Browns, oranges, earthy tones
+   - Feel: Leaves, cozy, harvest
 
-**Base Theme** → **Season Override** → **Custom Override**
+4. **Spring Bloom** (Mar 1 - May 31)
+   - Colors: Greens, pinks, pastels
+   - Feel: Fresh, growth, renewal
 
-Example:
-- Base: Blue gradient background
-- Winter Override: Snow particles, cool blue
-- Custom Override: User's uploaded logo
+### **Category 2: Holiday Themes (8)**
+Manual activation for special occasions
 
-### **3. DRAG-AND-DROP FIRST**
+1. **Christmas Joy** - Red, green, gold
+2. **Thanksgiving Warmth** - Orange, brown, cream
+3. **Halloween Spooky** - Orange, black, purple
+4. **Easter Pastel** - Pink, blue, yellow
+5. **Valentine Romance** - Red, pink, white
+6. **Independence Day** - Red, white, blue (US/Canada)
+7. **New Year Celebration** - Gold, silver, black
+8. **St. Patrick's Day** - Green, gold, white
 
-Admin should be able to:
-- Rearrange page sections by dragging
-- Add/remove content blocks
-- Change layouts without code
-- Preview before publishing
+### **Category 3: Standard Business Themes (4)**
+Professional, timeless styles
 
-### **4. MOBILE-RESPONSIVE ALWAYS**
+1. **Professional Blue** (DEFAULT)
+   - Colors: Corporate blue, trustworthy
+   - Feel: Business, reliable, clean
 
-All themes must:
-- Work on mobile (320px+)
-- Work on tablet (768px+)
-- Work on desktop (1024px+)
-- Adapt automatically
+2. **Modern Dark**
+   - Colors: Deep blues, blacks, sleek
+   - Feel: Contemporary, premium, tech
 
-### **5. PERFORMANCE OPTIMIZED**
+3. **Classic Light**
+   - Colors: White, light grays, elegant
+   - Feel: Timeless, professional, spacious
 
-- CSS minified automatically
-- Images lazy-loaded
-- Settings cached
-- Database queries optimized
+4. **Minimal White**
+   - Colors: Pure white, minimal colors
+   - Feel: Clean, simple, modern
 
----
+### **Category 4: Color Scheme Themes (4)**
+Vibrant, distinctive palettes
 
-## 🗄️ DATABASE ARCHITECTURE
+1. **Ocean Blue** - Blues and teals
+2. **Forest Green** - Greens and browns
+3. **Royal Purple** - Purples and golds
+4. **Sunset Orange** - Oranges and reds
 
-### **New Tables Required**
-
-#### **1. themes (Theme Definitions)**
-
-```sql
-CREATE TABLE themes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    display_name TEXT NOT NULL,
-    description TEXT,
-    preview_image TEXT,
-    style TEXT NOT NULL, -- 'light', 'medium', 'dark'
-    is_active INTEGER DEFAULT 0,
-    is_seasonal INTEGER DEFAULT 0,
-    season TEXT, -- 'winter', 'spring', 'summer', 'fall', null
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Pre-installed Themes:**
-- `default_light` - Clean white background
-- `default_medium` - Soft gray tones
-- `default_dark` - Deep blue/purple gradient (current)
-- `winter_light` - Snow theme, cool tones
-- `winter_dark` - Midnight blue, snowflakes
-- `spring_light` - Pastel greens, floral
-- `spring_dark` - Deep greens, nature
-- `summer_light` - Bright yellows, sunny
-- `summer_dark` - Ocean blue, warm
-- `fall_light` - Orange/brown, leaves
-- `fall_dark` - Deep burgundy, autumn
-
-#### **2. theme_colors (Color Palettes)**
-
-```sql
-CREATE TABLE theme_colors (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    theme_id INTEGER NOT NULL,
-    color_key TEXT NOT NULL, -- 'primary', 'secondary', 'accent', etc.
-    color_value TEXT NOT NULL, -- Hex code
-    FOREIGN KEY (theme_id) REFERENCES themes(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_theme_colors ON theme_colors(theme_id, color_key);
-```
-
-**Standard Color Keys:**
-- `primary` - Main brand color
-- `secondary` - Secondary brand color
-- `accent` - Accent/highlight color
-- `background` - Page background
-- `surface` - Card/panel background
-- `text_primary` - Main text color
-- `text_secondary` - Muted text
-- `success` - Green (success messages)
-- `warning` - Yellow (warnings)
-- `error` - Red (errors)
-- `info` - Blue (info messages)
-
-#### **3. theme_settings (Theme Configuration)**
-
-```sql
-CREATE TABLE theme_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    theme_id INTEGER NOT NULL,
-    setting_key TEXT NOT NULL,
-    setting_value TEXT NOT NULL,
-    setting_type TEXT NOT NULL, -- 'text', 'number', 'boolean', 'json'
-    FOREIGN KEY (theme_id) REFERENCES themes(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_theme_settings ON theme_settings(theme_id, setting_key);
-```
-
-**Standard Settings:**
-- `font_family` - Typography
-- `font_size_base` - Base font size
-- `border_radius` - Roundness
-- `shadow_intensity` - Shadow depth
-- `animation_speed` - Transition speed
-- `button_style` - Button appearance
-- `nav_style` - Navigation layout
-
-#### **4. pages (Page Definitions)**
-
-```sql
-CREATE TABLE pages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT NOT NULL UNIQUE, -- URL path
-    title TEXT NOT NULL,
-    meta_description TEXT,
-    meta_keywords TEXT,
-    is_public INTEGER DEFAULT 1, -- 1 = anyone, 0 = logged in only
-    is_active INTEGER DEFAULT 1,
-    layout_template TEXT NOT NULL, -- 'default', 'blank', 'landing'
-    sort_order INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Pre-installed Pages:**
-- `/` - Home (landing page)
-- `/pricing` - Pricing comparison
-- `/features` - Features showcase
-- `/about` - About us
-- `/contact` - Contact form
-- `/login` - User login
-- `/register` - User registration
-- `/terms` - Terms of service
-- `/privacy` - Privacy policy
-
-#### **5. page_sections (Page Content Blocks)**
-
-```sql
-CREATE TABLE page_sections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    page_id INTEGER NOT NULL,
-    section_type TEXT NOT NULL, -- 'hero', 'features', 'pricing', 'text', 'image', 'cta'
-    section_data TEXT NOT NULL, -- JSON content
-    sort_order INTEGER DEFAULT 0,
-    is_visible INTEGER DEFAULT 1,
-    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_page_sections ON page_sections(page_id, sort_order);
-```
-
-**Section Types:**
-- `hero` - Large banner with CTA
-- `features` - Feature grid (3-4 columns)
-- `pricing` - Pricing cards
-- `testimonials` - Customer quotes
-- `cta` - Call-to-action block
-- `text` - Rich text content
-- `image` - Image gallery
-- `video` - Video embed
-- `faq` - FAQ accordion
-- `stats` - Statistics display
-- `form` - Contact/signup form
-
-#### **6. site_settings (Global Settings)**
-
-```sql
-CREATE TABLE site_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    setting_key TEXT NOT NULL UNIQUE,
-    setting_value TEXT NOT NULL,
-    setting_type TEXT NOT NULL, -- 'text', 'number', 'boolean', 'json', 'image'
-    category TEXT, -- 'general', 'branding', 'seo', 'social'
-    description TEXT,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Pre-installed Settings:**
-- `site_title` - "TrueVault VPN"
-- `site_tagline` - "Your Complete Digital Fortress"
-- `site_logo` - Path to logo image
-- `site_favicon` - Path to favicon
-- `contact_email` - support@vpn.the-truth-publishing.com
-- `company_name` - "TrueVault VPN"
-- `support_phone` - Phone number
-- `facebook_url` - Social link
-- `twitter_url` - Social link
-- `enable_seasonal_themes` - Auto-switch themes
-- `maintenance_mode` - Site offline mode
-
-#### **7. navigation_menus (Dynamic Navigation)**
-
-```sql
-CREATE TABLE navigation_menus (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    menu_location TEXT NOT NULL, -- 'header', 'footer', 'sidebar'
-    label TEXT NOT NULL,
-    url TEXT NOT NULL,
-    target TEXT DEFAULT '_self', -- '_self' or '_blank'
-    icon TEXT, -- Icon class or emoji
-    parent_id INTEGER, -- For dropdowns
-    sort_order INTEGER DEFAULT 0,
-    is_visible INTEGER DEFAULT 1,
-    required_role TEXT -- null, 'user', 'admin'
-);
-
-CREATE INDEX idx_navigation_menus ON navigation_menus(menu_location, sort_order);
-```
+**Total: 20 themes** (4 seasonal + 8 holiday + 4 standard + 4 color = 20)
 
 ---
 
-## 🎨 THEME SYSTEM
+## 🗄️ DATABASE ARCHITECTURE - UPDATED
 
-### **Theme Structure**
+### **1. themes Table (Theme Registry)**
 
-Each theme consists of:
-1. **Base Colors** (11 color values)
-2. **Typography** (font family, sizes)
-3. **Spacing** (margins, paddings)
-4. **Components** (buttons, cards, inputs)
-5. **Animations** (transitions, effects)
-
-### **Theme Switching Process**
-
-```
-User clicks "Switch Theme" 
-   ↓
-Admin selects theme from dropdown
-   ↓
-System updates site_settings: active_theme_id = X
-   ↓
-Cache cleared
-   ↓
-Next page load uses new theme
-```
-
-### **Seasonal Auto-Switch**
-
-```
-Cron job runs daily
-   ↓
-Check current date → Determine season
-   ↓
-If enable_seasonal_themes = true
-   ↓
-Switch to season's theme automatically
-   ↓
-Log theme change
-```
-
-**Season Detection:**
-- Winter: Dec 1 - Feb 28/29
-- Spring: Mar 1 - May 31
-- Summer: Jun 1 - Aug 31
-- Fall: Sep 1 - Nov 30
-
-### **Theme Inheritance Example**
-
-```php
-// Get color with fallback chain
-$primaryColor = Theme::getColor('primary');
-
-// Process:
-// 1. Check custom overrides
-// 2. Check seasonal theme
-// 3. Check base active theme
-// 4. Fallback to default (#667eea)
+```sql
+CREATE TABLE IF NOT EXISTS themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    theme_name TEXT UNIQUE NOT NULL,        -- 'winter_frost'
+    display_name TEXT NOT NULL,             -- 'Winter Frost'
+    category TEXT NOT NULL,                 -- 'seasonal', 'holiday', 'standard', 'color_scheme'
+    season TEXT,                            -- 'winter', 'summer', 'fall', 'spring' (if seasonal)
+    holiday TEXT,                           -- 'christmas', 'halloween' (if holiday)
+    
+    -- Color palette (JSON with 11 colors)
+    colors TEXT NOT NULL,                   -- {primary, secondary, accent, bg, surface, text, etc.}
+    
+    -- Typography (JSON)
+    fonts TEXT NOT NULL,                    -- {heading, body, mono}
+    
+    -- Spacing (JSON)
+    spacing TEXT NOT NULL,                  -- {xs, sm, md, lg, xl}
+    
+    -- Borders (JSON)
+    borders TEXT NOT NULL,                  -- {radius_sm, radius_md, radius_lg}
+    
+    -- Shadows (JSON)
+    shadows TEXT NOT NULL,                  -- {sm, md, lg}
+    
+    -- Preview
+    preview_image TEXT,                     -- '/assets/themes/winter_frost.png'
+    
+    -- Status
+    is_active INTEGER DEFAULT 0,            -- Only 1 can be active
+    is_default INTEGER DEFAULT 0,           -- Professional Blue = default
+    
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
----
-
-## 🏗️ PAGE BUILDER
-
-### **Builder Interface Components**
-
-#### **1. Section Library (Left Sidebar)**
-
-Drag these onto canvas:
-- 📄 Hero Banner
-- 🎯 Features Grid
-- 💰 Pricing Table
-- 💬 Testimonials
-- 📝 Text Block
-- 🖼️ Image Gallery
-- 🎬 Video Player
-- ❓ FAQ Accordion
-- 📞 Contact Form
-- 📊 Stats Counter
-- 🔔 Call-to-Action
-
-#### **2. Canvas (Center)**
-
-- Visual preview of page
-- Drag sections to reorder
-- Click section to edit
-- Delete button on hover
-- Mobile/tablet/desktop preview toggle
-
-#### **3. Properties Panel (Right Sidebar)**
-
-When section selected:
-- Section-specific settings
-- Background color/image
-- Padding/margin
-- Animation effects
-- Visibility toggle
-- Custom CSS class
-
-### **Section Data Format (JSON)**
-
+**Color Palette Structure (11 colors):**
 ```json
 {
-  "type": "hero",
-  "data": {
-    "heading": "Welcome to TrueVault VPN",
-    "subheading": "Your Complete Digital Fortress",
-    "background_type": "gradient",
-    "background_value": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    "button_text": "Start Free Trial",
-    "button_url": "/register",
-    "button_style": "primary",
-    "image_url": "/assets/hero-shield.png",
-    "image_position": "right"
-  }
+  "primary": "#4A90E2",       // Main brand color
+  "secondary": "#89CFF0",     // Secondary brand
+  "accent": "#E8F4F8",        // Highlight/accent
+  "background": "#F0F8FF",    // Page background
+  "surface": "#FFFFFF",       // Card/panel background
+  "text": "#2C3E50",          // Main text
+  "text_light": "#7F8C8D",    // Muted text
+  "border": "#D0E8F2",        // Borders/dividers
+  "success": "#2ECC71",       // Success messages
+  "warning": "#F39C12",       // Warnings
+  "danger": "#E74C3C"         // Errors
 }
 ```
 
-### **Drag-and-Drop Implementation**
+---
 
-**Technology:** SortableJS (lightweight, no jQuery needed)
+## 🎨 THEME SYSTEM - UPDATED
 
-```javascript
-// Initialize sortable
-new Sortable(document.getElementById('canvas'), {
-    animation: 150,
-    handle: '.drag-handle',
-    onEnd: function(evt) {
-        // Update sort_order in database
-        updateSectionOrder(evt.oldIndex, evt.newIndex);
+### **Theme Switching Flow**
+
+```
+Admin opens Theme Manager (/admin/theme-manager.php)
+   ↓
+Views all 20+ themes grouped by category
+   ↓
+Clicks "Preview" on any theme → Opens preview in new tab
+   ↓
+Clicks "Activate" on chosen theme
+   ↓
+Database: UPDATE themes SET is_active = 0 (deactivate all)
+Database: UPDATE themes SET is_active = 1 WHERE id = X
+   ↓
+Clear cache
+   ↓
+All public pages now use new theme
+```
+
+### **Seasonal Auto-Switch System**
+
+**Cron Job:** `/cron/seasonal-theme-switch.php`
+
+```php
+// Run daily at midnight
+// 0 0 * * * php /path/to/cron/seasonal-theme-switch.php
+
+// Check if seasonal auto-switch enabled
+$enabled = getSetting('seasonal_auto_switch');
+
+if (!$enabled) exit;
+
+// Determine season
+$month = date('n');
+if ($month >= 3 && $month <= 5) $season = 'spring';
+elseif ($month >= 6 && $month <= 8) $season = 'summer';
+elseif ($month >= 9 && $month <= 11) $season = 'fall';
+else $season = 'winter';
+
+// Get seasonal theme
+$theme = $db->query("SELECT * FROM themes WHERE season = ? LIMIT 1", [$season]);
+
+// Activate if different from current
+if ($theme && !$theme['is_active']) {
+    $db->exec("UPDATE themes SET is_active = 0");
+    $db->exec("UPDATE themes SET is_active = 1 WHERE id = {$theme['id']}");
+    log("Auto-switched to {$theme['display_name']} for $season");
+}
+```
+
+**Toggle in Admin:**
+- Checkbox: "Automatically switch themes by season"
+- Stored in settings table: `seasonal_auto_switch = 1`
+
+---
+
+## 🖌️ GRAPESJS VISUAL EDITOR
+
+### **Why GrapesJS?**
+
+**Before (without GrapesJS):**
+- Admin must edit PHP files
+- Need to know CSS
+- Risk of breaking layout
+- Can't see changes live
+
+**After (with GrapesJS):**
+- Drag-and-drop editor
+- Visual customization
+- Live preview
+- No code knowledge needed
+- Can't break anything
+
+### **Editor Interface**
+
+**File:** `/admin/theme-editor.php?id=5`
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Save Theme]  [Preview]  [Reset]  [Back to Themes]         │
+├──────────────┬───────────────────────────────┬──────────────┤
+│  COLOR PANEL │     GRAPESJS CANVAS          │  COMPONENTS  │
+│              │                               │              │
+│  Primary:    │  ┌─────────────────────────┐ │  Blocks:     │
+│  [#4A90E2]   │  │ Welcome to TrueVault!  │ │  - Hero      │
+│              │  │                         │ │  - Features  │
+│  Secondary:  │  │ [Get Started] [Learn]  │ │  - Pricing   │
+│  [#89CFF0]   │  └─────────────────────────┘ │  - CTA       │
+│              │                               │              │
+│  Accent:     │  Features:                    │  Styles:     │
+│  [#E8F4F8]   │  ┌───────┬───────┬───────┐  │  - Modern    │
+│              │  │ 🔒    │ ⚡    │ 🌍    │  │  - Classic   │
+│  Background: │  │Secure │ Fast  │Global │  │  - Minimal   │
+│  [#F0F8FF]   │  └───────┴───────┴───────┘  │              │
+│              │                               │              │
+│  (All 11     │  Pricing Plans:              │              │
+│   colors)    │  ┌───────┬───────┬───────┐  │              │
+│              │  │$9.99  │$14.99 │$39.99 │  │              │
+└──────────────┴───────────────────────────────┴──────────────┘
+```
+
+### **GrapesJS Implementation**
+
+```html
+<!-- Load GrapesJS -->
+<link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css">
+<script src="https://unpkg.com/grapesjs"></script>
+<script src="https://unpkg.com/grapesjs-preset-webpage"></script>
+
+<script>
+const editor = grapesjs.init({
+    container: '#gjs',
+    fromElement: true,
+    height: '100%',
+    storageManager: false,
+    plugins: ['gjs-preset-webpage'],
+    pluginsOpts: {
+        'gjs-preset-webpage': {
+            blocks: ['hero', 'features', 'pricing', 'cta'],
+            showDefaultTemplates: false
+        }
     }
 });
+
+// Sync color changes to live preview
+document.querySelectorAll('.color-picker').forEach(picker => {
+    picker.addEventListener('change', () => {
+        const iframe = editor.Canvas.getFrameEl();
+        const root = iframe.contentDocument.documentElement;
+        root.style.setProperty('--primary', picker.value);
+    });
+});
+</script>
 ```
+
+### **Color Panel Features**
+
+- Color picker for each of 11 colors
+- Hex code text input (synced with picker)
+- Live preview updates as you change
+- Font family dropdowns
+- Spacing sliders (xs, sm, md, lg, xl)
+- Border radius sliders (sm, md, lg)
+- Save button persists to database
 
 ---
 
-## 📝 CONTENT MANAGEMENT
+## ⚛️ REACT PREVIEW COMPONENT
 
-### **Content Editing Flow**
+### **Why React?**
 
-```
-Admin clicks "Edit Page"
-   ↓
-Page Builder loads with existing sections
-   ↓
-Admin drags/edits sections
-   ↓
-Click "Preview" → See changes (not live)
-   ↓
-Click "Publish" → Update database
-   ↓
-Cache cleared
-   ↓
-Public sees updated page
-```
+- Instant preview without reload
+- Component-based (reusable)
+- State management (theme switching)
+- Professional presentation
 
-### **Content Versioning**
+### **Component Structure**
 
-```sql
-CREATE TABLE page_revisions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    page_id INTEGER NOT NULL,
-    revision_data TEXT NOT NULL, -- Full page JSON
-    created_by INTEGER, -- Admin user ID
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
-);
-```
+**File:** `/assets/js/ThemePreview.jsx`
 
-- Keep last 10 revisions per page
-- "Restore" button to revert
-- Compare revisions side-by-side
+```jsx
+import React, { useState, useEffect } from 'react';
 
-### **Media Library**
-
-```sql
-CREATE TABLE media_library (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    filename TEXT NOT NULL,
-    original_filename TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    file_type TEXT NOT NULL, -- 'image', 'video', 'document'
-    file_size INTEGER NOT NULL, -- bytes
-    mime_type TEXT,
-    alt_text TEXT,
-    uploaded_by INTEGER,
-    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Features:**
-- Drag-and-drop upload
-- Thumbnail preview
-- Search by filename
-- Filter by type
-- Insert into page builder
-
----
-
-## 🛠️ IMPLEMENTATION GUIDE
-
-### **Phase 1: Database Setup**
-
-**File:** `/admin/setup-theme-tables.php`
-
-Create all tables:
-- themes
-- theme_colors
-- theme_settings
-- pages
-- page_sections
-- site_settings
-- navigation_menus
-- page_revisions
-- media_library
-
-### **Phase 2: Helper Classes**
-
-**File:** `/includes/Theme.php`
-
-```php
-class Theme {
-    public static function getActiveTheme()
-    public static function getColor($key, $fallback = '#667eea')
-    public static function getSetting($key, $fallback = '')
-    public static function switchTheme($themeId)
-    public static function listThemes()
-    public static function autoSwitchSeasonal()
-}
-```
-
-**File:** `/includes/PageBuilder.php`
-
-```php
-class PageBuilder {
-    public static function getPage($slug)
-    public static function getSections($pageId)
-    public static function addSection($pageId, $type, $data)
-    public static function updateSection($sectionId, $data)
-    public static function deleteSection($sectionId)
-    public static function reorderSections($pageId, $order)
-}
-```
-
-**File:** `/includes/Content.php`
-
-```php
-class Content {
-    public static function get($key, $fallback = '')
-    public static function set($key, $value)
-    public static function render($pageSlug)
-}
-```
-
-### **Phase 3: Admin Interfaces**
-
-#### **3.1 Theme Manager** 
-**File:** `/admin/themes.php`
-
-Features:
-- Grid view of all themes
-- Preview modal
-- Activate button
-- Edit colors
-- Edit settings
-- Import/export themes
-
-#### **3.2 Page Builder**
-**File:** `/admin/page-builder.php?page=home`
-
-Features:
-- Section library sidebar
-- Canvas with live preview
-- Properties panel
-- Save draft / Publish
-- Mobile/tablet/desktop preview
-- Undo/redo
-- Revision history
-
-#### **3.3 Site Settings**
-**File:** `/admin/site-settings.php`
-
-Categories:
-- General (title, tagline, logo)
-- Branding (colors, fonts)
-- SEO (meta tags)
-- Social Media (links)
-- Maintenance Mode
-
-#### **3.4 Navigation Editor**
-**File:** `/admin/navigation.php`
-
-Features:
-- Drag-and-drop menu items
-- Add/edit/delete items
-- Icon picker
-- Visibility toggle
-- Multi-level menus (dropdowns)
-
-#### **3.5 Media Library**
-**File:** `/admin/media.php`
-
-Features:
-- Upload interface
-- Grid view with thumbnails
-- Delete/edit
-- Filter by type
-- Search
-- Copy URL button
-
-### **Phase 4: Frontend Rendering**
-
-**File:** `/includes/render-page.php`
-
-```php
-function renderPage($slug) {
-    $theme = Theme::getActiveTheme();
-    $page = PageBuilder::getPage($slug);
-    $sections = PageBuilder::getSections($page['id']);
+export default function ThemePreview({ themeId }) {
+    const [theme, setTheme] = useState(null);
     
-    include "/templates/{$page['layout_template']}.php";
+    useEffect(() => {
+        // Load theme data
+        fetch(`/api/themes/get.php?id=${themeId}`)
+            .then(res => res.json())
+            .then(data => setTheme(data.theme));
+    }, [themeId]);
+    
+    if (!theme) return <Loading />;
+    
+    const colors = JSON.parse(theme.colors);
+    const fonts = JSON.parse(theme.fonts);
+    const spacing = JSON.parse(theme.spacing);
+    const borders = JSON.parse(theme.borders);
+    
+    // Apply CSS variables
+    const cssVars = {
+        '--primary': colors.primary,
+        '--secondary': colors.secondary,
+        '--accent': colors.accent,
+        '--bg': colors.background,
+        '--text': colors.text,
+        '--font-heading': fonts.heading,
+        '--font-body': fonts.body,
+        '--spacing-md': spacing.md,
+        '--radius-md': borders.radius_md
+    };
+    
+    return (
+        <div style={cssVars} className="theme-preview">
+            <Hero />
+            <Features />
+            <Pricing />
+            <Testimonials />
+            <Footer />
+        </div>
+    );
 }
+
+function Hero() {
+    return (
+        <section style={{
+            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            padding: '60px 20px',
+            textAlign: 'center',
+            color: 'white'
+        }}>
+            <h1 style={{ 
+                fontFamily: 'var(--font-heading)',
+                fontSize: '3rem'
+            }}>
+                Welcome to TrueVault VPN
+            </h1>
+            <p style={{ fontSize: '1.5rem' }}>
+                Your Complete Digital Fortress
+            </p>
+            <button style={{
+                background: 'white',
+                color: 'var(--primary)',
+                padding: '15px 30px',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                fontWeight: '600'
+            }}>
+                Get Started
+            </button>
+        </section>
+    );
+}
+
+// Similar components for Features, Pricing, Testimonials, Footer...
 ```
 
-**Template Files:**
-- `/templates/default.php` - Standard layout
-- `/templates/blank.php` - No header/footer
-- `/templates/landing.php` - Marketing page
+### **Preview Features**
 
-### **Phase 5: Pre-installed Themes**
+✅ Live theme switching (no reload)
+✅ All 20+ themes previewable
+✅ Responsive layout (mobile/tablet/desktop)
+✅ Shows actual colors/fonts from database
+✅ Smooth transitions between themes
+✅ Can compare multiple themes side-by-side
 
-Create 12 themes:
-- 3 base styles (light, medium, dark)
-- 4 seasons × 2 styles each (light/dark)
+---
+
+## 🛠️ IMPLEMENTATION GUIDE - UPDATED
+
+### **Phase 1: Database Setup (45 min)**
+
+**File:** `/databases/setup-themes.php`
+
+```sql
+CREATE TABLE IF NOT EXISTS themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    theme_name TEXT UNIQUE NOT NULL,
+    display_name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    season TEXT,
+    holiday TEXT,
+    colors TEXT NOT NULL,
+    fonts TEXT NOT NULL,
+    spacing TEXT NOT NULL,
+    borders TEXT NOT NULL,
+    shadows TEXT NOT NULL,
+    preview_image TEXT,
+    is_active INTEGER DEFAULT 0,
+    is_default INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **Phase 2: Seed 20+ Themes (1.5 hrs)**
+
+**File:** `/databases/seed-themes.php`
+
+Insert all 20 themes with complete data:
+- 4 Seasonal (Winter, Summer, Autumn, Spring)
+- 8 Holiday (Christmas, Halloween, etc.)
+- 4 Standard (Professional, Modern, Classic, Minimal)
+- 4 Color Schemes (Ocean, Forest, Purple, Sunset)
 
 Each theme includes:
-- 11 color definitions
-- Font settings
-- Component styles
-- Sample preview
+- 11 color values
+- 3 font families
+- 5 spacing values
+- 3 border radius values
+- 3 shadow definitions
 
-### **Phase 6: Pre-installed Pages**
+### **Phase 3: Theme Manager Interface (2 hrs)**
 
-Create 9 essential pages:
-- Home (`/`)
-- Pricing (`/pricing`)
-- Features (`/features`)
-- About (`/about`)
-- Contact (`/contact`)
-- Login (`/login`)
-- Register (`/register`)
-- Terms (`/terms`)
-- Privacy (`/privacy`)
+**File:** `/admin/theme-manager.php`
 
-Each page includes:
-- SEO meta tags
-- 2-5 sections
-- Responsive layout
+Features:
+- Display all 20+ themes
+- Group by category
+- Preview modal
+- Activate button
+- Edit button → opens GrapesJS editor
+- Seasonal auto-switch toggle
+- Export theme as JSON
+- Import custom theme
+
+```php
+<div class="theme-categories">
+    <h2>🌦️ Seasonal Themes</h2>
+    <div class="theme-grid">
+        <?php foreach ($seasonal as $theme): ?>
+        <div class="theme-card <?= $theme['is_active'] ? 'active' : '' ?>">
+            <img src="<?= $theme['preview_image'] ?>">
+            <h3><?= $theme['display_name'] ?></h3>
+            <div class="actions">
+                <button onclick="activateTheme(<?= $theme['id'] ?>)">Activate</button>
+                <button onclick="editTheme(<?= $theme['id'] ?>)">Edit</button>
+                <button onclick="previewTheme(<?= $theme['id'] ?>)">Preview</button>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <!-- Repeat for Holiday, Standard, Color themes -->
+</div>
+```
+
+### **Phase 4: GrapesJS Visual Editor (3 hrs)**
+
+**File:** `/admin/theme-editor.php?id=5`
+
+**Left Panel - Color Customization:**
+```html
+<div id="color-panel">
+    <!-- Primary Color -->
+    <div class="color-item">
+        <label>Primary Color</label>
+        <input type="color" id="color-primary" value="<?= $colors['primary'] ?>">
+        <input type="text" id="color-primary-hex" value="<?= $colors['primary'] ?>" pattern="#[0-9A-Fa-f]{6}">
+    </div>
+    
+    <!-- Repeat for all 11 colors -->
+    <!-- Secondary, Accent, Background, Surface, Text, Text Light, Border, Success, Warning, Danger -->
+    
+    <!-- Fonts -->
+    <div class="font-selector">
+        <label>Heading Font</label>
+        <select id="font-heading">
+            <option value="Montserrat, sans-serif">Montserrat</option>
+            <option value="Poppins, sans-serif">Poppins</option>
+            <option value="Roboto, sans-serif">Roboto</option>
+            <option value="Open Sans, sans-serif">Open Sans</option>
+        </select>
+    </div>
+    
+    <!-- Spacing Sliders -->
+    <div class="spacing-controls">
+        <label>Small Spacing: <span id="spacing-sm-val">8px</span></label>
+        <input type="range" id="spacing-sm" min="4" max="16" value="8">
+    </div>
+    
+    <!-- Border Radius Sliders -->
+    <div class="border-controls">
+        <label>Medium Radius: <span id="radius-md-val">8px</span></label>
+        <input type="range" id="radius-md" min="0" max="20" value="8">
+    </div>
+</div>
+```
+
+**Center - GrapesJS Canvas:**
+```html
+<div id="gjs">
+    <!-- GrapesJS renders here -->
+    <!-- Shows live preview with theme applied -->
+    <!-- Admin can see colors/fonts in real-time -->
+</div>
+
+<script src="https://unpkg.com/grapesjs"></script>
+<script>
+const editor = grapesjs.init({
+    container: '#gjs',
+    fromElement: true,
+    height: '100%',
+    plugins: ['gjs-preset-webpage']
+});
+
+// Live preview updates
+function updatePreview() {
+    const colors = {
+        '--primary': document.getElementById('color-primary').value,
+        '--secondary': document.getElementById('color-secondary').value,
+        // ... all colors
+    };
+    
+    const iframe = editor.Canvas.getFrameEl();
+    const root = iframe.contentDocument.documentElement;
+    
+    for (const [key, value] of Object.entries(colors)) {
+        root.style.setProperty(key, value);
+    }
+}
+
+// Sync color picker with hex input
+document.querySelectorAll('.color-picker').forEach(picker => {
+    picker.addEventListener('input', () => {
+        document.getElementById(picker.id + '-hex').value = picker.value;
+        updatePreview();
+    });
+});
+</script>
+```
+
+**Save Button:**
+```javascript
+async function saveTheme() {
+    const themeData = {
+        theme_id: <?= $themeId ?>,
+        colors: {
+            primary: document.getElementById('color-primary').value,
+            secondary: document.getElementById('color-secondary').value,
+            // ... all 11 colors
+        },
+        fonts: {
+            heading: document.getElementById('font-heading').value,
+            body: document.getElementById('font-body').value,
+            mono: 'Fira Code, monospace'
+        },
+        borders: {
+            radius_sm: document.getElementById('radius-sm').value + 'px',
+            radius_md: document.getElementById('radius-md').value + 'px',
+            radius_lg: document.getElementById('radius-lg').value + 'px'
+        }
+    };
+    
+    const response = await fetch('/api/themes/update.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(themeData)
+    });
+    
+    if (response.ok) {
+        alert('✅ Theme saved successfully!');
+    }
+}
+```
+
+### **Phase 5: React Preview Component (2 hrs)**
+
+**File:** `/assets/js/ThemePreview.jsx`
+
+Build complete React app with:
+- Hero component
+- Features grid component
+- Pricing cards component
+- Testimonials component
+- Footer component
+
+All styled with CSS variables from theme:
+```jsx
+<section style={{
+    background: `linear-gradient(135deg, var(--primary), var(--secondary))`,
+    padding: 'var(--spacing-xl)',
+    color: 'white'
+}}>
+    <h1 style={{ fontFamily: 'var(--font-heading)' }}>
+        {content.heading}
+    </h1>
+</section>
+```
+
+### **Phase 6: Theme APIs (1.5 hrs)**
+
+**Create 4 API files:**
+
+**1. /api/themes/activate.php**
+```php
+// Deactivate all, activate one
+$db->exec("UPDATE themes SET is_active = 0");
+$db->exec("UPDATE themes SET is_active = 1 WHERE id = ?", [$themeId]);
+```
+
+**2. /api/themes/update.php**
+```php
+// Save color/font changes
+$db->exec("UPDATE themes SET colors = ?, fonts = ?, borders = ? WHERE id = ?");
+```
+
+**3. /api/themes/get.php**
+```php
+// Return theme data for preview
+echo json_encode($db->getTheme($themeId));
+```
+
+**4. /api/themes/export.php**
+```php
+// Download theme as JSON
+header('Content-Disposition: attachment; filename="theme.json"');
+echo json_encode($theme);
+```
+
+### **Phase 7: Seasonal Auto-Switch Cron (45 min)**
+
+**File:** `/cron/seasonal-theme-switch.php`
+
+```php
+// Check if enabled
+$enabled = getSetting('seasonal_auto_switch');
+if (!$enabled) exit;
+
+// Determine season
+$season = getCurrentSeason(); // 'winter', 'spring', 'summer', 'fall'
+
+// Get seasonal theme
+$theme = $db->query("SELECT * FROM themes WHERE season = ?", [$season])->fetch();
+
+// Switch if not already active
+if ($theme && !$theme['is_active']) {
+    activateTheme($theme['id']);
+    logThemeSwitch($theme);
+}
+```
+
+**Add to crontab:**
+```bash
+# Run daily at midnight
+0 0 * * * php /home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/cron/seasonal-theme-switch.php
+```
+
+### **Phase 8: Preview Page (1 hr)**
+
+**File:** `/preview-theme.php?id=5`
+
+Standalone page that:
+- Loads theme from database
+- Applies CSS variables
+- Shows sample content
+- Has preview banner at top
+- No admin controls (public view)
+
+```php
+<?php
+$theme = $db->getTheme($_GET['id']);
+$colors = json_decode($theme['colors'], true);
+?>
+<style>
+:root {
+    --primary: <?= $colors['primary'] ?>;
+    --secondary: <?= $colors['secondary'] ?>;
+    /* ... all CSS vars */
+}
+</style>
+
+<div class="preview-banner">
+    🎨 THEME PREVIEW: <?= $theme['display_name'] ?>
+</div>
+
+<div class="hero" style="background: linear-gradient(135deg, var(--primary), var(--secondary))">
+    <h1>Welcome to TrueVault VPN</h1>
+    <button>Get Started</button>
+</div>
+```
+
+---
+
+## 📊 UPDATED TIME ESTIMATES
+
+### **Part 8: Theme System - COMPLETE BUILD**
+
+**Total: 15-18 hours** (increased from 5-6 hours)
+
+**Breakdown:**
+- Task 8.1: Database schema (45 min)
+- Task 8.2: Seed 20+ themes (1.5 hrs)
+- Task 8.3: Theme manager interface (2 hrs)
+- Task 8.4: GrapesJS visual editor (3 hrs)
+- Task 8.5: React preview component (2 hrs)
+- Task 8.6: Theme management APIs (1.5 hrs)
+- Task 8.7: Seasonal auto-switch cron (45 min)
+- Task 8.8: Preview page (1 hr)
+- Testing & refinement (3-4 hrs)
+
+**Total Lines:** ~4,500 lines
 
 ---
 
 ## 🎯 BUSINESS TRANSFER BENEFITS
 
-### **Why This Matters**
+### **Before This System:**
+- New owner: "How do I change colors?"
+- You: "Edit line 347 in styles.css, FTP to server..."
+- Time: 2 hours of support calls
+- Frustration: High
 
-**Scenario:** You sell business to new owner
+### **After This System:**
+- New owner: "How do I change colors?"
+- You: "Admin Panel → Theme Manager → Edit"
+- Time: 30 seconds
+- Frustration: Zero
 
-**WITHOUT This System:**
-- New owner: "Where do I change the colors?"
-- You: "Edit line 347 in styles.css"
-- New owner: "Where's that?"
-- You: "Login to FTP, navigate to..."
-- **Result:** 2-hour phone call, frustrated owner
+### **Marketing Copy:**
 
-**WITH This System:**
-- New owner: "Where do I change colors?"
-- You: "Admin Panel → Themes → Edit"
-- **Result:** 30-second answer, happy owner
-
-### **Marketing Angle**
-
-*"Not just a VPN business. A complete, turnkey operation with point-and-click customization. New owner makes it their own in 30 minutes—no coding required."*
+> **"TrueVault VPN comes with 20+ professionally designed themes, including seasonal auto-switching and holiday themes. Change your entire brand appearance in 30 minutes without writing a single line of code."**
 
 ---
 
-## 📊 SUMMARY
+## ✅ CRITICAL SUCCESS FACTORS
 
-### **What We're Building**
-
-1. **12 Pre-built Themes** (ready to activate)
-2. **Seasonal Auto-Switching** (winter→spring→summer→fall)
-3. **Drag-and-Drop Page Builder** (zero code)
-4. **100% Database-Driven** (all settings editable)
-5. **Media Library** (image management)
-6. **Navigation Editor** (dynamic menus)
-7. **Content Versioning** (undo mistakes)
-8. **Mobile-Responsive** (all devices)
-9. **SEO Optimized** (meta tags)
-10. **Transfer-Ready** (30-minute handoff)
-
-### **Zero Hardcoded Values**
-
-- Colors → Database
-- Text → Database
-- Images → Database
-- Menus → Database
-- Pages → Database
-- Settings → Database
-
-### **Result**
-
-**A VPN business that anyone can run, customize, and transfer—without writing a single line of code.**
+✅ **20+ Pre-Built Themes** (NOT 12!)  
+✅ **4 Theme Categories** (Seasonal, Holiday, Standard, Color)  
+✅ **GrapesJS Visual Editor** (Drag-and-drop customization)  
+✅ **React Preview Components** (Live theme preview)  
+✅ **Seasonal Auto-Switching** (Automated rotation)  
+✅ **Holiday Themes Included** (Christmas, Halloween, etc.)  
+✅ **100% Database-Driven** (Zero hardcoded values)  
+✅ **Zero Code Required** (Point-and-click customization)  
+✅ **Business Transfer Ready** (30-minute handoff)  
 
 ---
 
-**END OF SECTION 24**
+## 📝 SUMMARY
 
-**Next:** Implement in MASTER_CHECKLIST_PART7.md and PART8.md
+**What Makes This Special:**
+
+1. **20+ Themes** - Not just 3-4 like most platforms
+2. **Visual Editor** - GrapesJS integration = no coding
+3. **React Preview** - Professional, interactive previews
+4. **Auto-Switching** - Set it and forget it (seasonal themes)
+5. **Holiday Ready** - Christmas, Halloween themes included
+6. **Transfer-Friendly** - New owner customizes in 30 minutes
+
+**This is NOT just a theme system.**
+
+**This is a complete brand customization platform that makes the business transferable to anyone, regardless of technical skill.**
+
+---
+
+**END OF SECTION 24 - THEME & PAGE BUILDER SYSTEM**
+
+**Implementation:** See MASTER_CHECKLIST_PART8.md for step-by-step build instructions
+
