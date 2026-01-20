@@ -1,9 +1,10 @@
-# MASTER CHECKLIST - PART 12: FRONTEND LANDING PAGES
+# MASTER CHECKLIST - PART 12: LANDING PAGES (DATABASE-DRIVEN PHP)
 
 **Created:** January 18, 2026 - 9:50 PM CST  
+**Updated:** January 20, 2026 - User Decision #1 Applied
 **Status:** ⏳ NOT STARTED  
 **Priority:** 🚨 CRITICAL - LAUNCH BLOCKER  
-**Estimated Time:** 5-6 hours  
+**Estimated Time:** 10-12 hours (increased for database integration)
 
 ---
 
@@ -11,899 +12,951 @@
 
 Build all public-facing landing pages that customers see BEFORE logging in.
 
-**Why This Was Missed:**
-- Part 8 built the **tools** (page builder, CMS)
-- But forgot to build the **product** (actual pages)
-- Classic mistake: confusing admin tools with customer experience
+**CRITICAL USER DECISION:**
+All pages MUST be:
+1. ✅ PHP files (NOT .html)
+2. ✅ Database-driven (NO hardcoded content)
+3. ✅ Theme-integrated (colors/fonts from database)
+4. ✅ Fully functional (NO placeholders)
+5. ✅ Logo/name changeable by new owner
 
-**What This Includes:**
-- Homepage with VPN education
-- Pricing page with USD/CAD pricing
-- Features page
-- About, Contact, Legal pages
-- Reusable components (header, footer)
-- Section templates for page builder
-
----
-
-## 🎯 REQUIREMENTS FROM USER
-
-### **Pricing Requirements:**
-✅ Personal Plan: **$9.97 USD** / **$13.47 CAD**  
-✅ Family Plan: **$14.97 USD** / **$20.21 CAD**  
-✅ Dedicated Server: **$39.97 USD** / **$53.96 CAD**  
-✅ USD & CAD same font size (equal importance)  
-✅ Monthly/Annual toggle (2 months free on annual)  
-❌ **NO VIP tier advertised** (hidden internal only)  
-
-### **Content Requirements:**
-✅ What is a VPN (education section)  
-✅ Why you need a VPN (privacy, security, freedom)  
-✅ All features listed  
-✅ Competitor comparison table  
-✅ Multiple CTAs (call-to-action)  
-✅ Trust badges  
+**Why This Matters:**
+- New business owner needs 30-minute transfer
+- Logo, name, colors ALL changeable via admin
+- NO code editing required
+- Everything in database = easy transfer
 
 ---
 
-## 🔧 TASK 12.1: Create Homepage (index.php)
+## 🗂️ FILES TO CREATE
 
-**Time:** 2 hours  
-**Lines:** ~600 lines  
-**File:** `/website/index.php`
+**Root Level (8 PHP Pages):**
+1. /index.php - Homepage
+2. /pricing.php - Pricing page
+3. /features.php - Features page
+4. /about.php - About page
+5. /contact.php - Contact form
+6. /privacy.php - Privacy policy
+7. /terms.php - Terms of service
+8. /refund.php - Refund policy
 
-### **Sections to Include:**
+**Templates (2 files):**
+1. /templates/header.php - Site header
+2. /templates/footer.php - Site footer
 
-**1. Hero Section**
-- [ ] Eye-catching headline
-- [ ] Subheadline explaining TrueVault
-- [ ] Primary CTA: "Start Free Trial"
-- [ ] Secondary CTA: "View Pricing"
-- [ ] Trust badges (7-day trial, no credit card, etc.)
+**Database Tables:**
+- pages (page content storage)
+- settings (site settings)
+- navigation (menu items)
+- themes (from Part 8)
 
-**2. What is a VPN Section**
-- [ ] Simple explanation of VPN
-- [ ] Visual diagram (encrypted tunnel)
-- [ ] 3-4 key benefits highlighted
-- [ ] "Without VPN" vs "With VPN" comparison
+---
 
-**3. Why You Need a VPN**
-- [ ] Privacy: Stop ISP tracking
-- [ ] Security: Protect on public WiFi
-- [ ] Freedom: Access geo-blocked content
-- [ ] Parental Controls: Protect kids online
-- [ ] Remote Access: Port forwarding for devices
+## 💾 TASK 12.1: Create Database Tables
 
-**4. Features Grid**
-- [ ] 15+ feature cards with icons
-- [ ] Each card: Icon, Title, Description
-- [ ] Features include:
-  - 256-bit encryption
-  - Zero logs policy
-  - Port forwarding
-  - Network scanner
-  - Parental controls with calendar
-  - Gaming server controls
-  - 4 server locations
-  - WireGuard protocol
-  - 2-click device setup
-  - Android helper app
-  - Family sharing
-  - 7-day free trial
-  - Email notifications
-  - Activity logs
-  - 24/7 support
+**Time:** 30 minutes  
+**File:** `/databases/setup-content.php`
 
-**5. Pricing Preview**
-- [ ] 3 pricing cards
-- [ ] Personal, Family, Dedicated
-- [ ] Monthly pricing only
-- [ ] "View Full Pricing" CTA
+**Create content.db with 3 tables:**
 
-**6. Competitor Comparison Table**
-- [ ] TrueVault vs Traditional VPNs
-- [ ] Feature checklist (checkmarks for us, X for them)
-- [ ] Features to compare:
-  - Multi-IP addresses
-  - Persistent regional identities
-  - Personal certificate authority
-  - Family/Team mesh network
-  - Decentralized architecture
-  - AI-powered routing
-  - Port forwarding
-  - Network scanner
-  - Parental calendar controls
-  - You control the keys
+```sql
+-- TABLE 1: pages
+CREATE TABLE IF NOT EXISTS pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_key TEXT UNIQUE NOT NULL,        -- 'homepage', 'pricing', 'features'
+    page_title TEXT NOT NULL,
+    meta_title TEXT,
+    meta_description TEXT,
+    meta_keywords TEXT,
+    sections TEXT,                         -- JSON structure
+    is_published INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 
-**7. How It Works**
-- [ ] 3-step process
-- [ ] Step 1: Sign up (7-day trial)
-- [ ] Step 2: Download config (2-click setup)
-- [ ] Step 3: Connect & browse safely
-- [ ] Visual diagram
+-- TABLE 2: settings
+CREATE TABLE IF NOT EXISTS settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setting_key TEXT UNIQUE NOT NULL,
+    setting_value TEXT,
+    setting_type TEXT DEFAULT 'text',     -- text, textarea, image, color, number
+    category TEXT,                         -- 'general', 'branding', 'seo', 'cta'
+    label TEXT,
+    description TEXT,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 
-**8. Trust & Security**
-- [ ] Security badges
-- [ ] "No logs" policy highlight
-- [ ] WireGuard protocol badge
-- [ ] Server locations map
-- [ ] Testimonial quotes (if available)
+-- TABLE 3: navigation
+CREATE TABLE IF NOT EXISTS navigation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    location TEXT NOT NULL,                -- 'header', 'footer', 'sidebar'
+    label TEXT NOT NULL,
+    url TEXT NOT NULL,
+    parent_id INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-**9. Final CTA Section**
-- [ ] Large heading: "Ready to protect your privacy?"
-- [ ] Subtext: "Start your 7-day free trial today"
-- [ ] Primary CTA button
-- [ ] "No credit card required" text
+**Seed Default Settings:**
 
-**10. Footer**
-- [ ] Navigation links
-- [ ] Social media icons
-- [ ] Copyright
-- [ ] Contact email
-- [ ] Legal links (Terms, Privacy)
+```sql
+-- BRANDING
+INSERT INTO settings (setting_key, setting_value, setting_type, category, label) VALUES
+('site_title', 'TrueVault VPN', 'text', 'branding', 'Site Title'),
+('site_tagline', 'Your Complete Digital Fortress', 'text', 'branding', 'Tagline'),
+('site_logo', '/assets/images/logo.png', 'image', 'branding', 'Logo'),
+('site_favicon', '/assets/images/favicon.ico', 'image', 'branding', 'Favicon'),
+('company_name', 'Connection Point Systems Inc', 'text', 'branding', 'Company Name'),
 
-### **Code Structure:**
+-- CTA BUTTONS
+('cta_primary_text', 'Start Free Trial', 'text', 'cta', 'Primary Button Text'),
+('cta_secondary_text', 'View Pricing', 'text', 'cta', 'Secondary Button Text'),
+('cta_login_text', 'Sign In', 'text', 'cta', 'Login Button Text'),
+
+-- SUPPORT
+('support_email', 'admin@the-truth-publishing.com', 'text', 'general', 'Support Email'),
+('notification_email', 'paulhalonen@gmail.com', 'text', 'general', 'Notification Email'),
+
+-- SEO
+('seo_default_title', 'TrueVault VPN - Complete Digital Privacy', 'text', 'seo', 'Default Meta Title'),
+('seo_default_description', 'Military-grade VPN with port forwarding, parental controls, and camera management', 'textarea', 'seo', 'Default Meta Description'),
+
+-- FEATURES
+('feature_trial_days', '7', 'number', 'features', 'Free Trial Days'),
+('feature_refund_days', '30', 'number', 'features', 'Refund Period Days'),
+
+-- PRICING (USD)
+('price_personal_usd', '9.97', 'number', 'pricing', 'Personal Plan USD'),
+('price_family_usd', '14.97', 'number', 'pricing', 'Family Plan USD'),
+('price_dedicated_usd', '39.97', 'number', 'pricing', 'Dedicated Plan USD'),
+
+-- PRICING (CAD)
+('price_personal_cad', '13.47', 'number', 'pricing', 'Personal Plan CAD'),
+('price_family_cad', '20.21', 'number', 'pricing', 'Family Plan CAD'),
+('price_dedicated_cad', '53.96', 'number', 'pricing', 'Dedicated Plan CAD');
+```
+
+**Seed Default Navigation:**
+
+```sql
+INSERT INTO navigation (location, label, url, sort_order) VALUES
+('header', 'Home', '/', 1),
+('header', 'Features', '/features.php', 2),
+('header', 'Pricing', '/pricing.php', 3),
+('header', 'About', '/about.php', 4),
+('header', 'Contact', '/contact.php', 5),
+
+('footer', 'Features', '/features.php', 1),
+('footer', 'Pricing', '/pricing.php', 2),
+('footer', 'About', '/about.php', 3),
+('footer', 'Contact', '/contact.php', 4),
+('footer', 'Privacy', '/privacy.php', 5),
+('footer', 'Terms', '/terms.php', 6),
+('footer', 'Refund Policy', '/refund.php', 7);
+```
+
+**Seed Homepage Content:**
+
+```sql
+INSERT INTO pages (page_key, page_title, meta_title, meta_description, sections) VALUES
+('homepage', 'Home', 'TrueVault VPN - Your Complete Digital Fortress', 'Military-grade VPN with port forwarding, parental controls, and camera management. 7-day free trial.', '{
+  "hero": {
+    "headline": "Your Complete Digital Fortress",
+    "subheadline": "Military-grade VPN with port forwarding, parental controls, and camera management",
+    "cta_primary": "Start Free Trial",
+    "cta_secondary": "View Pricing",
+    "trust_badges": ["7-Day Free Trial", "No Credit Card Required", "Cancel Anytime"]
+  },
+  "what_is_vpn": {
+    "title": "What is a VPN?",
+    "description": "A VPN (Virtual Private Network) creates an encrypted tunnel between your device and the internet...",
+    "benefits": [
+      "Encrypt your internet traffic",
+      "Hide your IP address",
+      "Access geo-blocked content",
+      "Protect on public WiFi"
+    ]
+  }
+}');
+```
+
+**Verification:**
+- [ ] content.db created
+- [ ] 3 tables created
+- [ ] Settings seeded (20+ settings)
+- [ ] Navigation seeded
+- [ ] Homepage content seeded
+- [ ] Can query data successfully
+
+---
+
+## 📄 TASK 12.2: Create Helper Classes
+
+**Time:** 45 minutes  
+**Files:** Create 3 helper classes
+
+### **File 1: /includes/Content.php**
 ```php
 <?php
+class Content {
+    private static $db;
+    private static $settings = [];
+    
+    public static function init() {
+        self::$db = new PDO('sqlite:databases/content.db');
+        self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        // Load all settings into memory (cache)
+        $stmt = self::$db->query("SELECT setting_key, setting_value FROM settings");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            self::$settings[$row['setting_key']] = $row['setting_value'];
+        }
+    }
+    
+    public static function get($key, $default = '') {
+        return self::$settings[$key] ?? $default;
+    }
+    
+    public static function getPage($page_key) {
+        $stmt = self::$db->prepare("SELECT * FROM pages WHERE page_key = ? AND is_published = 1 LIMIT 1");
+        $stmt->execute([$page_key]);
+        $page = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($page && $page['sections']) {
+            $page['sections'] = json_decode($page['sections'], true);
+        }
+        
+        return $page;
+    }
+    
+    public static function getNavigation($location = 'header') {
+        $stmt = self::$db->prepare("
+            SELECT * FROM navigation 
+            WHERE location = ? AND is_active = 1 
+            ORDER BY sort_order ASC
+        ");
+        $stmt->execute([$location]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+Content::init();
+```
+
+### **File 2: /includes/Theme.php**
+```php
+<?php
+class Theme {
+    private static $db;
+    private static $active;
+    
+    public static function init() {
+        self::$db = new PDO('sqlite:databases/admin.db');
+        self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        // Load active theme
+        $stmt = self::$db->query("SELECT * FROM themes WHERE is_active = 1 LIMIT 1");
+        $theme = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($theme) {
+            self::$active = [
+                'name' => $theme['theme_name'],
+                'colors' => json_decode($theme['colors'], true),
+                'fonts' => json_decode($theme['fonts'], true),
+                'spacing' => json_decode($theme['spacing'], true),
+                'borders' => json_decode($theme['borders'], true),
+                'shadows' => json_decode($theme['shadows'], true)
+            ];
+        }
+    }
+    
+    public static function getActive() {
+        return self::$active;
+    }
+    
+    public static function getCSSVars() {
+        $theme = self::$active;
+        $css = ":root {\n";
+        
+        // Colors
+        foreach ($theme['colors'] as $key => $value) {
+            $css .= "  --{$key}: {$value};\n";
+        }
+        
+        // Fonts
+        foreach ($theme['fonts'] as $key => $value) {
+            $css .= "  --font-{$key}: {$value};\n";
+        }
+        
+        // Spacing
+        foreach ($theme['spacing'] as $key => $value) {
+            $css .= "  --spacing-{$key}: {$value};\n";
+        }
+        
+        // Borders
+        foreach ($theme['borders'] as $key => $value) {
+            $css .= "  --{$key}: {$value};\n";
+        }
+        
+        // Shadows
+        foreach ($theme['shadows'] as $key => $value) {
+            $css .= "  --shadow-{$key}: {$value};\n";
+        }
+        
+        $css .= "}\n";
+        return $css;
+    }
+}
+
+Theme::init();
+```
+
+### **File 3: /includes/PageRenderer.php**
+```php
+<?php
+class PageRenderer {
+    public static function renderSection($type, $data) {
+        $template = "templates/sections/{$type}.php";
+        
+        if (file_exists($template)) {
+            extract($data);
+            include $template;
+        }
+    }
+    
+    public static function renderMeta($page) {
+        $title = $page['meta_title'] ?? Content::get('seo_default_title');
+        $description = $page['meta_description'] ?? Content::get('seo_default_description');
+        $keywords = $page['meta_keywords'] ?? '';
+        
+        echo "<title>{$title}</title>\n";
+        echo "<meta name='description' content='{$description}'>\n";
+        if ($keywords) {
+            echo "<meta name='keywords' content='{$keywords}'>\n";
+        }
+    }
+}
+```
+
+**Verification:**
+- [ ] Content.php created
+- [ ] Theme.php created
+- [ ] PageRenderer.php created
+- [ ] Can load settings
+- [ ] Can load pages
+- [ ] Can load navigation
+- [ ] Can load theme
+
+---
+
+## 🏠 TASK 12.3: Create Homepage (index.php)
+
+**Time:** 3 hours  
+**Lines:** ~600 lines  
+**File:** `/index.php` (root level!)
+
+**Complete database-driven homepage:**
+
+```php
+<?php
+// ===== INITIALIZATION =====
 define('TRUEVAULT_INIT', true);
 require_once 'configs/config.php';
-require_once 'includes/Theme.php';
 require_once 'includes/Content.php';
+require_once 'includes/Theme.php';
+require_once 'includes/PageRenderer.php';
 
-$theme = Theme::getActiveTheme();
-$colors = Theme::getAllColors();
+// Load page data
+$page = Content::getPage('homepage');
+$sections = $page['sections'];
+$theme = Theme::getActive();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><?= Content::get('site_title') ?> - Complete Digital Privacy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags (from database) -->
+    <?php PageRenderer::renderMeta($page); ?>
+    
+    <!-- Favicon (from database) -->
+    <link rel="icon" href="<?= Content::get('site_favicon') ?>">
+    
+    <!-- Dynamic Theme CSS -->
     <style>
-        /* Use theme colors from database */
-        :root {
-            --primary: <?= $colors['primary'] ?>;
-            --secondary: <?= $colors['secondary'] ?>;
-            /* ... all theme colors */
+    <?= Theme::getCSSVars() ?>
+    
+    /* Base Styles */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        font-family: var(--font-body);
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.6;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        line-height: 1.2;
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 var(--spacing-md);
+    }
+    
+    /* Button Styles */
+    .btn {
+        display: inline-block;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .btn-primary:hover {
+        background: var(--secondary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .btn-secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--primary);
+        color: white;
+    }
+    
+    /* Hero Section */
+    .hero {
+        text-align: center;
+        padding: var(--spacing-xl) 0;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+    }
+    
+    .hero h1 {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .hero p {
+        font-size: 1.3rem;
+        margin-bottom: var(--spacing-lg);
+        opacity: 0.9;
+    }
+    
+    .hero-ctas {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .trust-badges {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        margin-top: var(--spacing-lg);
+        flex-wrap: wrap;
+    }
+    
+    .trust-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+    }
+    
+    /* Section Styles */
+    .section {
+        padding: var(--spacing-xl) 0;
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: var(--spacing-lg);
+        color: var(--primary);
+    }
+    
+    /* Features Grid */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .feature-card {
+        background: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .feature-title {
+        font-size: 1.3rem;
+        margin-bottom: var(--spacing-sm);
+        color: var(--primary);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2rem;
         }
-        /* Responsive CSS */
+        
+        .hero p {
+            font-size: 1.1rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+    }
     </style>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
     
-    <!-- Hero -->
-    <section class="hero">...</section>
-    
-    <!-- What is VPN -->
-    <section class="what-is-vpn">...</section>
-    
-    <!-- Why You Need VPN -->
-    <section class="why-vpn">...</section>
-    
-    <!-- Features -->
-    <section class="features">...</section>
-    
-    <!-- Pricing Preview -->
-    <section class="pricing-preview">...</section>
-    
-    <!-- Comparison Table -->
-    <section class="comparison">...</section>
-    
-    <!-- How It Works -->
-    <section class="how-it-works">...</section>
-    
-    <!-- Trust -->
-    <section class="trust">...</section>
-    
-    <!-- Final CTA -->
-    <section class="final-cta">...</section>
-    
-    <?php include 'includes/footer.php'; ?>
-</body>
-</html>
-```
-
-### **Verification:**
-- [ ] All 10 sections display
-- [ ] Theme colors apply
-- [ ] Responsive on mobile
-- [ ] All CTAs link correctly
-- [ ] Images load
-- [ ] No hardcoded values
-- [ ] Fast page load (<2 seconds)
-
----
-
-## 🔧 TASK 12.2: Create Pricing Page (pricing.php)
-
-**Time:** 1.5 hours  
-**Lines:** ~400 lines  
-**File:** `/website/pricing.php`
-
-### **Sections to Include:**
-
-**1. Hero Section**
-- [ ] "Simple, Transparent Pricing"
-- [ ] "No hidden fees. Cancel anytime."
-- [ ] Currency toggle: USD | CAD
-- [ ] Billing toggle: Monthly | Annual (save 2 months!)
-
-**2. Pricing Cards (3 plans)**
-
-**Personal Plan:**
-- [ ] $9.97 USD / **$13.47 CAD** monthly
-- [ ] $99.70 USD / **$134.70 CAD** annual (2 months free)
-- [ ] 3 devices
-- [ ] All locations
-- [ ] Port forwarding
-- [ ] Network scanner
-- [ ] Email support
-- [ ] 7-day free trial
-- [ ] "Start Free Trial" CTA
-
-**Family Plan:**
-- [ ] $14.97 USD / **$20.21 CAD** monthly
-- [ ] $149.70 USD / **$202.10 CAD** annual (2 months free)
-- [ ] 10 devices
-- [ ] All locations
-- [ ] Port forwarding
-- [ ] Network scanner
-- [ ] Parental controls
-- [ ] Gaming controls
-- [ ] Calendar scheduling
-- [ ] Priority support
-- [ ] 7-day free trial
-- [ ] "Most Popular" badge
-- [ ] "Start Free Trial" CTA
-
-**Dedicated Server:**
-- [ ] $39.97 USD / **$53.96 CAD** monthly
-- [ ] $399.70 USD / **$539.60 CAD** annual (2 months free)
-- [ ] Unlimited devices
-- [ ] Your own dedicated server
-- [ ] All features
-- [ ] Fastest speeds
-- [ ] 24/7 priority support
-- [ ] 7-day free trial
-- [ ] "Contact Sales" CTA
-
-**3. Competitor Comparison Table**
-- [ ] Feature-by-feature comparison
-- [ ] TrueVault vs NordVPN vs ExpressVPN vs Surfshark
-- [ ] Rows for each feature:
-  - Price (monthly)
-  - Price (annual with discount)
-  - Number of devices
-  - Port forwarding
-  - Network scanner
-  - Parental controls
-  - Gaming controls
-  - Server locations
-  - Free trial
-  - Zero logs
-  - WireGuard protocol
-  - Android helper app
-  - Calendar scheduling
-  - Dedicated server option
-  - Family mesh network
-- [ ] Checkmarks ✓ for Yes, ✗ for No
-- [ ] Highlight TrueVault column
-
-**4. Feature Comparison Matrix**
-- [ ] All features listed
-- [ ] Which plan includes what
-- [ ] Visual checkmarks
-
-**5. FAQ Section**
-- [ ] "What's included in the free trial?"
-- [ ] "Can I cancel anytime?"
-- [ ] "Do you keep logs?"
-- [ ] "What payment methods do you accept?"
-- [ ] "Can I upgrade my plan later?"
-- [ ] "What's the difference between plans?"
-- [ ] "Is there a money-back guarantee?"
-- [ ] "How do I set up parental controls?"
-
-**6. Final CTA**
-- [ ] "Ready to get started?"
-- [ ] "Start your 7-day free trial"
-- [ ] "No credit card required"
-
-### **JavaScript for Toggles:**
-```javascript
-// Currency toggle
-const currencyToggle = document.getElementById('currency-toggle');
-currencyToggle.addEventListener('change', (e) => {
-    const currency = e.target.value;
-    document.querySelectorAll('.price-usd').forEach(el => {
-        el.style.display = currency === 'USD' ? 'inline' : 'none';
-    });
-    document.querySelectorAll('.price-cad').forEach(el => {
-        el.style.display = currency === 'CAD' ? 'inline' : 'none';
-    });
-});
-
-// Billing toggle
-const billingToggle = document.getElementById('billing-toggle');
-billingToggle.addEventListener('change', (e) => {
-    const billing = e.target.value;
-    document.querySelectorAll('.price-monthly').forEach(el => {
-        el.style.display = billing === 'monthly' ? 'block' : 'none';
-    });
-    document.querySelectorAll('.price-annual').forEach(el => {
-        el.style.display = billing === 'annual' ? 'block' : 'none';
-    });
-});
-```
-
-### **Verification:**
-- [ ] Currency toggle works
-- [ ] Billing toggle works
-- [ ] Prices display correctly
-- [ ] USD & CAD same font size
-- [ ] Comparison table readable
-- [ ] FAQ answers helpful
-- [ ] All CTAs work
-- [ ] Mobile responsive
-
----
-
-## 🔧 TASK 12.3: Create Features Page (features.php)
-
-**Time:** 1 hour  
-**Lines:** ~350 lines  
-**File:** `/website/features.php`
-
-### **Sections to Include:**
-
-**1. Hero**
-- [ ] "Everything You Need for Complete Privacy"
-
-**2. Core VPN Features**
-- [ ] 256-bit Military Encryption
-- [ ] Zero Logs Policy
-- [ ] WireGuard Protocol
-- [ ] 4 Server Locations
-- [ ] Unlimited Bandwidth
-- [ ] Kill Switch
-- [ ] DNS Leak Protection
-
-**3. Advanced Features**
-- [ ] Port Forwarding (detailed explanation)
-- [ ] Network Scanner (screenshot)
-- [ ] 2-Click Device Setup
-- [ ] Android Helper App
-
-**4. Parental Controls**
-- [ ] Calendar Scheduling (screenshot)
-- [ ] Time Windows
-- [ ] Gaming Controls (Xbox, PS, Steam, Nintendo)
-- [ ] Whitelist/Blacklist
-- [ ] Weekly Reports
-
-**5. Family Features**
-- [ ] Up to 10 devices
-- [ ] Family mesh network
-- [ ] Shared port forwarding
-- [ ] Individual profiles
-
-**6. Business Features (Dedicated Server)**
-- [ ] Your own server
-- [ ] Unlimited devices
-- [ ] Fastest speeds
-- [ ] Priority support
-
-**7. Security Features**
-- [ ] Military-grade encryption
-- [ ] No logs policy
-- [ ] Perfect forward secrecy
-- [ ] Secure core servers
-
-**8. CTA**
-- [ ] "Try all features free for 7 days"
-
-### **Verification:**
-- [ ] All features explained
-- [ ] Screenshots included
-- [ ] Technical details accurate
-- [ ] Benefits clear
-- [ ] CTAs work
-
----
-
-## 🔧 TASK 12.4: Create About/Contact/Legal Pages
-
-**Time:** 1 hour  
-**Lines:** ~300 lines total  
-
-### **about.php:**
-- [ ] Company mission
-- [ ] Why we built TrueVault
-- [ ] Our values (privacy, transparency, simplicity)
-- [ ] Team (if applicable)
-
-### **contact.php:**
-- [ ] Contact form
-- [ ] Support email: paulhalonen@gmail.com
-- [ ] Response time expectations
-- [ ] FAQ link
-
-### **terms.php:**
-- [ ] Terms of service
-- [ ] User responsibilities
-- [ ] Service limitations
-- [ ] Cancellation policy
-- [ ] Payment terms
-
-### **privacy.php:**
-- [ ] Privacy policy
-- [ ] What data we collect (minimal!)
-- [ ] How we use data
-- [ ] Third parties (PayPal only)
-- [ ] Data retention
-- [ ] Your rights
-
-### **404.php:**
-- [ ] "Page not found"
-- [ ] Search box
-- [ ] Popular links
-- [ ] Home button
-
----
-
-## 🔧 TASK 12.5: Create Reusable Components
-
-**Time:** 30 minutes  
-**Lines:** ~200 lines total  
-
-### **includes/header.php:**
-```php
-<header class="site-header">
-    <div class="container">
-        <div class="logo">
-            <a href="/"><?= Content::get('site_title') ?></a>
-        </div>
-        <nav class="main-nav">
-            <a href="/">Home</a>
-            <a href="/features.php">Features</a>
-            <a href="/pricing.php">Pricing</a>
-            <a href="/about.php">About</a>
-            <a href="/contact.php">Contact</a>
-        </nav>
-        <div class="header-cta">
-            <a href="/auth/login.php" class="btn-secondary">Sign In</a>
-            <a href="/auth/register.php" class="btn-primary">Start Free Trial</a>
-        </div>
-    </div>
-</header>
-```
-
-### **includes/footer.php:**
-```php
-<footer class="site-footer">
-    <div class="container">
-        <div class="footer-grid">
-            <div class="footer-col">
-                <h4>Product</h4>
-                <a href="/features.php">Features</a>
-                <a href="/pricing.php">Pricing</a>
-                <a href="/downloads/">Apps</a>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <a href="/about.php">About</a>
-                <a href="/contact.php">Contact</a>
-            </div>
-            <div class="footer-col">
-                <h4>Legal</h4>
-                <a href="/terms.php">Terms</a>
-                <a href="/privacy.php">Privacy</a>
-            </div>
-            <div class="footer-col">
-                <h4>Support</h4>
-                <a href="mailto:paulhalonen@gmail.com">Email Support</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 <?= Content::get('site_title') ?>. All rights reserved.</p>
-        </div>
-    </div>
-</footer>
-```
-
----
-
-## 📊 COMPLETION CHECKLIST
-
-### **Pages:**
-- [ ] index.php (homepage)
-- [ ] pricing.php (detailed pricing)
-- [ ] features.php (all features)
-- [ ] about.php (company info)
-- [ ] contact.php (support)
-- [ ] terms.php (legal)
-- [ ] privacy.php (legal)
-- [ ] 404.php (error)
-
-### **Components:**
-- [ ] includes/header.php
-- [ ] includes/footer.php
-
-### **Content:**
-- [ ] VPN explanation written
-- [ ] Features described
-- [ ] Pricing accurate
-- [ ] FAQ answers written
-- [ ] Legal documents written
-
-### **Testing:**
-- [ ] All pages load
-- [ ] Theme colors apply
-- [ ] Mobile responsive
-- [ ] Links work
-- [ ] Forms submit
-- [ ] CTAs functional
-- [ ] No hardcoded values
-- [ ] Fast load times
-
----
-
-## ⏱️ TIME ESTIMATE
-
-**Total Time:** 5-6 hours
-
-**Breakdown:**
-- Homepage: 2 hours
-- Pricing: 1.5 hours
-- Features: 1 hour
-- Other pages: 1 hour
-- Components: 30 minutes
-
-**Total Lines:** ~2,350 lines
-
----
-
-## 🚀 PRIORITY
-
-**CRITICAL - LAUNCH BLOCKER**
-
-Without these pages:
-- ❌ No one can learn about TrueVault
-- ❌ No one can see pricing
-- ❌ No one can sign up
-- ❌ Website appears broken
-
-**Must complete before launch!**
-
----
-
-**END OF PART 12 CHECKLIST**
-
----
-
-## 🔄 CRITICAL UPDATES - JANUARY 20, 2026
-
-**USER DECISION:** All landing pages MUST be:
-1. PHP files (NOT .html)
-2. Database-driven (NOT hardcoded)
-3. Integrated with theme system (Part 8)
-4. Fully functional (NO placeholders)
-
----
-
-### **CORRECTED FILE NAMES:**
-
-**WRONG (Original Checklist):**
-- ❌ index.html
-- ❌ pricing.html  
-- ❌ features.html
-- ❌ about.html
-- ❌ contact.html
-- ❌ privacy.html
-- ❌ terms.html
-- ❌ refund.html
-
-**CORRECT (Updated):**
-- ✅ index.php
-- ✅ pricing.php
-- ✅ features.php
-- ✅ about.php
-- ✅ contact.php
-- ✅ privacy.php
-- ✅ terms.php
-- ✅ refund.php
-
----
-
-### **DATABASE-DRIVEN REQUIREMENTS:**
-
-**Every page MUST:**
-1. Pull content from admin.db
-2. Pull theme variables from admin.db
-3. Pull navigation from admin.db
-4. Pull settings from admin.db
-5. NO hardcoded strings ANYWHERE
-
-**Example - WRONG (Hardcoded):**
-```php
-<h1>Welcome to TrueVault VPN</h1>
-<p>Your privacy matters.</p>
-<button>Sign Up Now</button>
-```
-
-**Example - CORRECT (Database-Driven):**
-```php
-<?php
-require_once '../configs/config.php';
-require_once '../includes/Database.php';
-require_once '../includes/Theme.php';
-
-$db = new Database();
-$theme = new Theme();
-
-// Get page content
-$page = $db->getPageContent('homepage');
-$settings = $db->getSettings();
-$activeTheme = $theme->getActive();
-
-// Get hero content
-$hero = $page['sections']['hero'];
-?>
-
-<style>
-:root {
-  --primary: <?= $activeTheme['colors']['primary'] ?>;
-  --secondary: <?= $activeTheme['colors']['secondary'] ?>;
-  --accent: <?= $activeTheme['colors']['accent'] ?>;
-  --bg: <?= $activeTheme['colors']['background'] ?>;
-  --text: <?= $activeTheme['colors']['text'] ?>;
-}
-</style>
-
-<h1 style="font-family: <?= $activeTheme['fonts']['heading'] ?>">
-  <?= htmlspecialchars($hero['headline']) ?>
-</h1>
-<p><?= htmlspecialchars($hero['subheadline']) ?></p>
-<button style="background: var(--primary)">
-  <?= htmlspecialchars($settings['cta_button_text']) ?>
-</button>
-```
-
----
-
-### **UPDATED TASK 12.1: Create Homepage (index.php)**
-
-**File:** `/index.php` (NOT /website/index.php - root level!)
-**Time:** 3 hours (increased)
-**Lines:** ~800 lines (increased for DB integration)
-
-**Purpose:** Database-driven homepage pulling all content from admin.db
-
-**Structure:**
-```php
-<?php
-// ----- CONFIG & INCLUDES -----
-require_once 'configs/config.php';
-require_once 'includes/Database.php';
-require_once 'includes/Theme.php';
-
-// ----- DATA LOADING -----
-$db = new Database();
-$theme = new Theme();
-
-// Load page content
-$page = $db->query("
-  SELECT * FROM pages 
-  WHERE page_key = 'homepage' 
-  LIMIT 1
-")->fetch(PDO::FETCH_ASSOC);
-
-$sections = json_decode($page['sections'], true);
-$settings = $db->getAllSettings();
-$activeTheme = $theme->getActive();
-
-// Load navigation
-$nav = $db->query("
-  SELECT * FROM navigation 
-  WHERE location = 'header' 
-  AND is_active = 1 
-  ORDER BY sort_order ASC
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// ----- HEAD -----
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= htmlspecialchars($settings['site_title']) ?> - <?= htmlspecialchars($page['meta_title']) ?></title>
-  <meta name="description" content="<?= htmlspecialchars($page['meta_description']) ?>">
-  
-  <!-- Dynamic Theme CSS -->
-  <style>
-  :root {
-    --primary: <?= $activeTheme['colors']['primary'] ?>;
-    --secondary: <?= $activeTheme['colors']['secondary'] ?>;
-    --accent: <?= $activeTheme['colors']['accent'] ?>;
-    --bg: <?= $activeTheme['colors']['background'] ?>;
-    --text: <?= $activeTheme['colors']['text'] ?>;
-    --text-light: <?= $activeTheme['colors']['text_light'] ?>;
-    --border: <?= $activeTheme['colors']['border'] ?>;
-    --success: <?= $activeTheme['colors']['success'] ?>;
-    --warning: <?= $activeTheme['colors']['warning'] ?>;
-    --danger: <?= $activeTheme['colors']['danger'] ?>;
-    
-    --font-heading: <?= $activeTheme['fonts']['heading'] ?>;
-    --font-body: <?= $activeTheme['fonts']['body'] ?>;
-    --font-mono: <?= $activeTheme['fonts']['mono'] ?>;
-    
-    --spacing-xs: <?= $activeTheme['spacing']['xs'] ?>;
-    --spacing-sm: <?= $activeTheme['spacing']['sm'] ?>;
-    --spacing-md: <?= $activeTheme['spacing']['md'] ?>;
-    --spacing-lg: <?= $activeTheme['spacing']['lg'] ?>;
-    --spacing-xl: <?= $activeTheme['spacing']['xl'] ?>;
-    
-    --radius-sm: <?= $activeTheme['borders']['radius_sm'] ?>;
-    --radius-md: <?= $activeTheme['borders']['radius_md'] ?>;
-    --radius-lg: <?= $activeTheme['borders']['radius_lg'] ?>;
-    
-    --shadow-sm: <?= $activeTheme['shadows']['sm'] ?>;
-    --shadow-md: <?= $activeTheme['shadows']['md'] ?>;
-    --shadow-lg: <?= $activeTheme['shadows']['lg'] ?>;
-  }
-  
-  body {
-    margin: 0;
-    font-family: var(--font-body);
-    color: var(--text);
-    background: var(--bg);
-  }
-  
-  h1, h2, h3 {
-    font-family: var(--font-heading);
-  }
-  
-  .btn-primary {
-    background: var(--primary);
-    color: white;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--radius-md);
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    box-shadow: var(--shadow-md);
-  }
-  
-  /* ... more dynamic styles ... */
-  </style>
-</head>
-<body>
-
 <!-- HEADER (from database) -->
 <?php include 'templates/header.php'; ?>
 
 <!-- HERO SECTION (from database) -->
 <section class="hero">
-  <h1><?= htmlspecialchars($sections['hero']['headline']) ?></h1>
-  <p><?= htmlspecialchars($sections['hero']['subheadline']) ?></p>
-  <button class="btn-primary">
-    <?= htmlspecialchars($settings['cta_primary_text']) ?>
-  </button>
+    <div class="container">
+        <h1><?= htmlspecialchars($sections['hero']['headline']) ?></h1>
+        <p><?= htmlspecialchars($sections['hero']['subheadline']) ?></p>
+        
+        <div class="hero-ctas">
+            <a href="/auth/register.php" class="btn btn-primary">
+                <?= htmlspecialchars($sections['hero']['cta_primary']) ?>
+            </a>
+            <a href="/pricing.php" class="btn btn-secondary">
+                <?= htmlspecialchars($sections['hero']['cta_secondary']) ?>
+            </a>
+        </div>
+        
+        <div class="trust-badges">
+            <?php foreach ($sections['hero']['trust_badges'] as $badge): ?>
+                <div class="trust-badge">✓ <?= htmlspecialchars($badge) ?></div>
+            <?php endforeach; ?>
+        </div>
+    </div>
 </section>
 
-<!-- More sections... -->
+<!-- WHAT IS VPN SECTION (from database) -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title"><?= htmlspecialchars($sections['what_is_vpn']['title']) ?></h2>
+        <p style="text-align: center; max-width: 800px; margin: 0 auto var(--spacing-lg);">
+            <?= htmlspecialchars($sections['what_is_vpn']['description']) ?>
+        </p>
+        
+        <div class="features-grid">
+            <?php foreach ($sections['what_is_vpn']['benefits'] as $benefit): ?>
+                <div class="feature-card">
+                    <div class="feature-icon">✓</div>
+                    <h3 class="feature-title"><?= htmlspecialchars($benefit) ?></h3>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
 
+<!-- More sections here... -->
+
+<!-- FOOTER (from database) -->
 <?php include 'templates/footer.php'; ?>
+
 </body>
 </html>
 ```
 
-**Database Tables Required:**
-
-**pages table:**
-```sql
-CREATE TABLE pages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  page_key TEXT UNIQUE NOT NULL,
-  page_title TEXT NOT NULL,
-  meta_title TEXT,
-  meta_description TEXT,
-  sections TEXT, -- JSON
-  is_published INTEGER DEFAULT 1,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**settings table:**
-```sql
-CREATE TABLE settings (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  setting_key TEXT UNIQUE NOT NULL,
-  setting_value TEXT,
-  setting_type TEXT DEFAULT 'text',
-  category TEXT,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**Example settings:**
-- site_title = "TrueVault VPN"
-- site_logo = "/assets/images/logo.png"
-- cta_primary_text = "Start Free Trial"
-- cta_secondary_text = "View Pricing"
-- support_email = "admin@the-truth-publishing.com"
-- ... (100+ settings)
-
-**Steps:**
-- [ ] Create database tables (pages, settings, navigation)
-- [ ] Populate with default content
-- [ ] Create index.php with DB integration
-- [ ] Create header.php template
-- [ ] Create footer.php template
-- [ ] Create section templates (hero, features, pricing)
-- [ ] Test theme switching
-- [ ] Test content editing from admin
+**Key Points:**
+- ✅ NO hardcoded strings
+- ✅ All content from `$sections`
+- ✅ All settings from `Content::get()`
+- ✅ All theme vars from CSS
+- ✅ Logo, name, colors changeable
 
 **Verification:**
-- [ ] Page loads without errors
-- [ ] All content from database
+- [ ] Page loads successfully
+- [ ] Hero displays with database content
+- [ ] Buttons link correctly
 - [ ] Theme colors applied
-- [ ] Fonts correct
 - [ ] Can edit content via admin
 - [ ] Can switch themes
+- [ ] Logo changes when updated
+- [ ] Site name changes when updated
+- [ ] Mobile responsive
+
+---
+
+## 💰 TASK 12.4: Create Pricing Page (pricing.php)
+
+**Time:** 2 hours  
+**Lines:** ~500 lines  
+**File:** `/pricing.php`
+
+**Key Requirements:**
+- Pull pricing from database (USD & CAD)
+- Monthly/Annual toggle
+- 3 plan cards (Personal, Family, Dedicated)
+- Comparison table
+- FAQ section
+- NO VIP tier advertised
+
+**Code Structure:**
+```php
+<?php
+require_once 'configs/config.php';
+require_once 'includes/Content.php';
+require_once 'includes/Theme.php';
+
+// Get pricing from database
+$pricing = [
+    'personal' => [
+        'usd' => Content::get('price_personal_usd'),
+        'cad' => Content::get('price_personal_cad')
+    ],
+    'family' => [
+        'usd' => Content::get('price_family_usd'),
+        'cad' => Content::get('price_family_cad')
+    ],
+    'dedicated' => [
+        'usd' => Content::get('price_dedicated_usd'),
+        'cad' => Content::get('price_dedicated_cad')
+    ]
+];
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title><?= Content::get('site_title') ?> - Pricing</title>
+    <style>
+    <?= Theme::getCSSVars() ?>
+    /* Pricing styles... */
+    </style>
+</head>
+<body>
+    <?php include 'templates/header.php'; ?>
+    
+    <section class="pricing-hero">
+        <h1>Simple, Transparent Pricing</h1>
+        <p>No hidden fees. Cancel anytime.</p>
+        
+        <!-- Currency Toggle -->
+        <div class="toggles">
+            <select id="currency">
+                <option value="USD">USD ($)</option>
+                <option value="CAD">CAD ($)</option>
+            </select>
+            
+            <select id="billing">
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual (Save 2 Months!)</option>
+            </select>
+        </div>
+    </section>
+    
+    <section class="pricing-cards">
+        <div class="container">
+            <!-- Personal Plan -->
+            <div class="plan-card">
+                <h3>Personal</h3>
+                <div class="price">
+                    <span class="price-usd">$<?= $pricing['personal']['usd'] ?></span>
+                    <span class="price-cad" style="display:none">$<?= $pricing['personal']['cad'] ?></span>
+                    <span class="period">/month</span>
+                </div>
+                <ul class="features">
+                    <li>✓ 3 devices</li>
+                    <li>✓ All locations</li>
+                    <li>✓ Port forwarding</li>
+                    <li>✓ Network scanner</li>
+                </ul>
+                <a href="/auth/register.php?plan=personal" class="btn btn-primary">
+                    Start Free Trial
+                </a>
+            </div>
+            
+            <!-- Family & Dedicated plans... -->
+        </div>
+    </section>
+    
+    <script>
+    // Currency toggle
+    document.getElementById('currency').addEventListener('change', (e) => {
+        const currency = e.target.value;
+        document.querySelectorAll('.price-usd').forEach(el => {
+            el.style.display = currency === 'USD' ? 'inline' : 'none';
+        });
+        document.querySelectorAll('.price-cad').forEach(el => {
+            el.style.display = currency === 'CAD' ? 'inline' : 'none';
+        });
+    });
+    </script>
+    
+    <?php include 'templates/footer.php'; ?>
+</body>
+</html>
+```
+
+**Verification:**
+- [ ] Pricing loads from database
+- [ ] Currency toggle works
+- [ ] Billing toggle works
+- [ ] USD & CAD same size
+- [ ] 3 plans display
+- [ ] NO VIP advertised
+- [ ] CTAs work
+
+---
+
+## ✨ TASK 12.5: Create Remaining Pages
+
+**Time:** 3 hours  
+**Files:** 5 pages
+
+### **features.php (1 hour)**
+- List all VPN features
+- Port forwarding explanation
+- Camera dashboard
+- Parental controls
+- Gaming controls
+- Network scanner
+
+### **about.php (30 min)**
+- Company mission
+- Why TrueVault exists
+- Values (privacy, simplicity)
+
+### **contact.php (45 min)**
+- Contact form
+- Email: `<?= Content::get('support_email') ?>`
+- Support hours
+- FAQ link
+
+### **privacy.php (30 min)**
+- Privacy policy
+- What data collected (minimal)
+- How data used
+- Third parties (PayPal only)
+
+### **terms.php (30 min)**
+- Terms of service
+- User responsibilities
+- Cancellation policy
+- Refund policy reference
+
+### **refund.php (15 min)**
+- <?= Content::get('feature_refund_days') ?>-day guarantee
+- How to request refund
+- What's refunded
+- Process timeline
+
+**All pages:**
+- ✅ Database-driven
+- ✅ Theme-integrated
+- ✅ Header/footer included
+- ✅ NO hardcoded strings
+
+---
+
+## 🧩 TASK 12.6: Create Templates
+
+**Time:** 1 hour  
+**Files:** 2 templates
+
+### **templates/header.php**
+```php
+<?php
+$nav = Content::getNavigation('header');
+?>
+<header class="site-header">
+    <div class="container">
+        <div class="header-left">
+            <a href="/" class="logo">
+                <img src="<?= Content::get('site_logo') ?>" alt="<?= Content::get('site_title') ?>">
+                <span><?= Content::get('site_title') ?></span>
+            </a>
+        </div>
+        
+        <nav class="header-nav">
+            <?php foreach ($nav as $item): ?>
+                <a href="<?= $item['url'] ?>"><?= $item['label'] ?></a>
+            <?php endforeach; ?>
+        </nav>
+        
+        <div class="header-right">
+            <a href="/auth/login.php" class="btn-secondary">
+                <?= Content::get('cta_login_text') ?>
+            </a>
+            <a href="/auth/register.php" class="btn-primary">
+                <?= Content::get('cta_primary_text') ?>
+            </a>
+        </div>
+    </div>
+</header>
+```
+
+### **templates/footer.php**
+```php
+<?php
+$nav = Content::getNavigation('footer');
+?>
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Product</h4>
+                <?php foreach (array_slice($nav, 0, 3) as $item): ?>
+                    <a href="<?= $item['url'] ?>"><?= $item['label'] ?></a>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <?php foreach (array_slice($nav, 4, 3) as $item): ?>
+                    <a href="<?= $item['url'] ?>"><?= $item['label'] ?></a>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="footer-col">
+                <h4>Support</h4>
+                <a href="mailto:<?= Content::get('support_email') ?>">
+                    <?= Content::get('support_email') ?>
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; <?= date('Y') ?> <?= Content::get('company_name') ?>. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+```
+
+**Verification:**
+- [ ] Header displays
+- [ ] Logo shows
+- [ ] Navigation works
+- [ ] Footer displays
+- [ ] All links functional
+- [ ] Email link works
+
+---
+
+## ✅ FINAL VERIFICATION - PART 12
+
+**Database:**
+- [ ] content.db exists
+- [ ] 3 tables created
+- [ ] Settings seeded (20+)
+- [ ] Navigation seeded
+- [ ] Pages seeded
+
+**Helper Classes:**
+- [ ] Content.php works
+- [ ] Theme.php works
+- [ ] PageRenderer.php works
+
+**Pages Created (8):**
+- [ ] index.php
+- [ ] pricing.php
+- [ ] features.php
+- [ ] about.php
+- [ ] contact.php
+- [ ] privacy.php
+- [ ] terms.php
+- [ ] refund.php
+
+**Templates (2):**
+- [ ] templates/header.php
+- [ ] templates/footer.php
+
+**Functionality:**
+- [ ] All pages load
+- [ ] NO hardcoded strings
+- [ ] All content from database
+- [ ] Theme integration works
 - [ ] Logo changeable
 - [ ] Site name changeable
+- [ ] Colors changeable
+- [ ] Navigation editable
+- [ ] Currency toggle works
+- [ ] Mobile responsive
+
+**Business Transfer Ready:**
+- [ ] New owner can change logo via admin
+- [ ] New owner can change site name via admin
+- [ ] New owner can change colors via themes
+- [ ] New owner can edit page content
+- [ ] New owner can edit navigation
+- [ ] New owner can edit pricing
+- [ ] NO code editing required
 
 ---
 
-### **UPDATED TASK 12.2: Create Pricing Page (pricing.php)**
+## 📊 TIME ESTIMATE
 
-**Same approach as index.php:**
-- Database-driven content
-- Theme integration
-- USD/CAD pricing from database
-- Monthly/Annual toggle
-- No hardcoded strings
+**Part 12 Total:** 10-12 hours (increased from 5-6)
 
----
+**Breakdown:**
+- Task 12.1: Database tables (30 min)
+- Task 12.2: Helper classes (45 min)
+- Task 12.3: Homepage (3 hrs)
+- Task 12.4: Pricing page (2 hrs)
+- Task 12.5: Other pages (3 hrs)
+- Task 12.6: Templates (1 hr)
 
-### **ALL Part 12 Pages (8 total):**
-
-1. ✅ index.php - Homepage
-2. ✅ pricing.php - Pricing page
-3. ✅ features.php - Features page
-4. ✅ about.php - About page
-5. ✅ contact.php - Contact form
-6. ✅ privacy.php - Privacy policy
-7. ✅ terms.php - Terms of service
-8. ✅ refund.php - Refund policy
-
-**Each page:**
-- PHP file (not HTML)
-- Database-driven
-- Theme integration
-- Header/footer templates
-- No hardcoded content
+**Total Lines:** ~3,500 lines
 
 ---
 
-### **UPDATED Part 12 Summary:**
+## 🎯 CRITICAL SUCCESS FACTORS
 
-**Original Time:** 5-6 hours
-**Updated Time:** 8-10 hours (database integration adds complexity)
+✅ PHP files (NOT .html)  
+✅ Database-driven (NO hardcoded)  
+✅ Theme-integrated  
+✅ Logo/name changeable  
+✅ 30-minute transfer ready  
+✅ NO placeholders  
+✅ Fully functional  
 
-**Files Changed:**
-- .html → .php (8 files)
-- Added database queries
-- Added theme integration
-- Added template system
+**THIS IS HOW IT MUST BE BUILT!**
 
-**New Requirements:**
-- Database tables for pages/settings
-- Template files (header, footer, sections)
-- Admin interface to edit pages
-- Theme switching functional
-
----
