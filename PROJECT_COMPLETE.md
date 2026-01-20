@@ -299,7 +299,7 @@ Follow: `/docs/SERVER_SETUP_GUIDE.md`
 - **Email:** paulhalonen@gmail.com
 - **App Name:** MyApp_ConnectionPoint_Systems_Inc
 - **Client ID:** ActD2XQKe8EkUNI8eZakmhR8964d2kAdh7rcpbkm2rbr8rrtEOoOdmoj50FtXmy1XLYzALL5ogvxcagk
-- **Webhook:** https://builder.the-truth-publishing.com/api/paypal-webhook.php
+- **Webhook:** https://vpn.the-truth-publishing.com/api/paypal-webhook.php
 
 ### **Contabo Servers**
 - **Login:** paulhalonen@gmail.com / Asasasas4!

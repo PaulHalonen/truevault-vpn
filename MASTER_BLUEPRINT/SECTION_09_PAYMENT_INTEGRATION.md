@@ -50,7 +50,7 @@ App Name: MyApp_ConnectionPoint_Systems_Inc
 Client ID: ActD2XQKe8EkUNI8eZakmhR8964d2kAdh7rcpbkm2rbr8rrtEOoOdmoj50FtXmy1XLYzALL5ogvxcagk
 Secret Key: (stored securely in database)
 Mode: LIVE (production)
-Webhook URL: https://builder.the-truth-publishing.com/api/paypal-webhook.php
+Webhook URL: https://vpn.the-truth-publishing.com/api/paypal-webhook.php
 ```
 
 ---
@@ -271,7 +271,7 @@ function createSubscription($userId, $planId) {
 ### **Webhook URL**
 
 ```
-https://builder.the-truth-publishing.com/api/paypal-webhook.php
+https://vpn.the-truth-publishing.com/api/paypal-webhook.php
 Webhook ID: 46924926WL757580D
 Events: All Events
 ```
