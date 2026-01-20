@@ -1,749 +1,559 @@
-# MASTER CHECKLIST - PART 18: ENTERPRISE BUSINESS HUB
+# MASTER CHECKLIST - PART 18: ENTERPRISE PORTAL (SIGNUP & LICENSE TRACKING ONLY)
 
-**Created:** January 18, 2026 - 11:35 PM CST  
-**Blueprint:** SECTION_23_ENTERPRISE_BUSINESS_HUB.md (2,163 lines)  
+**Created:** January 20, 2026 - 5:10 AM CST  
+**Updated:** January 20, 2026 - Based on User Decision #4
 **Status:** ⏳ NOT STARTED  
-**Priority:** 🟢 LOW - Advanced corporate feature  
-**Estimated Time:** 8-10 hours  
-**Estimated Lines:** ~2,000 lines  
+**Priority:** 🟡 MEDIUM - Sales portal for enterprise product  
+**Estimated Time:** 2-3 hours  
+**Estimated Lines:** ~400 lines  
 
 ---
 
 ## 📋 OVERVIEW
 
-Build Enterprise Business Hub - Corporate VPN + HR Management + DataForge for companies.
+**CRITICAL CLARIFICATION:**
+This is NOT the full Enterprise product build. This is ONLY the signup portal and license tracking interface that lives inside the TrueVault VPN dashboard.
 
-**Core Principle:** *"Transform TrueVault from consumer VPN to complete business platform"*
+**What This IS:**
+- `/enterprise/` directory with signup page
+- License purchase/activation system
+- Download instructions for actual enterprise product
+- License tracking in admin panel
+- Inactive until customer purchases
 
-**What This Includes:**
-- Corporate VPN (separate from consumer service)
-- HR Management System (employees, departments, time-off, reviews)
-- DataForge Custom Database Builder (FileMaker alternative)
-- 7-Tier Role-Based Access Control
-- Real-Time Sync (WebSocket)
-- React PWA Frontend
+**What This IS NOT:**
+- Full enterprise product (HR, DataForge, etc.)
+- Corporate VPN deployment
+- Company management system
 
-**Pricing:**
-- **Corporate Plan:** $79.97/month (includes 5 seats)
-- **Additional Seats:** $8/month each
-- **Profit Margin:** 91.5% ($73.22 per company)
+**The Actual Enterprise Product:**
+- Separate codebase
+- Deploys on client's own server
+- Uses own license key
+- Completely independent
 
----
-
-## 🎯 KEY FEATURES
-
-✅ Company-dedicated VPS (each company gets own server)  
-✅ Corporate WireGuard VPN  
-✅ HR Management (employees, departments, positions)  
-✅ Time-off management  
-✅ Performance reviews  
-✅ DataForge (custom database builder)  
-✅ 7-tier role system (Read-Only → Owner)  
-✅ Real-time updates (WebSocket)  
-✅ React PWA (web-first, no desktop app needed)  
-✅ 2-minute onboarding  
+**This Portal Just:**
+- Sells licenses
+- Provides download link
+- Tracks active licenses
+- Generates license keys
 
 ---
 
-## 💾 TASK 18.1: Create Database Schema (company.db)
+## 🎯 PURPOSE
 
-**Time:** 1 hour  
-**Lines:** ~300 lines  
-**File:** `/enterprise/setup-company-db.php`
+**Customer Journey:**
+1. Customer visits `/enterprise/` on TrueVault VPN
+2. Sees enterprise product description
+3. Signs up (purchases license)
+4. Receives license key + download link
+5. Downloads enterprise product zip
+6. Deploys on their own server
+7. Activates with license key
 
-### **Create company.db with 12 tables:**
+**TrueVault Tracks:**
+- Who purchased
+- License keys generated
+- Activation status
+- Renewal dates
+
+---
+
+## 💾 TASK 18.1: Create Enterprise Licenses Database
+
+**Time:** 20 minutes  
+**Lines:** ~80 lines  
+**File:** `/databases/setup-licenses.php`
+
+**Create licenses.db with 2 tables:**
 
 ```sql
--- TABLE 1: roles (7-tier system)
-CREATE TABLE IF NOT EXISTS roles (
+-- TABLE 1: enterprise_licenses
+CREATE TABLE IF NOT EXISTS enterprise_licenses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,              -- 'owner', 'admin', 'manager', etc.
-    display_name TEXT NOT NULL,
-    level INTEGER NOT NULL DEFAULT 0,       -- 10=readonly, 100=owner
-    description TEXT,
-    is_system INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-
--- Seed 7 roles:
--- (1, 'readonly', 'Read Only', 10)
--- (2, 'employee', 'Employee', 20)
--- (3, 'manager', 'Manager', 40)
--- (4, 'hr_staff', 'HR Staff', 50)
--- (5, 'hr_admin', 'HR Admin', 70)
--- (6, 'admin', 'Administrator', 80)
--- (7, 'owner', 'Owner', 100)
-
--- TABLE 2: departments
-CREATE TABLE IF NOT EXISTS departments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    code TEXT UNIQUE,                       -- 'ENG', 'SALES', 'HR'
-    description TEXT,
-    manager_id INTEGER,                     -- FK to employees
-    parent_id INTEGER,                      -- FK to departments (hierarchy)
-    is_active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-
--- TABLE 3: positions
-CREATE TABLE IF NOT EXISTS positions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,                    -- 'Senior Developer'
-    department_id INTEGER,
-    description TEXT,
-    pay_grade TEXT,
-    min_salary REAL,
-    max_salary REAL,
-    is_active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (department_id) REFERENCES departments(id)
-);
-
--- TABLE 4: employees
-CREATE TABLE IF NOT EXISTS employees (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    employee_number TEXT UNIQUE,            -- 'EMP-0001'
-    role_id INTEGER NOT NULL,
-    department_id INTEGER,
-    position_id INTEGER,
-    manager_id INTEGER,
-    hire_date TEXT,
-    status TEXT DEFAULT 'active',           -- active, inactive, terminated
-    phone TEXT,
-    avatar_url TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (role_id) REFERENCES roles(id),
-    FOREIGN KEY (department_id) REFERENCES departments(id),
-    FOREIGN KEY (position_id) REFERENCES positions(id),
-    FOREIGN KEY (manager_id) REFERENCES employees(id)
-);
-
--- TABLE 5: time_off_requests
-CREATE TABLE IF NOT EXISTS time_off_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id INTEGER NOT NULL,
-    type TEXT NOT NULL,                     -- vacation, sick, personal
-    start_date TEXT NOT NULL,
-    end_date TEXT NOT NULL,
-    days_count REAL NOT NULL,
-    reason TEXT,
-    status TEXT DEFAULT 'pending',          -- pending, approved, denied
-    approved_by INTEGER,
-    approved_at TEXT,
-    notes TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(id),
-    FOREIGN KEY (approved_by) REFERENCES employees(id)
-);
-
--- TABLE 6: performance_reviews
-CREATE TABLE IF NOT EXISTS performance_reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id INTEGER NOT NULL,
-    reviewer_id INTEGER NOT NULL,
-    review_period TEXT NOT NULL,            -- '2026-Q1'
-    overall_rating INTEGER,                 -- 1-5
-    performance_rating INTEGER,
-    attendance_rating INTEGER,
-    teamwork_rating INTEGER,
-    strengths TEXT,
-    areas_for_improvement TEXT,
-    goals TEXT,
-    notes TEXT,
-    status TEXT DEFAULT 'draft',            -- draft, submitted, acknowledged
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    submitted_at TEXT,
-    FOREIGN KEY (employee_id) REFERENCES employees(id),
-    FOREIGN KEY (reviewer_id) REFERENCES employees(id)
-);
-
--- TABLE 7: vpn_devices (company VPN devices)
-CREATE TABLE IF NOT EXISTS vpn_devices (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id INTEGER NOT NULL,
-    device_name TEXT NOT NULL,
-    device_type TEXT,                       -- laptop, desktop, mobile
-    wireguard_public_key TEXT NOT NULL,
-    internal_ip TEXT NOT NULL,              -- 10.0.0.x
-    is_active INTEGER DEFAULT 1,
-    last_connected_at TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(id)
-);
-
--- TABLE 8: dataforge_tables (custom tables created)
-CREATE TABLE IF NOT EXISTS dataforge_tables (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    table_name TEXT NOT NULL UNIQUE,
-    display_name TEXT NOT NULL,
-    description TEXT,
-    created_by INTEGER NOT NULL,
-    fields TEXT,                            -- JSON: field definitions
-    permissions TEXT,                       -- JSON: role-based access
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES employees(id)
-);
-
--- TABLE 9: sessions (authentication)
-CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id INTEGER NOT NULL,
-    token_hash TEXT NOT NULL UNIQUE,
-    device_name TEXT,
-    ip_address TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    expires_at TEXT NOT NULL,
-    last_activity_at TEXT,
-    FOREIGN KEY (employee_id) REFERENCES employees(id)
-);
-
--- TABLE 10: audit_log (all actions)
-CREATE TABLE IF NOT EXISTS audit_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id INTEGER,
-    action_type TEXT NOT NULL,
-    resource_type TEXT,
-    resource_id INTEGER,
-    details TEXT,                           -- JSON
-    ip_address TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(id)
-);
-
--- TABLE 11: company_settings
-CREATE TABLE IF NOT EXISTS company_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,                -- FK to users in users.db
+    license_key TEXT NOT NULL UNIQUE,        -- Generated key
     company_name TEXT NOT NULL,
-    company_logo_url TEXT,
-    primary_color TEXT DEFAULT '#3b82f6',
-    vpn_server_ip TEXT,                     -- Dedicated Contabo VPS IP
-    max_employees INTEGER DEFAULT 5,
-    subscription_status TEXT DEFAULT 'active',
-    billing_email TEXT,
-    billing_cycle TEXT DEFAULT 'monthly',
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    company_email TEXT NOT NULL,
+    purchased_date TEXT DEFAULT CURRENT_TIMESTAMP,
+    activation_date TEXT,
+    expiration_date TEXT,                    -- Annual renewal
+    status TEXT DEFAULT 'active',            -- active, expired, suspended
+    max_seats INTEGER DEFAULT 5,             -- Included seats
+    current_seats INTEGER DEFAULT 0,         -- Seats in use
+    notes TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- TABLE 12: notifications
-CREATE TABLE IF NOT EXISTS notifications (
+-- TABLE 2: license_activations
+CREATE TABLE IF NOT EXISTS license_activations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id INTEGER NOT NULL,
-    type TEXT NOT NULL,                     -- time_off_approved, review_ready
-    title TEXT NOT NULL,
-    message TEXT,
-    is_read INTEGER DEFAULT 0,
-    link_url TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(id)
+    license_id INTEGER NOT NULL,
+    server_ip TEXT,
+    server_hostname TEXT,
+    activated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    last_checkin TEXT,
+    version TEXT,
+    FOREIGN KEY (license_id) REFERENCES enterprise_licenses(id)
 );
 ```
 
-### **Verification:**
-- [ ] company.db created
-- [ ] All 12 tables exist
-- [ ] 7 roles seeded
-- [ ] Can insert test data
+**Seed Example Data:**
+```sql
+-- None needed (populated when customers purchase)
+```
+
+**Verification:**
+- [ ] licenses.db created
+- [ ] 2 tables exist
+- [ ] Can insert test license
 
 ---
 
-## 🏢 TASK 18.2: Company Provisioning System
+## 🔑 TASK 18.2: License Key Generator
 
-**Time:** 1.5 hours  
-**Lines:** ~300 lines  
-**File:** `/enterprise/provision-company.php`
+**Time:** 30 minutes  
+**Lines:** ~100 lines  
+**File:** `/api/generate-license.php`
 
-### **Auto-Provision on Signup:**
-
-When company signs up for Corporate plan:
-
-1. **Create Contabo VPS**
-   - API call to Contabo
-   - Deploy Ubuntu + WireGuard
-   - Configure firewall
-   - Install dashboard
-
-2. **Create Company Database**
-   - Generate company.db
-   - Seed initial data
-   - Create first admin user
-
-3. **Generate VPN Configs**
-   - Create WireGuard server keys
-   - Assign internal IP range (10.0.0.0/24)
-   - Generate QR codes for mobile
-
-4. **Setup Subdomain**
-   - Create DNS record: company-name.truevault.app
-   - Install SSL certificate
-   - Configure Nginx reverse proxy
-
-### **Provisioning API:**
+**Generate Unique License Keys:**
 
 ```php
-class CompanyProvisioner {
-    public function provisionNewCompany($companyData) {
-        // 1. Create Contabo VPS via API
-        $server = $this->contaboAPI->createVPS([
-            'plan' => 'Cloud VPS 10',
-            'region' => 'US-central',
-            'os' => 'ubuntu-24.04'
-        ]);
-        
-        // 2. Wait for server ready
-        $this->waitForServer($server['ip']);
-        
-        // 3. Deploy WireGuard + Dashboard
-        $this->deployToServer($server['ip'], [
-            'wireguard' => true,
-            'dashboard' => true,
-            'company_name' => $companyData['name']
-        ]);
-        
-        // 4. Create company database
-        $this->createCompanyDB($companyData);
-        
-        // 5. Setup DNS
-        $this->cloudflareAPI->createDNS([
-            'name' => $companyData['subdomain'],
-            'type' => 'A',
-            'content' => $server['ip']
-        ]);
-        
-        // 6. Generate SSL
-        $this->generateSSL($companyData['subdomain']);
-        
-        return [
-            'company_id' => $companyId,
-            'dashboard_url' => "https://{$companyData['subdomain']}.truevault.app",
-            'vpn_ip' => $server['ip'],
-            'admin_email' => $companyData['admin_email'],
-            'status' => 'ready'
-        ];
+<?php
+// Generate license key format: TVPN-XXXX-XXXX-XXXX-XXXX
+
+function generateLicenseKey() {
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing chars
+    $key = 'TVPN-';
+    
+    for ($i = 0; $i < 4; $i++) {
+        for ($j = 0; $j < 4; $j++) {
+            $key .= $chars[rand(0, strlen($chars) - 1)];
+        }
+        if ($i < 3) $key .= '-';
+    }
+    
+    return $key; // e.g., TVPN-A3F7-9K2M-P4R6-X8Z3
+}
+
+// Generate and save license
+function createLicense($user_id, $company_name, $company_email, $max_seats = 5) {
+    global $db;
+    
+    $license_key = generateLicenseKey();
+    
+    // Check if key already exists (very rare)
+    while ($db->licenseExists($license_key)) {
+        $license_key = generateLicenseKey();
+    }
+    
+    // Calculate expiration (1 year from now)
+    $expiration = date('Y-m-d H:i:s', strtotime('+1 year'));
+    
+    $db->insert('enterprise_licenses', [
+        'user_id' => $user_id,
+        'license_key' => $license_key,
+        'company_name' => $company_name,
+        'company_email' => $company_email,
+        'expiration_date' => $expiration,
+        'max_seats' => $max_seats,
+        'status' => 'active'
+    ]);
+    
+    return $license_key;
+}
+
+// API endpoint
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify admin
+    requireAdmin();
+    
+    $license = createLicense(
+        $_POST['user_id'],
+        $_POST['company_name'],
+        $_POST['company_email'],
+        $_POST['max_seats'] ?? 5
+    );
+    
+    echo json_encode(['success' => true, 'license_key' => $license]);
+}
+```
+
+**Verification:**
+- [ ] Can generate unique keys
+- [ ] Keys are in correct format (TVPN-XXXX-XXXX-XXXX-XXXX)
+- [ ] No duplicate keys
+- [ ] Saved to database
+
+---
+
+## 🌐 TASK 18.3: Enterprise Portal Page
+
+**Time:** 45 minutes  
+**Lines:** ~150 lines  
+**File:** `/enterprise/index.php`
+
+**Simple Sales/Signup Page:**
+
+```php
+<?php
+session_start();
+require_once '../includes/db.php';
+
+// Check if user logged in
+$logged_in = isset($_SESSION['user_id']);
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TrueVault Enterprise - Corporate VPN & Business Tools</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+<div class="enterprise-hero">
+    <h1>🏢 TrueVault Enterprise</h1>
+    <p>Complete Business Platform: Corporate VPN, HR Management, Custom Databases</p>
+    <p class="pricing">$79.97/month • Includes 5 seats • Additional seats $8/month</p>
+</div>
+
+<div class="enterprise-features">
+    <h2>What You Get:</h2>
+    <ul>
+        <li>✅ Dedicated Corporate VPN Server</li>
+        <li>✅ HR Management System (Employees, Departments, Time-Off)</li>
+        <li>✅ DataForge Custom Database Builder (FileMaker Alternative)</li>
+        <li>✅ 7-Tier Role-Based Access Control</li>
+        <li>✅ Real-Time Collaboration (WebSocket)</li>
+        <li>✅ React PWA (Web + Mobile)</li>
+        <li>✅ Self-Hosted (Your Own Server)</li>
+    </ul>
+</div>
+
+<div class="enterprise-cta">
+    <?php if ($logged_in): ?>
+        <button onclick="purchaseEnterprise()" class="btn-primary">
+            Purchase Enterprise License - $79.97/month
+        </button>
+    <?php else: ?>
+        <a href="/login.php" class="btn-primary">Sign In to Purchase</a>
+    <?php endif; ?>
+</div>
+
+<div class="enterprise-faq">
+    <h2>How It Works:</h2>
+    <ol>
+        <li>Purchase license ($79.97/month)</li>
+        <li>Receive license key + download link</li>
+        <li>Download enterprise product (zip file)</li>
+        <li>Deploy on your own server (VPS, dedicated, etc.)</li>
+        <li>Activate with license key</li>
+        <li>Invite employees (up to 5 included)</li>
+    </ol>
+</div>
+
+<script>
+async function purchaseEnterprise() {
+    // Simple purchase flow
+    const company = prompt('Company Name:');
+    const email = prompt('Company Email:');
+    
+    if (!company || !email) return;
+    
+    // Call PayPal subscription API
+    const response = await fetch('/api/purchase-enterprise.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({company_name: company, company_email: email})
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        alert('License Generated! Check your email for download link.');
+        window.location.href = '/dashboard/enterprise-license.php';
+    } else {
+        alert('Error: ' + data.error);
     }
 }
+</script>
+
+</body>
+</html>
 ```
 
-### **Verification:**
-- [ ] Can provision new company
-- [ ] Contabo VPS created
-- [ ] WireGuard installed
-- [ ] Dashboard accessible
-- [ ] DNS working
-- [ ] SSL certificate valid
+**Verification:**
+- [ ] Page loads at `/enterprise/`
+- [ ] Shows product description
+- [ ] Purchase button works (logged in users only)
+- [ ] Redirects to login if not logged in
 
 ---
 
-## 👥 TASK 18.3: HR Management System
+## 💳 TASK 18.4: Purchase & License Delivery
 
-**Time:** 2 hours  
-**Lines:** ~400 lines  
-**Files:** Multiple HR modules
+**Time:** 30 minutes  
+**Lines:** ~120 lines  
+**File:** `/api/purchase-enterprise.php`
 
-### **Employee Management:**
-
-**Features:**
-- [ ] Add/edit/deactivate employees
-- [ ] Assign roles (7-tier system)
-- [ ] Assign departments
-- [ ] Assign managers (hierarchy)
-- [ ] Upload avatar
-- [ ] View employee directory
-- [ ] Org chart visualization
-
-### **Time-Off Management:**
-
-**Features:**
-- [ ] Request time off
-- [ ] Approve/deny requests (managers only)
-- [ ] Calendar view of absences
-- [ ] Balance tracking
-- [ ] Automatic email notifications
-
-### **Performance Reviews:**
-
-**Features:**
-- [ ] Create review templates
-- [ ] Assign reviews (managers)
-- [ ] Submit reviews
-- [ ] Employee acknowledgment
-- [ ] Review history
-- [ ] Rating analytics
-
-### **API Endpoints:**
-
-```
-POST /api/employees - Create employee
-GET  /api/employees - List all employees
-GET  /api/employees/:id - Get employee details
-PUT  /api/employees/:id - Update employee
-DELETE /api/employees/:id - Deactivate employee
-
-POST /api/time-off - Request time off
-GET  /api/time-off - List all requests
-PUT  /api/time-off/:id/approve - Approve request
-PUT  /api/time-off/:id/deny - Deny request
-
-POST /api/reviews - Create review
-GET  /api/reviews - List reviews
-GET  /api/reviews/:id - Get review details
-PUT  /api/reviews/:id - Update review
-```
-
-### **Verification:**
-- [ ] Can add employees
-- [ ] Roles enforce permissions
-- [ ] Time-off requests work
-- [ ] Reviews work
-- [ ] Org chart displays
-
----
-
-## 🔐 TASK 18.4: 7-Tier Role System
-
-**Time:** 1 hour  
-**Lines:** ~200 lines  
-**File:** `/enterprise/roles-permissions.php`
-
-### **Role Hierarchy:**
-
-```
-LEVEL 100 - OWNER
-├─ Full system access
-├─ Manage company settings
-├─ Manage billing
-├─ Create/delete any data
-└─ Cannot be deleted
-
-LEVEL 80 - ADMINISTRATOR
-├─ Manage employees
-├─ Manage departments
-├─ View all data
-├─ Cannot change billing
-└─ Cannot delete owner
-
-LEVEL 70 - HR ADMINISTRATOR
-├─ Full HR access
-├─ Approve time-off
-├─ Conduct reviews
-└─ Cannot access admin settings
-
-LEVEL 50 - HR STAFF
-├─ View HR data
-├─ Submit reviews
-└─ Limited editing
-
-LEVEL 40 - MANAGER
-├─ Manage team members
-├─ Approve team time-off
-├─ Conduct team reviews
-└─ View team data only
-
-LEVEL 20 - EMPLOYEE
-├─ View own data
-├─ Request time off
-├─ View own reviews
-└─ Submit expense reports
-
-LEVEL 10 - READ ONLY
-├─ View public data only
-├─ No editing
-└─ No sensitive data
-```
-
-### **Permission Check Function:**
+**Handle Enterprise License Purchase:**
 
 ```php
-function hasPermission($employeeId, $permission) {
-    // Get employee role level
-    $level = getEmployeeRoleLevel($employeeId);
-    
-    // Check permission requirements
-    $required = PERMISSIONS[$permission];
-    
-    return $level >= $required;
+<?php
+session_start();
+require_once '../includes/db.php';
+require_once '../includes/paypal.php';
+
+// Verify logged in
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['success' => false, 'error' => 'Not logged in']);
+    exit;
 }
 
-// Usage:
-if (hasPermission($userId, 'employees.delete')) {
-    // Allow deletion
+// Get POST data
+$data = json_decode(file_get_contents('php://input'), true);
+$company_name = $data['company_name'] ?? '';
+$company_email = $data['company_email'] ?? '';
+
+if (!$company_name || !$company_email) {
+    echo json_encode(['success' => false, 'error' => 'Missing company info']);
+    exit;
+}
+
+// Create PayPal subscription plan ($79.97/month)
+$subscription = PayPal::createSubscription([
+    'plan_id' => 'ENTERPRISE_PLAN_ID', // From PayPal dashboard
+    'quantity' => 1,
+    'user_id' => $_SESSION['user_id']
+]);
+
+if ($subscription['status'] === 'ACTIVE') {
+    // Generate license
+    $license_key = createLicense(
+        $_SESSION['user_id'],
+        $company_name,
+        $company_email,
+        5 // Default 5 seats
+    );
+    
+    // Send email with license + download link
+    $email_body = "
+        <h1>Your TrueVault Enterprise License</h1>
+        <p>Company: {$company_name}</p>
+        <p><strong>License Key:</strong> {$license_key}</p>
+        <p><strong>Download:</strong> <a href='https://vpn.the-truth-publishing.com/downloads/truevault-enterprise.zip'>Download Enterprise Product</a></p>
+        <h2>Installation Instructions:</h2>
+        <ol>
+            <li>Download the zip file</li>
+            <li>Upload to your server (VPS, dedicated, etc.)</li>
+            <li>Run setup script</li>
+            <li>Enter your license key when prompted</li>
+            <li>Create your first admin account</li>
+        </ol>
+        <p>Support: admin@the-truth-publishing.com</p>
+    ";
+    
+    sendEmail($company_email, 'Your TrueVault Enterprise License', $email_body);
+    sendEmail('paulhalonen@gmail.com', "New Enterprise Customer: {$company_name}", $email_body);
+    
+    echo json_encode([
+        'success' => true,
+        'license_key' => $license_key,
+        'download_url' => '/downloads/truevault-enterprise.zip'
+    ]);
 } else {
-    // Deny with 403 Forbidden
+    echo json_encode(['success' => false, 'error' => 'Payment failed']);
 }
 ```
 
-### **Verification:**
-- [ ] All 7 roles exist
-- [ ] Permission checks work
-- [ ] Lower roles cannot access higher features
-- [ ] Owner cannot be deleted
+**Verification:**
+- [ ] PayPal subscription created
+- [ ] License key generated
+- [ ] Email sent with license + download link
+- [ ] Admin notified
 
 ---
 
-## 🗄️ TASK 18.5: DataForge (Custom Database Builder)
+## 📊 TASK 18.5: License Management (Admin Panel)
 
-**Time:** 1.5 hours  
-**Lines:** ~300 lines  
-**File:** `/enterprise/dataforge.php`
+**Time:** 30 minutes  
+**Lines:** ~100 lines  
+**File:** `/admin/enterprise-licenses.php`
 
-### **DataForge Features:**
+**Admin Can View/Manage Licenses:**
 
-**Similar to Part 13 (Database Builder) but simpler:**
-- [ ] Create custom tables
-- [ ] Add fields (10 types: text, number, date, dropdown, etc.)
-- [ ] Add records
-- [ ] Edit records
-- [ ] Role-based access (who can view/edit)
-- [ ] Export to CSV
+```php
+<?php
+// Admin only
+requireAdmin();
 
-### **Key Differences from Part 13:**
-- Simplified (fewer field types)
-- Built into enterprise dashboard
-- Role-based permissions integrated
-- Real-time sync via WebSocket
+$licenses = $db->query("SELECT * FROM enterprise_licenses ORDER BY purchased_date DESC");
+?>
 
-### **Verification:**
-- [ ] Can create tables
-- [ ] Can add fields
-- [ ] Can add records
-- [ ] Permissions work
-- [ ] Export works
-
----
-
-## ⚡ TASK 18.6: Real-Time Sync (WebSocket)
-
-**Time:** 1 hour  
-**Lines:** ~200 lines  
-**File:** `/enterprise/websocket-server.js`
-
-### **WebSocket Events:**
-
-```javascript
-// Server pushes updates to all connected clients
-io.on('connection', (socket) => {
-    // Employee added
-    socket.on('employee:added', (data) => {
-        socket.broadcast.emit('employee:added', data);
-    });
+<div class="admin-section">
+    <h2>Enterprise Licenses</h2>
     
-    // Time-off approved
-    socket.on('timeoff:approved', (data) => {
-        socket.to(`user_${data.employee_id}`).emit('notification', {
-            type: 'timeoff_approved',
-            message: 'Your time-off request was approved!'
-        });
-    });
+    <button onclick="createManualLicense()">+ Create Manual License</button>
     
-    // Real-time notifications
-    socket.on('notification:new', (data) => {
-        socket.to(`user_${data.recipient_id}`).emit('notification', data);
+    <table class="admin-table">
+        <tr>
+            <th>Company</th>
+            <th>License Key</th>
+            <th>Purchased</th>
+            <th>Expires</th>
+            <th>Status</th>
+            <th>Seats</th>
+            <th>Actions</th>
+        </tr>
+        <?php foreach ($licenses as $lic): ?>
+        <tr>
+            <td><?= htmlspecialchars($lic['company_name']) ?></td>
+            <td><code><?= $lic['license_key'] ?></code></td>
+            <td><?= date('M j, Y', strtotime($lic['purchased_date'])) ?></td>
+            <td><?= date('M j, Y', strtotime($lic['expiration_date'])) ?></td>
+            <td>
+                <span class="status-<?= $lic['status'] ?>">
+                    <?= ucfirst($lic['status']) ?>
+                </span>
+            </td>
+            <td><?= $lic['current_seats'] ?> / <?= $lic['max_seats'] ?></td>
+            <td>
+                <button onclick="editLicense(<?= $lic['id'] ?>)">Edit</button>
+                <button onclick="suspendLicense(<?= $lic['id'] ?>)">Suspend</button>
+                <button onclick="resendEmail(<?= $lic['id'] ?>)">Resend Email</button>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </table>
+</div>
+
+<script>
+function createManualLicense() {
+    const company = prompt('Company Name:');
+    const email = prompt('Company Email:');
+    const seats = prompt('Max Seats:', '5');
+    
+    if (!company || !email) return;
+    
+    fetch('/api/generate-license.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({company_name: company, company_email: email, max_seats: seats})
+    }).then(r => r.json()).then(data => {
+        alert('License Created: ' + data.license_key);
+        location.reload();
     });
-});
+}
+</script>
 ```
 
-### **Client Integration:**
-
-```javascript
-// React hook for WebSocket
-const useWebSocket = () => {
-    useEffect(() => {
-        const socket = io('wss://company.truevault.app');
-        
-        socket.on('employee:added', (data) => {
-            // Update employee list in UI
-            setEmployees(prev => [...prev, data]);
-        });
-        
-        socket.on('notification', (data) => {
-            // Show notification toast
-            toast.success(data.message);
-        });
-        
-        return () => socket.disconnect();
-    }, []);
-};
-```
-
-### **Verification:**
-- [ ] WebSocket server runs
-- [ ] Clients connect
-- [ ] Real-time updates work
-- [ ] Notifications push instantly
+**Verification:**
+- [ ] Admin can view all licenses
+- [ ] Can create manual licenses
+- [ ] Can suspend licenses
+- [ ] Can resend emails
 
 ---
 
-## 🎨 TASK 18.7: React PWA Frontend
+## 📂 TASK 18.6: Download File Placeholder
 
-**Time:** 2 hours  
-**Lines:** ~400 lines  
-**Files:** React components
+**Time:** 10 minutes  
+**Lines:** ~20 lines  
+**File:** `/downloads/truevault-enterprise.zip`
 
-### **Dashboard Components:**
+**Create Placeholder Download:**
 
-**Main Dashboard:**
-- Company stats overview
-- Recent activity feed
-- Quick actions
-- Notifications center
-
-**Employee Management:**
-- Employee directory (table + cards)
-- Add/edit employee modal
-- Employee detail view
-- Org chart visualization
-
-**Time-Off Management:**
-- Calendar view of absences
-- Request form
-- Approval queue (managers)
-- Balance tracker
-
-**DataForge:**
-- Table list
-- Table designer
-- Data grid view
-- Record editor
-
-### **Tech Stack:**
-- React 18
-- Vite (build tool)
-- Tailwind CSS
-- shadcn/ui components
-- React Router
-- Zustand (state)
-- TanStack Query (API)
-- Socket.io-client (WebSocket)
-
-### **Verification:**
-- [ ] PWA installable
-- [ ] Works offline (basic caching)
-- [ ] Responsive (mobile, tablet, desktop)
-- [ ] Real-time updates
-- [ ] Fast page loads
-
----
-
-## 🧪 TESTING CHECKLIST
-
-### **Provisioning:**
-- [ ] Can create new company
-- [ ] VPS created automatically
-- [ ] DNS configured
-- [ ] SSL certificate installed
-- [ ] Dashboard accessible
-
-### **HR System:**
-- [ ] Can add employees
-- [ ] Roles enforced
-- [ ] Time-off requests work
-- [ ] Reviews work
-- [ ] Notifications sent
-
-### **DataForge:**
-- [ ] Can create tables
-- [ ] Can add data
-- [ ] Permissions enforced
-- [ ] Export works
-
-### **Real-Time:**
-- [ ] WebSocket connects
-- [ ] Updates push instantly
-- [ ] Notifications appear
-- [ ] No lag
-
----
-
-## 📦 FILE STRUCTURE
+For now, just create a placeholder zip that says:
 
 ```
-/enterprise/
-├── setup-company-db.php (database setup)
-├── provision-company.php (auto-provision)
-├── roles-permissions.php (RBAC system)
-├── dataforge.php (custom DB builder)
-├── websocket-server.js (real-time sync)
-├── api/
-│   ├── employees.php
-│   ├── time-off.php
-│   ├── reviews.php
-│   └── dataforge.php
-├── frontend/ (React PWA)
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── EmployeeDirectory.jsx
-│   │   │   ├── TimeOffCalendar.jsx
-│   │   │   └── DataForge.jsx
-│   │   ├── hooks/
-│   │   │   ├── useWebSocket.js
-│   │   │   └── useAuth.js
-│   │   └── App.jsx
-│   ├── package.json
-│   └── vite.config.js
-└── databases/
-    └── [company_name].db (per company)
+TRUEVAULT ENTERPRISE PRODUCT
+
+This is a placeholder for the actual enterprise product.
+
+The full enterprise product will be built separately and includes:
+- Corporate VPN
+- HR Management
+- DataForge Database Builder
+- Role-Based Access Control
+- Real-Time Sync
+
+This is distributed as a separate build that deploys on client servers.
 ```
 
----
-
-## 🚀 DEPLOYMENT CHECKLIST
-
-- [ ] Contabo API credentials configured
-- [ ] Cloudflare API configured
-- [ ] WebSocket server running (port 3001)
-- [ ] React PWA built and deployed
-- [ ] SSL certificates auto-renew
-- [ ] Test company provisioning end-to-end
-- [ ] Test all HR features
-- [ ] Test DataForge
-- [ ] Test real-time sync
+**Verification:**
+- [ ] File exists at `/downloads/truevault-enterprise.zip`
+- [ ] Can be downloaded
+- [ ] Contains placeholder text
 
 ---
 
-## 📊 SUMMARY
+## ✅ FINAL VERIFICATION - PART 18
 
-**Total Tasks:** 7 major tasks  
-**Total Lines:** ~2,000 lines  
-**Total Time:** 8-10 hours  
+**Portal:**
+- [ ] `/enterprise/` page loads
+- [ ] Product description clear
+- [ ] Purchase button works
+- [ ] Redirects to login if needed
 
-**Pricing:**
-- $79.97/month (5 seats included)
-- $8/month per additional seat
-- 91.5% profit margin
+**License System:**
+- [ ] License keys generated correctly
+- [ ] Format is TVPN-XXXX-XXXX-XXXX-XXXX
+- [ ] Saved to database
+- [ ] Email sent with license + download
 
-**Competitors:**
-- NordLayer: $95/mo (we're 16% cheaper!)
-- GoodAccess: $74/mo (we have more features!)
-- FileMaker Pro: $588/year (FREE with our VPN!)
+**Admin Panel:**
+- [ ] Can view all licenses
+- [ ] Can create manual licenses
+- [ ] Can suspend/reactivate
+- [ ] Can resend emails
 
-**Dependencies:**
-- Part 1 (Core infrastructure) ✅
-- Part 13 (Database Builder) ✅
-
-**Result:** Transform TrueVault into enterprise platform!
+**Download:**
+- [ ] Placeholder zip exists
+- [ ] Can be downloaded
+- [ ] Contains instructions
 
 ---
 
-**END OF PART 18 CHECKLIST - ENTERPRISE BUSINESS HUB**
+## 📊 TIME ESTIMATE
+
+**Part 18 Total:** 2-3 hours (was 8-10 hours)
+
+**Breakdown:**
+- Task 18.1: Database (20 min)
+- Task 18.2: License Generator (30 min)
+- Task 18.3: Portal Page (45 min)
+- Task 18.4: Purchase Flow (30 min)
+- Task 18.5: Admin Panel (30 min)
+- Task 18.6: Download Placeholder (10 min)
+
+**Updated Total Project:** 165-200 hours → **159-194 hours** (saved 6 hours!)
 
 ---
 
-## 🎉 ALL CHECKLISTS COMPLETE!
+## 🎯 SUMMARY
 
-You now have comprehensive checklists for:
-✅ Part 12: Frontend Landing Pages (581 lines)
-✅ Part 13: Database Builder (621 lines)
-✅ Part 14: Form Library (641 lines)
-✅ Part 15: Marketing Automation (594 lines)
-✅ Part 16: Tutorial System (463 lines)
-✅ Part 17: Business Automation (559 lines)
-✅ Part 18: Enterprise Business Hub (THIS FILE)
+**This Part 18 IS:**
+- ✅ Simple signup portal
+- ✅ License generation & tracking
+- ✅ Download delivery
+- ✅ Admin management
 
-**TOTAL MISSING CODE:** ~14,500 lines
-**TOTAL TIME TO BUILD:** 51-64 hours
-**STATUS:** Ready to build everything before launch!
+**This Part 18 IS NOT:**
+- ❌ Full enterprise product
+- ❌ HR management
+- ❌ DataForge builder
+- ❌ Corporate VPN deployment
+
+**The Actual Enterprise Product:**
+- Separate codebase (built later)
+- Deploys on client's server
+- Uses license key for activation
+- Independent from VPN dashboard
+
+**This portal just:**
+- Sells it
+- Delivers it
+- Tracks it
+
+**DONE!** ✅
+
