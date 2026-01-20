@@ -663,8 +663,23 @@ Get user approval BEFORE coding
 Create 1-2 files at a time
 Test each piece
 Commit to git frequently
-Update BUILD_PROGRESS.md during work
-Update chat_log.txt during work (NOT just at end)
+
+CRITICAL: Update docs DURING work (not at end):
+- [ ] Check off items in MASTER_CHECKLIST as completed
+- [ ] Update BUILD_PROGRESS.md after each file/feature
+- [ ] Append to chat_log.txt every 15-20 minutes
+- [ ] Reference MASTER_BLUEPRINT before coding each feature
+
+WORKFLOW PER TASK:
+1. Read relevant MASTER_BLUEPRINT section
+2. Read relevant MASTER_CHECKLIST part
+3. Quote requirements from docs
+4. Build feature
+5. Test feature
+6. CHECK OFF item in Master_Checklist ✅
+7. Update BUILD_PROGRESS.md
+8. Commit to git
+9. Repeat
 ```
 
 ### **Step 6: Test & Verify (per chunk)**
@@ -702,9 +717,35 @@ Create new handoff doc if session ending early
 
 ### **3. Documentation Updates**
 - **NEVER** wait until end of session
-- **ALWAYS** update BUILD_PROGRESS.md incrementally
-- **ALWAYS** update chat_log.txt incrementally
+- **ALWAYS** update BUILD_PROGRESS.md incrementally (after each feature)
+- **ALWAYS** update chat_log.txt incrementally (every 15-20 minutes)
 - **ALWAYS** commit frequently (every 2-3 files)
+- **ALWAYS** check off Master_Checklist items as you complete them
+- **ALWAYS** read MASTER_BLUEPRINT section BEFORE coding feature
+
+**MANDATORY WORKFLOW PER FEATURE:**
+```
+1. Read MASTER_BLUEPRINT/SECTION_XX for feature
+2. Read Master_Checklist/MASTER_CHECKLIST_PARTX for tasks
+3. Quote exact requirements from docs
+4. Get user approval
+5. Build feature (1-2 files max)
+6. Test feature
+7. Edit Master_Checklist: Change [ ] to [x] for completed items
+8. Edit BUILD_PROGRESS.md: Update percentage and add feature to completed list
+9. Append to chat_log.txt: Brief summary of what was done
+10. Git commit with detailed message
+11. Repeat for next feature
+```
+
+**EXAMPLE CHECKLIST UPDATE:**
+```markdown
+Before:
+- [ ] Create transfer admin panel at /admin/transfer/index.php
+
+After (when done):
+- [x] Create transfer admin panel at /admin/transfer/index.php
+```
 
 ### **4. Subdomain Usage**
 - **ALWAYS** use: vpn.the-truth-publishing.com
@@ -863,21 +904,39 @@ Should I proceed with the Transfer Admin Panel?
 
 ## 🎉 FINAL CHECKLIST FOR YOU (NEXT CLAUDE)
 
-Before starting ANY work:
+**Before starting ANY work:**
 - [ ] Read this entire HANDOFF document
 - [ ] Understand user has visual impairment
 - [ ] Know project is 67% complete
 - [ ] Know business MUST be transferable
 - [ ] Read BUSINESS_TRANSFER_PLAN.md if building transfer panel
-- [ ] Read relevant MASTER_BLUEPRINT section
-- [ ] Read relevant MASTER_CHECKLIST part
+- [ ] Read relevant MASTER_BLUEPRINT section FIRST
+- [ ] Read relevant MASTER_CHECKLIST part FIRST
 - [ ] Create implementation plan
 - [ ] Get user approval
-- [ ] Work in small chunks (2-3 files max)
-- [ ] Commit frequently
-- [ ] Update docs during work (not after)
-- [ ] Test each piece
-- [ ] Create handoff if session ending
+
+**DURING work (PER FEATURE):**
+- [ ] Reference MASTER_BLUEPRINT section for requirements
+- [ ] Build 1-2 files maximum
+- [ ] Test the feature works
+- [ ] CHECK OFF [x] item in Master_Checklist file
+- [ ] Update BUILD_PROGRESS.md with new completion %
+- [ ] Append summary to chat_log.txt
+- [ ] Git commit with clear message
+- [ ] Repeat for next feature
+
+**AFTER work (END OF SESSION):**
+- [ ] Final git commit and push
+- [ ] Verify all completed items checked off in Master_Checklist
+- [ ] Verify BUILD_PROGRESS.md is current
+- [ ] Create handoff if session ending early
+
+**CRITICAL ACCOUNTABILITY:**
+The Master_Checklist is your CONTRACT with the user.
+- Each [ ] is a promise to complete
+- Each [x] is proof you completed it
+- User tracks progress by these checkboxes
+- Don't say "done" unless checkbox is checked [x]
 
 ---
 
