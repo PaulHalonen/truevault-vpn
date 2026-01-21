@@ -62,7 +62,7 @@ define('DB_THEMES', DB_PATH . 'themes.db');
 // ============================================
 define('SESSION_NAME', 'truevault_session');
 define('SESSION_LIFETIME', 604800); // 7 days
-define('JWT_SECRET', 'CHANGE_THIS_TO_RANDOM_STRING_BEFORE_LAUNCH');
+define('JWT_SECRET', 'd0c14e79c13c47d09c49ba0f2057cb0af9e8975527ff4761');
 define('JWT_EXPIRATION', 604800);
 define('PASSWORD_COST', 12);
 define('MAX_LOGIN_ATTEMPTS', 5);
