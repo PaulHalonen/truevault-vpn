@@ -1,6 +1,6 @@
 <?php
 /**
- * Update Server Public Keys - Run Once
+ * Update Server Public Keys - All 4 Servers with REAL Keys
  */
 define('TRUEVAULT_INIT', true);
 require_once __DIR__ . '/../configs/config.php';
@@ -20,12 +20,23 @@ try {
     $stmt->execute();
     echo "✅ St. Louis VIP key updated<br>";
     
+    // Update Dallas (Fly.io)
+    $stmt = $db->prepare("UPDATE servers SET public_key = :key WHERE endpoint LIKE '66.241.124.4%'");
+    $stmt->bindValue(':key', 'dFEz/d9TKfddk0Z6aMN03uO+j0GgQwXSR/+Ay+IXXmk=', SQLITE3_TEXT);
+    $stmt->execute();
+    echo "✅ Dallas key updated<br>";
+    
+    // Update Toronto (Fly.io)
+    $stmt = $db->prepare("UPDATE servers SET public_key = :key WHERE endpoint LIKE '66.241.125.247%'");
+    $stmt->bindValue(':key', 'O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=', SQLITE3_TEXT);
+    $stmt->execute();
+    echo "✅ Toronto key updated<br>";
+    
     // Verify updates
     echo "<br><strong>Current Servers:</strong><br>";
     $results = $db->query("SELECT name, endpoint, public_key FROM servers");
     while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
-        $key = $row['public_key'] ?: 'NOT SET';
-        echo "{$row['name']} ({$row['endpoint']}): {$key}<br>";
+        echo "{$row['name']} ({$row['endpoint']}): {$row['public_key']}<br>";
     }
     
     $db->close();

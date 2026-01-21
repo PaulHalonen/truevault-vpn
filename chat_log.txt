@@ -2436,10 +2436,11 @@ Starting: Part 1, Task 1.1 - Directory Structure
 - Password: Asasasas4!
 - Role: super_admin
 
-**Server Keys Updated:**
+**Server Keys Updated - ALL REAL KEYS:**
 - New York (66.94.103.91): lbriy+env0wv6VmEJscnjoREswmiQdn7D+lKGai9n3s=
 - St. Louis VIP (144.126.133.253): qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM=
-- Dallas & Toronto: Still have placeholders (Fly.io not deployed)
+- Dallas (66.241.124.4): dFEz/d9TKfddk0Z6aMN03uO+j0GgQwXSR/+Ay+IXXmk=
+- Toronto (66.241.125.247): O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=
 
 **Git Commit:** da2af35
 
