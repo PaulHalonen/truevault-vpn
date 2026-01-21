@@ -57,6 +57,8 @@
 - [✅] Navigate to: `/home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/`
 - [✅] Create these folders (RIGHT CLICK > New Directory):
 
+**VERIFIED: January 20, 2026** - All directories created on server AND local Git repo
+
 ```
 /home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/
 ├── api/                  ← [✅] Created
