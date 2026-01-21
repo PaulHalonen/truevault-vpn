@@ -1,8 +1,26 @@
-# TRUEVAULT VPN - MASTER BUILD CHECKLIST (Part 2/4)
+# TRUEVAULT VPN - MASTER BUILD CHECKLIST (Part 2)
 
 **Continuation:** Database Setup & Core Authentication  
 **Status:** Week 1 (Days 2-3)  
 **Created:** January 15, 2026 - 7:50 AM CST  
+**CORRECTED:** January 21, 2026 - 5:00 AM CST  
+**Note:** USES SQLite3 (NOT PDO!)
+
+---
+
+## ⚠️ CRITICAL: ALL DATABASE CODE USES SQLite3 NOT PDO!
+
+**CORRECT (SQLite3):**
+```php
+$db = new SQLite3(DB_BILLING);
+$db->enableExceptions(true);
+$db->exec("CREATE TABLE...");
+```
+
+**WRONG (DO NOT USE PDO!):**
+```php
+$db = new PDO('sqlite:' . DB_BILLING);  // NO!
+```
 
 ---
 
@@ -17,7 +35,7 @@
 ```php
 <?php
 // ============================================
-// DATABASE 4: BILLING.DB
+// DATABASE 4: BILLING.DB (SQLite3!)
 // ============================================
 
 try {
@@ -27,8 +45,9 @@ try {
         throw new Exception('Database already exists!');
     }
     
-    $db = new PDO('sqlite:' . DB_BILLING);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // SQLite3 - NOT PDO!
+    $db = new SQLite3(DB_BILLING);
+    $db->enableExceptions(true);
     
     // Create subscriptions table
     $db->exec("
@@ -112,6 +131,7 @@ try {
         )
     ");
     
+    $db->close();
     echo '<div class="success">✅ billing.db created successfully!</div>';
     $results['billing.db'] = 'success';
     
@@ -123,7 +143,7 @@ try {
 echo '</div>';
 
 // ============================================
-// DATABASE 5: PORT_FORWARDS.DB
+// DATABASE 5: PORT_FORWARDS.DB (SQLite3!)
 // ============================================
 
 try {
@@ -133,8 +153,9 @@ try {
         throw new Exception('Database already exists!');
     }
     
-    $db = new PDO('sqlite:' . DB_PORT_FORWARDS);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // SQLite3 - NOT PDO!
+    $db = new SQLite3(DB_PORT_FORWARDS);
+    $db->enableExceptions(true);
     
     // Create port forwards table
     $db->exec("
@@ -182,6 +203,7 @@ try {
     
     $db->exec("CREATE INDEX idx_discovered_devices_user_id ON discovered_devices(user_id)");
     
+    $db->close();
     echo '<div class="success">✅ port_forwards.db created successfully!</div>';
     $results['port_forwards.db'] = 'success';
     
@@ -193,7 +215,7 @@ try {
 echo '</div>';
 
 // ============================================
-// DATABASE 6: PARENTAL_CONTROLS.DB
+// DATABASE 6: PARENTAL_CONTROLS.DB (SQLite3!)
 // ============================================
 
 try {
@@ -203,8 +225,9 @@ try {
         throw new Exception('Database already exists!');
     }
     
-    $db = new PDO('sqlite:' . DB_PARENTAL_CONTROLS);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // SQLite3 - NOT PDO!
+    $db = new SQLite3(DB_PARENTAL_CONTROLS);
+    $db->enableExceptions(true);
     
     // Create parental control rules table
     $db->exec("
@@ -261,7 +284,7 @@ try {
         )
     ");
     
-    // Insert default categories
+    // Insert default categories (SQLite3 style)
     $categories = [
         ['Adult Content', 'Pornography and adult entertainment', 1],
         ['Gambling', 'Online gambling and betting sites', 1],
@@ -273,11 +296,16 @@ try {
         ['Shopping', 'E-commerce and shopping sites', 0]
     ];
     
-    $stmt = $db->prepare("INSERT INTO website_categories (category_name, description, default_blocked) VALUES (?, ?, ?)");
+    $stmt = $db->prepare("INSERT INTO website_categories (category_name, description, default_blocked) VALUES (:name, :desc, :blocked)");
     foreach ($categories as $cat) {
-        $stmt->execute($cat);
+        $stmt->bindValue(':name', $cat[0], SQLITE3_TEXT);
+        $stmt->bindValue(':desc', $cat[1], SQLITE3_TEXT);
+        $stmt->bindValue(':blocked', $cat[2], SQLITE3_INTEGER);
+        $stmt->execute();
+        $stmt->reset();
     }
     
+    $db->close();
     echo '<div class="success">✅ parental_controls.db created with default categories!</div>';
     $results['parental_controls.db'] = 'success';
     
@@ -289,7 +317,7 @@ try {
 echo '</div>';
 
 // ============================================
-// DATABASE 7: ADMIN.DB
+// DATABASE 7: ADMIN.DB (SQLite3!)
 // ============================================
 
 try {
@@ -299,8 +327,9 @@ try {
         throw new Exception('Database already exists!');
     }
     
-    $db = new PDO('sqlite:' . DB_ADMIN);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // SQLite3 - NOT PDO!
+    $db = new SQLite3(DB_ADMIN);
+    $db->enableExceptions(true);
     
     // Create admin users table
     $db->exec("
@@ -317,12 +346,16 @@ try {
         )
     ");
     
-    // Insert default admin (owner)
-    $password_hash = password_hash('admin123', PASSWORD_DEFAULT); // TODO: User must change this!
-    $db->exec("
+    // Insert default admin (owner) - CHANGE PASSWORD IMMEDIATELY!
+    $password_hash = password_hash('admin123', PASSWORD_DEFAULT);
+    $stmt = $db->prepare("
         INSERT INTO admin_users (email, password_hash, full_name, role, status)
-        VALUES ('kahlen@truthvault.com', '$password_hash', 'Kah-Len (Owner)', 'super_admin', 'active')
+        VALUES (:email, :password, :name, 'super_admin', 'active')
     ");
+    $stmt->bindValue(':email', 'kahlen@truthvault.com', SQLITE3_TEXT);
+    $stmt->bindValue(':password', $password_hash, SQLITE3_TEXT);
+    $stmt->bindValue(':name', 'Kah-Len (Owner)', SQLITE3_TEXT);
+    $stmt->execute();
     
     // Create system settings table
     $db->exec("
@@ -338,7 +371,7 @@ try {
         )
     ");
     
-    // Insert default settings
+    // Insert default settings (SQLite3 style)
     $settings = [
         ['site_name', 'TrueVault VPN', 'string', 'Website name', 1],
         ['site_tagline', 'Your Complete Digital Fortress', 'string', 'Website tagline', 1],
@@ -357,9 +390,15 @@ try {
         ['vip_secret_list', '[]', 'json', 'List of VIP emails (JSON array)', 1]
     ];
     
-    $stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value, setting_type, description, editable) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value, setting_type, description, editable) VALUES (:key, :value, :type, :desc, :editable)");
     foreach ($settings as $setting) {
-        $stmt->execute($setting);
+        $stmt->bindValue(':key', $setting[0], SQLITE3_TEXT);
+        $stmt->bindValue(':value', $setting[1], SQLITE3_TEXT);
+        $stmt->bindValue(':type', $setting[2], SQLITE3_TEXT);
+        $stmt->bindValue(':desc', $setting[3], SQLITE3_TEXT);
+        $stmt->bindValue(':editable', $setting[4], SQLITE3_INTEGER);
+        $stmt->execute();
+        $stmt->reset();
     }
     
     // Create VIP list table
@@ -368,15 +407,19 @@ try {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL UNIQUE,
             notes TEXT,
+            dedicated_server_id INTEGER,
+            access_level TEXT DEFAULT 'full',
+            status TEXT DEFAULT 'active',
             added_by TEXT,
             added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     ");
     
     // Add the two known VIPs
-    $db->exec("INSERT INTO vip_list (email, notes, added_by) VALUES ('kahlen@truthvault.com', 'Owner', 'system')");
-    $db->exec("INSERT INTO vip_list (email, notes, added_by) VALUES ('seige235@yahoo.com', 'Dedicated St. Louis server', 'system')");
+    $db->exec("INSERT INTO vip_list (email, notes, added_by) VALUES ('paulhalonen@gmail.com', 'Owner', 'system')");
+    $db->exec("INSERT INTO vip_list (email, notes, dedicated_server_id, added_by) VALUES ('seige235@yahoo.com', 'Dedicated St. Louis server', 2, 'system')");
     
+    $db->close();
     echo '<div class="success">✅ admin.db created with default settings and VIP list!</div>';
     $results['admin.db'] = 'success';
     
@@ -388,7 +431,7 @@ try {
 echo '</div>';
 
 // ============================================
-// DATABASE 8: LOGS.DB
+// DATABASE 8: LOGS.DB (SQLite3!)
 // ============================================
 
 try {
@@ -398,8 +441,9 @@ try {
         throw new Exception('Database already exists!');
     }
     
-    $db = new PDO('sqlite:' . DB_LOGS);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // SQLite3 - NOT PDO!
+    $db = new SQLite3(DB_LOGS);
+    $db->enableExceptions(true);
     
     // Create security events log
     $db->exec("
@@ -408,35 +452,35 @@ try {
             event_type TEXT NOT NULL,
             severity TEXT NOT NULL CHECK(severity IN ('low', 'medium', 'high', 'critical')),
             user_id INTEGER,
+            email TEXT,
             ip_address TEXT,
             user_agent TEXT,
-            event_data TEXT,
-            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            details TEXT,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     ");
     
     $db->exec("CREATE INDEX idx_security_events_type ON security_events(event_type)");
     $db->exec("CREATE INDEX idx_security_events_severity ON security_events(severity)");
-    $db->exec("CREATE INDEX idx_security_events_timestamp ON security_events(timestamp)");
+    $db->exec("CREATE INDEX idx_security_events_created_at ON security_events(created_at)");
     
     // Create audit log
     $db->exec("
         CREATE TABLE IF NOT EXISTS audit_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             action TEXT NOT NULL,
             entity_type TEXT NOT NULL,
             entity_id INTEGER,
-            performed_by INTEGER,
-            old_values TEXT,
-            new_values TEXT,
+            details TEXT,
             ip_address TEXT,
-            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     ");
     
     $db->exec("CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id)");
-    $db->exec("CREATE INDEX idx_audit_log_performed_by ON audit_log(performed_by)");
-    $db->exec("CREATE INDEX idx_audit_log_timestamp ON audit_log(timestamp)");
+    $db->exec("CREATE INDEX idx_audit_log_user_id ON audit_log(user_id)");
+    $db->exec("CREATE INDEX idx_audit_log_created_at ON audit_log(created_at)");
     
     // Create API requests log (for rate limiting and monitoring)
     $db->exec("
@@ -449,12 +493,12 @@ try {
             user_agent TEXT,
             response_code INTEGER,
             response_time_ms INTEGER,
-            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     ");
     
     $db->exec("CREATE INDEX idx_api_requests_user_id ON api_requests(user_id)");
-    $db->exec("CREATE INDEX idx_api_requests_timestamp ON api_requests(timestamp)");
+    $db->exec("CREATE INDEX idx_api_requests_created_at ON api_requests(created_at)");
     
     // Create error log
     $db->exec("
@@ -468,19 +512,76 @@ try {
             user_id INTEGER,
             ip_address TEXT,
             url TEXT,
-            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     ");
     
     $db->exec("CREATE INDEX idx_error_log_level ON error_log(error_level)");
-    $db->exec("CREATE INDEX idx_error_log_timestamp ON error_log(timestamp)");
+    $db->exec("CREATE INDEX idx_error_log_created_at ON error_log(created_at)");
     
+    $db->close();
     echo '<div class="success">✅ logs.db created successfully!</div>';
     $results['logs.db'] = 'success';
     
 } catch (Exception $e) {
     echo '<div class="error">❌ Error: ' . $e->getMessage() . '</div>';
     $results['logs.db'] = 'error';
+}
+
+echo '</div>';
+
+// ============================================
+// DATABASE 9: THEMES.DB (SQLite3!)
+// ============================================
+
+try {
+    echo '<div class="database"><h2>🎨 Creating themes.db...</h2>';
+    
+    if (file_exists(DB_THEMES)) {
+        throw new Exception('Database already exists!');
+    }
+    
+    // SQLite3 - NOT PDO!
+    $db = new SQLite3(DB_THEMES);
+    $db->enableExceptions(true);
+    
+    // Create themes table
+    $db->exec("
+        CREATE TABLE IF NOT EXISTS themes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            theme_name TEXT NOT NULL UNIQUE,
+            display_name TEXT NOT NULL,
+            colors TEXT NOT NULL,
+            fonts TEXT NOT NULL,
+            spacing TEXT NOT NULL,
+            borders TEXT,
+            is_active INTEGER DEFAULT 0,
+            is_default INTEGER DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+    
+    // Create settings table for theme preferences
+    $db->exec("
+        CREATE TABLE IF NOT EXISTS theme_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT NOT NULL UNIQUE,
+            setting_value TEXT,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+    
+    // Insert default seasonal auto-switch setting
+    $db->exec("INSERT INTO theme_settings (setting_key, setting_value) VALUES ('seasonal_auto_switch', '0')");
+    
+    $db->close();
+    echo '<div class="success">✅ themes.db created successfully!</div>';
+    $results['themes.db'] = 'success';
+    
+} catch (Exception $e) {
+    echo '<div class="error">❌ Error: ' . $e->getMessage() . '</div>';
+    $results['themes.db'] = 'error';
 }
 
 echo '</div>';
@@ -504,7 +605,7 @@ $total_count = count($results);
 
 if ($success_count === $total_count) {
     echo '<div class="success">';
-    echo '<h3>🎊 All 8 databases created successfully!</h3>';
+    echo '<h3>🎊 All 9 databases created successfully!</h3>';
     echo '<p><strong>Next Steps:</strong></p>';
     echo '<ol>';
     echo '<li>Update server public keys in servers.db</li>';
@@ -529,17 +630,19 @@ echo '</div>';
 ```
 
 **Verification:**
-- [ ] Code added to setup-databases.php
-- [ ] File saved
-- [ ] No syntax errors
+- [ ] Code uses SQLite3 - NOT PDO!
+- [ ] All databases use `new SQLite3($path)` 
+- [ ] All databases use `$db->enableExceptions(true)`
+- [ ] All prepared statements use `bindValue()` with SQLITE3_TEXT/SQLITE3_INTEGER
+- [ ] File saved and uploaded
 
 ---
 
 #### Task 2.2: Run Database Setup
 - [ ] Visit: https://vpn.the-truth-publishing.com/admin/setup-databases.php
 - [ ] Click through and wait for all databases to create
-- [ ] Verify all 8 databases show ✅ success
-- [ ] Check /databases/ folder - should see 8 .db files
+- [ ] Verify all 9 databases show ✅ success
+- [ ] Check /databases/ folder - should see 9 .db files
 
 **Expected Files:**
 ```
@@ -551,7 +654,8 @@ echo '</div>';
 ├── port_forwards.db      ← [ ] Verify exists
 ├── parental_controls.db  ← [ ] Verify exists
 ├── admin.db              ← [ ] Verify exists
-└── logs.db               ← [ ] Verify exists
+├── logs.db               ← [ ] Verify exists
+└── themes.db             ← [ ] Verify exists
 ```
 
 ---
@@ -563,8 +667,6 @@ echo '</div>';
 - [ ] Update each server's public_key field with real keys
 - [ ] Save changes
 
-**Note:** If you don't have real keys yet, you can do this later, but the system won't work until you do.
-
 ---
 
 ### **Afternoon: Security Setup (2-3 hours)**
@@ -574,62 +676,57 @@ echo '</div>';
 - [ ] Open in DB Browser for SQLite
 - [ ] Go to "Browse Data" tab
 - [ ] Select "admin_users" table
-- [ ] Find the kahlen@truthvault.com record
-- [ ] Generate new password hash:
-  - [ ] Go to: https://bcrypt-generator.com/
-  - [ ] Enter your secure password
-  - [ ] Set cost to 12
-  - [ ] Copy the bcrypt hash
+- [ ] Generate new password hash using PHP:
+```php
+echo password_hash('YOUR_SECURE_PASSWORD', PASSWORD_DEFAULT);
+```
 - [ ] Update password_hash field with new hash
 - [ ] Save and upload database back to server
-
-**Verification:**
-- [ ] New password hash in database
-- [ ] Can't login with old password (admin123)
-- [ ] Can login with new password
 
 ---
 
 #### Task 2.5: Update JWT Secret
 - [ ] Open `/configs/config.php`
 - [ ] Find line: `define('JWT_SECRET', 'CHANGE_THIS_TO_RANDOM_STRING');`
-- [ ] Go to: https://randomkeygen.com/
-- [ ] Copy a "Fort Knox Password" (256-bit key)
-- [ ] Replace 'CHANGE_THIS_TO_RANDOM_STRING' with your key
+- [ ] Generate secure random string (64+ characters)
+- [ ] Replace with your key
 - [ ] Save file
 
-**Example:**
-```php
-define('JWT_SECRET', 'rY8kMpN2vX9qL5wT3hB7jF4dC6gA1sZ');
-```
-
-**Verification:**
-- [ ] JWT_SECRET changed from default
-- [ ] No syntax errors
-- [ ] File uploaded
-
 ---
 
-**END OF DAY 2 TASKS**
+**END OF PART 2**
 
-**Before Moving to Day 3:**
-- [ ] All 8 databases created and verified
+**Before Moving to Part 3:**
+- [ ] All 9 databases created and verified
 - [ ] Admin password changed
 - [ ] JWT secret updated
-- [ ] Server keys updated (or noted for later)
-- [ ] Commit to GitHub: "Day 2 Complete - All databases created and secured"
+- [ ] Commit to GitHub
 
 ---
 
-## DAY 3: AUTHENTICATION SYSTEM (Wednesday)
+## ⚠️ REMEMBER: SQLite3 NOT PDO!
 
-### **Morning: Build Authentication API (3-4 hours)**
+**CORRECT:**
+```php
+$db = new SQLite3($path);
+$db->enableExceptions(true);
+$stmt = $db->prepare($sql);
+$stmt->bindValue(':param', $value, SQLITE3_TEXT);
+$result = $stmt->execute();
+$row = $result->fetchArray(SQLITE3_ASSOC);
+$db->lastInsertRowID();
+$db->close();
+```
 
-*To be continued in MASTER_CHECKLIST_PART3.md...*
+**WRONG (DO NOT USE!):**
+```php
+$db = new PDO("sqlite:$path");  // NO!
+$stmt->execute([$param]);        // NO!
+$stmt->fetch();                  // NO!
+$db->lastInsertId();            // NO!
+```
 
 ---
 
-**Status:** Part 2 of 4 Complete  
-**Next:** Part 3 will cover authentication, user management, and device setup  
-**Lines:** ~700 lines this part  
-**Created:** January 15, 2026 - 7:55 AM CST
+**Status:** Part 2 - Database Setup  
+**Next:** Part 3 - Authentication System (SQLite3!)

@@ -1,4 +1,3 @@
 # Protect database files from direct access
-# TrueVault VPN - Database Security
 Order Deny,Allow
 Deny from all

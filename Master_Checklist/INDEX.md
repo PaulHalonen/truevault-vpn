@@ -1,12 +1,13 @@
 # MASTER CHECKLIST - QUICK INDEX
 
-**Total:** 11 parts, ~18,500+ lines of production code  
-**Build Time:** 11 days (85-110 hours)  
-**Result:** Complete automated VPN business with secret VIP system, Android app, and advanced parental controls  
+**Total:** 18 parts, ~25,000+ lines of production code  
+**Build Time:** 18 days (120-150 hours)  
+**Result:** Complete automated VPN business with secret VIP system, Android app, advanced parental controls, camera dashboard, marketing automation, and enterprise portal  
+**Last Updated:** January 21, 2026
 
 ---
 
-## 📋 PART 1 - DAY 1: ENVIRONMENT SETUP
+## 📋 PART 1 - ENVIRONMENT SETUP
 **File:** `MASTER_CHECKLIST_PART1.md`  
 **Lines:** ~800 lines  
 **Time:** 3-4 hours  
@@ -28,48 +29,50 @@
 
 ---
 
-## 📋 PART 2 - DAY 2: ALL 9 DATABASES
+## 📋 PART 2 - ALL 9 DATABASES
 **File:** `MASTER_CHECKLIST_PART2.md`  
 **Lines:** ~700 lines  
 **Time:** 3-4 hours  
 
 **What's Inside:**
-- users.db (users, sessions, tokens, password resets)
-- devices.db (devices, configs)
-- servers.db (4 pre-configured servers)
-- billing.db (subscriptions, transactions, invoices)
+- users.db (users, sessions)
+- devices.db (devices)
+- servers.db (4 pre-configured servers with REAL WireGuard keys)
+- billing.db (subscriptions, transactions, invoices, payment_methods)
 - port_forwards.db (rules, discovered devices)
 - parental_controls.db (rules, categories, blocked requests)
 - admin.db (admin users, system settings, VIP list)
-- logs.db (security events, audit log, API requests, errors, email log, email queue)
-- support.db (tickets, messages, knowledge base) ⭐ NEW
+- logs.db (security events, audit log, API requests, errors, connection log)
+- themes.db (themes, theme settings)
 
 **Key Deliverables:**
 - All 9 SQLite databases
-- Complete table schemas
-- Indexes and foreign keys
-- 4 servers pre-configured
+- Complete table schemas with indexes
+- 4 servers with REAL WireGuard keys
 - Admin user created
+- VIP list pre-populated
 
 ---
 
-## 📋 PART 3 - DAY 3: AUTHENTICATION SYSTEM
-**File:** `MASTER_CHECKLIST_PART3_CONTINUED.md`  
-**Lines:** ~1,300 lines  
-**Time:** 5-6 hours  
+## 📋 PART 3 - AUTHENTICATION SYSTEM
+**Files:** `MASTER_CHECKLIST_PART3.md` + `MASTER_CHECKLIST_PART3_CONTINUED.md`  
+**Lines:** ~1,510 lines  
+**Time:** 6-8 hours  
 
-**What's Inside:**
-- Database.php helper class (150 lines)
-- JWT.php token management (120 lines)
-- Validator.php input validation (180 lines)
-- Auth.php middleware (90 lines)
-- Registration API with VIP detection (250 lines)
+**What's Inside (PART3.md - Tasks 3.1-3.4):**
+- Database.php SQLite3 helper class (180 lines) - NOT PDO!
+- JWT.php token management (150 lines)
+- Validator.php input validation (200 lines)
+- Registration API with VIP detection (280 lines)
+
+**What's Inside (PART3_CONTINUED.md - Tasks 3.5+):**
 - Login API with brute force protection (280 lines)
 - Logout API (80 lines)
 - Password reset flow (150 lines)
+- Auth.php middleware (90 lines)
 
 **Key Deliverables:**
-- Complete authentication system
+- Complete authentication system using SQLite3
 - JWT token-based auth
 - VIP auto-detection (seige235@yahoo.com)
 - Brute force protection
@@ -78,23 +81,28 @@
 
 ---
 
-## 📋 PART 4 - DAY 4: DEVICE MANAGEMENT
-**Files:** `MASTER_CHECKLIST_PART4.md` + `PART4_CONTINUED.md`  
+## 📋 PART 4 - DEVICE MANAGEMENT (2-CLICK SETUP)
+**Files:** `MASTER_CHECKLIST_PART4.md` + `MASTER_CHECKLIST_PART4_CONTINUED.md`  
 **Lines:** ~1,120 lines  
 **Time:** 8-10 hours  
 
 **What's Inside:**
-- setup-device.php - 3-step interface (320 lines)
-- Browser-side key generation (TweetNaCl.js)
-- Device provisioning API (380 lines)
-- List devices API (100 lines)
-- Delete device API (110 lines)
-- Switch server API (150 lines)
-- Get available servers API (60 lines)
+- 2-click device setup interface
+- SERVER-SIDE key generation (NOT browser-side!)
+- Device provisioning API
+- List/Delete/Switch device APIs
+- Config file download
+- QR code for mobile
+
+**2-Click Flow:**
+1. User clicks "Add Device"
+2. User enters name + selects server
+3. Server generates WireGuard keys
+4. Config file ready for download
 
 **Key Deliverables:**
 - 2-click device setup (30 seconds!)
-- Browser generates WireGuard keys
+- Server generates WireGuard keys
 - Instant config download
 - QR codes for mobile
 - Device management APIs
@@ -103,7 +111,7 @@
 
 ---
 
-## 📋 PART 5 - DAY 5: ADMIN & PAYPAL
+## 📋 PART 5 - ADMIN & PAYPAL
 **File:** `MASTER_CHECKLIST_PART5.md`  
 **Lines:** ~1,630 lines  
 **Time:** 8-10 hours  
@@ -118,378 +126,311 @@
 - System settings editor (200 lines)
 
 **Key Deliverables:**
-- Complete admin panel
-- User management (search, filter, actions)
-- PayPal Live API integration
-- Subscription management
-- Automatic invoicing
-- Webhook event handling
-- 100% database-driven settings
+- Admin can login and manage users
+- Dashboard shows real-time stats
+- PayPal integration (sandbox & live)
+- Webhook processing for payments
 
 ---
 
-## 📋 PART 6 - DAY 6: ADVANCED FEATURES & TESTING
-**File:** `MASTER_CHECKLIST_PART6.md`  
-**Lines:** ~2,000 lines  
-**Time:** 8-10 hours  
-
-**What's Inside:**
-- Port forwarding interface (180 lines)
-- Network scanner integration (150 lines)
-- Camera dashboard (200 lines)
-- Port forwarding API (120 lines)
-- Parental controls (220 lines)
-- Main user dashboard (280 lines)
-- VIP request form (100 lines)
-- Complete testing checklist
-- User guide (200 lines)
-- Admin guide (180 lines)
-- Business transfer guide (150 lines)
-- Troubleshooting guide (120 lines)
-
-**Key Deliverables:**
-- Port forwarding system
-- Network device scanner
-- IP camera dashboard
-- Parental controls
-- User dashboard
-- VIP request system
-- Complete documentation
-- Testing checklist
-- Deployment guide
-
----
-
-## 📋 PART 7 - DAY 7: COMPLETE AUTOMATION SYSTEM ⭐ NEW!
-**File:** `MASTER_CHECKLIST_PART7.md`  
-**Lines:** ~3,850 lines  
+## 📋 PART 6 - PORT FORWARDING & CAMERA DASHBOARD
+**Files:** `MASTER_CHECKLIST_PART6.md` + `MASTER_CHECKLIST_PART6A.md`  
+**Lines:** ~1,800 lines  
 **Time:** 10-12 hours  
 
-**What's Inside:**
-- Email.php - Dual email system (350 lines)
-- EmailTemplate.php - Template engine (200 lines)
-- AutomationEngine.php - Workflow processor (400 lines)
-- Workflows.php - 12 automated workflows (1,200 lines)
-- 19 email templates installation (950 lines)
-- Support ticket system (500 lines)
-- Knowledge base system (200 lines)
-- Admin ticket management (250 lines)
-- Email queue processing
-- Scheduled task handling
+**What's Inside (PART6.md):**
+- Port forwarding management
+- Network scanner
+- Discovered devices list
+
+**What's Inside (PART6A.md - FULL CAMERA DASHBOARD):**
+- Live video streaming (HLS.js)
+- Multi-camera grid views (2x2, 3x3, 4x4)
+- Recording & playback
+- Motion detection with zones
+- Snapshot capture
+- Two-way audio (supported cameras)
+- PTZ controls (Pan-Tilt-Zoom)
+- Quality selection (1080p, 720p, 480p)
+- Full screen mode
+- RTSP stream integration
+- Video storage management
+- Alert notifications
+
+**Camera API Endpoints:**
+- /api/cameras/get-stream.php
+- /api/cameras/snapshot.php
+- /api/cameras/start-recording.php
+- /api/cameras/stop-recording.php
+- /api/cameras/get-recordings.php
+- /api/cameras/motion-detection.php
+- /api/cameras/ptz-control.php
 
 **Key Deliverables:**
-- **Dual Email System:**
-  - SMTP (admin@vpn.the-truth-publishing.com) for customers
-  - Gmail (paulhalonen@gmail.com) for admin notifications
-- **19 Professional Email Templates:**
-  - Welcome emails (Basic/Formal/VIP)
-  - Payment emails (success, failed reminders, final warning)
-  - Support emails (received, resolved)
-  - Complaint emails (acknowledge, resolved)
-  - Server alerts (down, restored)
-  - Retention emails (survey, offer, win-back)
-  - VIP emails (request received, secret welcome)
-- **12 Automated Workflows:**
-  1. New customer onboarding (welcome → setup → follow-up)
-  2. Payment failed escalation (Day 0, 3, 7, 8 suspend)
-  3. Payment success (invoice → thank you)
-  4. Support ticket created (categorize → KB → acknowledge)
-  5. Support ticket resolved (notify → survey)
-  6. Complaint handling (apology → flag → follow-up)
-  7. Server down alert (admin + customers)
-  8. Server restored (all clear)
-  9. Cancellation request (survey → retention → win-back)
-  10. Monthly invoicing (generate → send → retry → report)
-  11. VIP request received (notify admin)
-  12. VIP approved (upgrade → welcome → provision)
-- Support ticket automation
-- Knowledge base integration
-- Email queue system
-- Complete logging
-- Cron job integration
+- Complete port forwarding system
+- Network device discovery
+- FULL camera dashboard with live streaming
+- Recording and playback
+- Motion detection alerts
 
 ---
 
-## 📋 PART 8 - DAY 8: FRONTEND & BUSINESS TRANSFER ⭐ NEW!
-**File:** `MASTER_CHECKLIST_PART8.md`  
-**Lines:** ~2,500 lines  
+## 📋 PART 7 - EMAIL & AUTOMATION SYSTEM
+**File:** `MASTER_CHECKLIST_PART7.md`  
+**Lines:** ~1,300 lines  
 **Time:** 8-10 hours  
 
 **What's Inside:**
-- Landing page (300 lines) - NO VIP advertising
-- Pricing page (200 lines) - 2 tiers only (Standard $9.99, Pro $14.99)
-- Features page (250 lines) - NO VIP features listed
-- User login page (150 lines)
-- User registration (200 lines) - VIP auto-detection built in
-- User dashboard (350 lines) - SECRET VIP badge (top right)
-- Account settings (200 lines)
-- Billing management (250 lines) - VIP sees "no billing needed"
-- Business transfer wizard (300 lines)
-- Transfer documentation (300 lines)
-
-**Key Deliverables:**
-- **Complete Public-Facing Website:**
-  - Beautiful landing page with gradients
-  - Professional pricing page (NO VIP shown!)
-  - Features showcase
-  - User login/registration
-  - 7-day free trial option
-- **User Account Pages:**
-  - Main dashboard with stats
-  - Device management
-  - Port forwarding
-  - Billing (hidden for VIP)
-  - Support tickets
-- **Secret VIP System:**
-  - NO VIP on any public page
-  - VIP badge ONLY after login
-  - VIP users bypass PayPal completely
-  - seige235@yahoo.com gets dedicated server
-  - Admin-only VIP email management
-- **Business Transfer System:**
-  - Transfer wizard interface
-  - Settings export/import (JSON)
-  - PayPal credential change
-  - Email provider switch
-  - Domain change support
-  - 30-minute takeover process
-  - Canadian → USA conversion guide
-  - Complete handoff checklist
-
----
-
-## 📋 PART 9 - DAY 9: SERVER MANAGEMENT ⭐ NEW!
-**File:** `MASTER_CHECKLIST_PART9.md`  
-**Lines:** ~1,500 lines  
-**Time:** 8-12 hours  
-
-**What's Inside:**
-- Server database setup (inventory, costs, logs)
-- Contabo server configuration (NY, St. Louis VIP)
-- Fly.io server configuration (Dallas, Toronto)
-- WireGuard installation scripts
-- Server health monitoring
-- Automated failover system
-- Bandwidth tracking
-- SSH key management
-- Admin server management UI
-- Cost tracking and reporting
-
-**Key Deliverables:**
-- Complete server inventory in database
-- Contabo API integration
-- Fly.io GraphQL API integration
-- 5-minute health check cron
-- Auto-failover when server down
-- Admin UI to manage all 4 servers
-- SSH access to all servers
-- Bandwidth monitoring with alerts
-
----
-
-## 📋 PART 10 - DAY 10: ANDROID HELPER APP ⭐ NEW!
-**File:** `MASTER_CHECKLIST_PART10.md`  
-**Lines:** ~2,000 lines  
-**Time:** 15-20 hours (3 weeks development)  
-
-**What's Inside:**
-- Android Studio project setup
-- App branding (colors, icons, theme)
-- Main activity with 3 action cards
-- QR scanner (camera + gallery/screenshots)
-- WireGuard import helper
-- File auto-fix (.conf.txt → .conf)
-- Background file monitor service
-- Settings activity
-- Signed APK generation
-- Google Play Store listing (optional)
-
-**Key Deliverables:**
-- Native Kotlin Android app
-- QR scanning from screenshots (solve can't-scan-own-screen problem)
-- Auto-fix .conf.txt files (60% of Android support tickets!)
-- Background service monitors Downloads folder
-- One-tap import to WireGuard
-- Branded TrueVault Helper app
-- APK hosted on website for download
-
-**Business Impact:**
-- -90% Android support tickets
-- Setup time: <60 seconds
-- User satisfaction: +40%
-
----
-
-## 📋 PART 11 - DAY 11: ADVANCED PARENTAL CONTROLS ⭐ NEW!
-**File:** `MASTER_CHECKLIST_PART11.md`  
-**Lines:** ~2,500 lines  
-**Time:** 20-25 hours (5 weeks development)  
-
-**What's Inside:**
-- 6 new database tables for schedules
-- Schedule management backend APIs
-- Monthly calendar UI component
-- Device-specific rules
-- Gaming server controls (Xbox, PlayStation, Steam)
-- Whitelist/blacklist management
-- Temporary blocks with expiry
-- Quick actions panel (Block Gaming, Homework Mode)
-- Statistics & weekly reports
-- VPN server enforcement integration
-- Mobile-responsive design
-
-**Key Deliverables:**
-- **Calendar Scheduling System:**
-  - Visual monthly calendar
-  - Multiple time windows per day
-  - Recurring schedules (weekdays, weekends)
-  - Templates: School Day, Weekend, Holiday
-- **Gaming Server Controls:**
-  - Toggle gaming on/off instantly
-  - Block Xbox Live, PlayStation Network, Steam, Epic Games
-  - Allow streaming/educational while blocking gaming
-  - "Block until bedtime" quick action
-- **Parent Quick Actions:**
-  - Emergency Gaming Block
-  - Homework Mode (whitelist only)
-  - +1 Hour Free Time
-  - Restore Normal
-- **Statistics Dashboard:**
-  - Screen time tracking
-  - Category breakdown (gaming, streaming, social)
-  - Weekly email reports
-- **Device-Specific Rules:**
-  - Different schedules per device
-  - Device groups (Kids Devices, etc.)
-
-**Business Impact:**
-- +30% Family plan signups
-- Key differentiator vs other VPNs
-- Lower churn (sticky feature)
-- Press coverage potential
-
----
-
-## 🎯 HOW TO USE
-
-### **Day 1-2: Foundation (6-8 hours)**
-- Set up environment
-- Create all 9 databases
-- Test database access
-
-### **Day 3: Authentication (5-6 hours)**
-- Build auth system
-- Test registration/login
-- Verify VIP detection
-
-### **Day 4: Devices (8-10 hours)**
-- Create setup interface
-- Build provisioning APIs
-- Test device management
-
-### **Day 5: Admin & Billing (8-10 hours)**
-- Build admin panel
-- Integrate PayPal
-- Configure webhooks
-
-### **Day 6: Launch Prep (8-10 hours)**
-- Add advanced features
-- Complete testing
-- Prepare deployment
-
-### **Day 7: Automation (10-12 hours)**
-- Setup dual email system
-- Install email templates
-- Configure 12 workflows
-- Setup support tickets
-- Configure cron jobs
-
-### **Day 8: Frontend & Transfer (8-10 hours)**
-- Build public pages (NO VIP!)
-- Create user dashboard (with secret VIP badge)
-- Setup transfer wizard
-- Complete documentation
-
-### **Day 9: Server Management (8-12 hours)**
-- Server database and inventory
-- Provider API integrations (Contabo, Fly.io)
-- Health monitoring and failover
-- Admin server UI
-
-### **Day 10: Android App (15-20 hours / 3 weeks)**
-- Build TrueVault Helper app
-- QR scanning from screenshots
-- Auto-fix .conf.txt files
-- Publish APK
-
-### **Day 11: Advanced Parental Controls (20-25 hours / 5 weeks)**
-- Calendar scheduling system
-- Gaming server controls
-- Whitelist/blacklist management
-- Statistics and reports
-
----
-
-## 📊 FEATURE BREAKDOWN
-
-### **Part 1-2: Infrastructure (12%)**
-- Environment setup
-- Security configuration
-- Database foundation (9 databases)
-
-### **Part 3: Security (9%)**
-- User authentication
-- JWT tokens
-- Secret VIP system
-
-### **Part 4: Core Product (8%)**
-- Device setup
-- VPN connection
-- Server management
-
-### **Part 5: Billing (12%)**
-- Admin panel
-- PayPal integration
-- Subscription management
-
-### **Part 6: Advanced (14%)**
-- Port forwarding
-- Network scanner
-- Camera features
-- Documentation
-
-### **Part 7: Automation (28%)**
-- Dual email system
+- Dual email system (SMTP + Gmail)
+- 19 professional email templates
 - 12 automated workflows
-- Support tickets
-- Knowledge base
-- Email templates
+- Support ticket automation
+- Knowledge base system
+- Email queue processing
+- Cron job configuration
 
-### **Part 8: Frontend & Transfer (15%)**
-- Public marketing site
-- User account pages
-- Secret VIP badge
+**Key Deliverables:**
+- Emails send automatically
+- All workflows running 24/7
+- Support tickets auto-responded
+- Zero manual intervention needed
+
+---
+
+## 📋 PART 8 - PAGES & TRANSFER WIZARD
+**File:** `MASTER_CHECKLIST_PART8.md`  
+**Lines:** ~1,500 lines  
+**Time:** 8-10 hours  
+
+**What's Inside:**
+- User dashboard (post-login)
+- VIP badge display (after login only!)
+- Account settings pages
 - Business transfer wizard
+- Transfer documentation
+- Database export/import
 
-### **Part 9: Server Management (8%)**
-- Server inventory database
-- Provider API integrations
-- Health monitoring & failover
-- Admin server management
+**Key Deliverables:**
+- User dashboard functional
+- VIP badge shows (login required)
+- 30-minute business transfer ready
+- All docs for new owner
 
-### **Part 10: Android Helper App (11%)**
-- Native Kotlin app
+---
+
+## 📋 PART 9 - SERVER MANAGEMENT
+**Files:** `MASTER_CHECKLIST_PART9.md` + `MASTER_CHECKLIST_PART9A.md`  
+**Lines:** ~1,200 lines  
+**Time:** 6-8 hours  
+
+**What's Inside:**
+- 4 VPN servers configured:
+  - New York (Contabo, Shared)
+  - St. Louis (Contabo, VIP Dedicated)
+  - Dallas (Fly.io, Shared)
+  - Toronto (Fly.io, Shared)
+- Health check monitoring (5-minute intervals)
+- Auto-failover logic
+- Server status dashboard
+- Bandwidth tracking
+- Admin server management UI
+
+**Key Deliverables:**
+- All 4 servers with REAL WireGuard keys
+- Health monitoring active
+- Auto-failover working
+- Server admin UI
+
+---
+
+## 📋 PART 10 - ANDROID HELPER APP
+**File:** `MASTER_CHECKLIST_PART10.md`  
+**Lines:** ~800 lines  
+**Time:** 6-8 hours  
+
+**What's Inside:**
+- TrueVault Helper Android app
 - QR scanning from screenshots
 - Auto-fix .conf.txt files
 - Background file monitoring
+- Kotlin implementation
+- Signed APK generation
 
-### **Part 11: Advanced Parental Controls (14%)**
-- Calendar scheduling system
-- Gaming server controls
-- Whitelist/blacklist management
-- Statistics & weekly reports
+**Key Deliverables:**
+- Working Android APK
+- QR scanning from screenshots
+- Auto-fix Android WireGuard issue
+- APK hosted on website
 
 ---
+
+## 📋 PART 11 - ADVANCED PARENTAL CONTROLS
+**File:** `MASTER_CHECKLIST_PART11.md`  
+**Lines:** ~1,100 lines  
+**Time:** 6-8 hours  
+
+**What's Inside:**
+- Visual calendar interface
+- Time window scheduling
+- Gaming server controls (Xbox, PS, Steam)
+- Whitelist/blacklist management
+- Quick action buttons
+- Weekly report emails
+
+**Key Deliverables:**
+- Calendar-based controls
+- Gaming toggle working
+- Weekly reports sending
+- Parent dashboard complete
+
+---
+
+## 📋 PART 12 - LANDING PAGES (DATABASE-DRIVEN)
+**File:** `MASTER_CHECKLIST_PART12.md`  
+**Lines:** ~1,500 lines  
+**Time:** 10-12 hours  
+
+**What's Inside:**
+- Homepage (PHP, database-driven)
+- Features page
+- Pricing page (2 tiers, NO VIP!)
+- About page
+- Contact page
+- Terms of Service
+- Privacy Policy
+- All content from database
+- Logo/name changeable via admin
+
+**Key Deliverables:**
+- All public pages live
+- Database-driven content
+- Theme-integrated styling
+- 30-minute transfer ready
+
+---
+
+## 📋 PART 13 - DATABASE BUILDER
+**File:** `MASTER_CHECKLIST_PART13.md`  
+**Lines:** ~3,000 lines  
+**Time:** 10-12 hours  
+
+**What's Inside:**
+- DataForge custom database builder
+- Table creation UI
+- Field types (20+ types)
+- Relationship management
+- Query builder
+- Data import/export
+
+**Key Deliverables:**
+- Users can create custom databases
+- No coding required
+- Professional data management
+
+---
+
+## 📋 PART 14 - FORM LIBRARY
+**File:** `MASTER_CHECKLIST_PART14.md`  
+**Lines:** ~2,500 lines  
+**Time:** 8-10 hours  
+
+**What's Inside:**
+- 50+ professional pre-built forms
+- 3 style variations per form
+- Form builder interface
+- Submission handling
+- Email notifications
+- PDF export
+
+**Key Deliverables:**
+- Complete form library
+- Professional templates
+- Easy customization
+
+---
+
+## 📋 PART 15 - MARKETING AUTOMATION
+**File:** `MASTER_CHECKLIST_PART15.md`  
+**Lines:** ~2,000 lines  
+**Time:** 8-10 hours  
+
+**What's Inside:**
+- 50+ FREE advertising platforms
+- 365-day content calendar
+- Post scheduling
+- Performance tracking
+- Platform API integrations
+- Social media management
+
+**Key Deliverables:**
+- Zero-budget marketing system
+- Year of content planned
+- Automated posting
+
+---
+
+## 📋 PART 16 - TUTORIAL SYSTEM
+**File:** `MASTER_CHECKLIST_PART16.md`  
+**Lines:** ~1,500 lines  
+**Time:** 6-8 hours  
+
+**What's Inside:**
+- 35 step-by-step lessons
+- Interactive tutorials (learn by doing)
+- Progress tracking
+- Achievement badges
+- Video tutorials
+- Knowledge assessments
+
+**Key Deliverables:**
+- Complete tutorial system
+- User onboarding simplified
+- Self-service support
+
+---
+
+## 📋 PART 17 - BUSINESS AUTOMATION
+**File:** `MASTER_CHECKLIST_PART17.md`  
+**Lines:** ~1,000 lines  
+**Time:** 6-8 hours  
+
+**What's Inside:**
+- 12 automated business workflows
+- Customer lifecycle automation
+- Invoice generation
+- Payment reminders
+- Churn prevention
+- Report generation
+
+**Key Deliverables:**
+- Fully automated business operations
+- Single-person capable
+- Zero daily management needed
+
+---
+
+## 📋 PART 18 - ENTERPRISE PORTAL
+**File:** `MASTER_CHECKLIST_PART18.md`  
+**Lines:** ~400 lines  
+**Time:** 2-3 hours  
+
+**What's Inside:**
+- Enterprise signup portal (portal only, not full product)
+- License tracking interface
+- Sales lead capture
+- Enterprise pricing display
+- Contact sales form
+
+**NOTE:** This is NOT the full Enterprise Business Hub build.
+That is a SEPARATE project. This is just the portal/signup page.
+
+**Key Deliverables:**
+- Enterprise sales portal live
+- License tracking ready
+- Lead capture working
+
+---
+
 
 ## ✅ COMPLETION CHECKLIST
 
@@ -502,17 +443,19 @@
 **Part 2 Complete When:**
 - [ ] All 9 databases created
 - [ ] Can query each database
-- [ ] 4 servers in servers.db
+- [ ] 4 servers with REAL WireGuard keys
 - [ ] Admin user exists
 
 **Part 3 Complete When:**
+- [ ] Database.php helper works (SQLite3!)
 - [ ] User can register
 - [ ] User can login
 - [ ] JWT tokens work
 - [ ] VIP email auto-upgrades
 
 **Part 4 Complete When:**
-- [ ] Can setup device in <30 seconds
+- [ ] Can setup device in <30 seconds (2-click!)
+- [ ] Server generates WireGuard keys
 - [ ] Config file downloads
 - [ ] QR code appears
 - [ ] Can switch servers
@@ -526,8 +469,9 @@
 **Part 6 Complete When:**
 - [ ] Port forwarding works
 - [ ] Scanner discovers devices
-- [ ] All tests pass
-- [ ] Documentation complete
+- [ ] Camera dashboard with live streaming
+- [ ] Recording and playback working
+- [ ] Motion detection active
 
 **Part 7 Complete When:**
 - [ ] SMTP emails send
@@ -538,17 +482,13 @@
 - [ ] Cron jobs configured
 
 **Part 8 Complete When:**
-- [ ] Landing page live (NO VIP!)
-- [ ] Pricing shows 2 tiers
-- [ ] User can register
+- [ ] User dashboard shows devices
 - [ ] VIP badge shows after login
 - [ ] Transfer wizard works
 - [ ] All docs complete
 
 **Part 9 Complete When:**
 - [ ] All 4 servers in database
-- [ ] Contabo API working
-- [ ] Fly.io API working
 - [ ] Health check cron running
 - [ ] Failover logic tested
 - [ ] Admin server UI working
@@ -557,17 +497,55 @@
 - [ ] Android app builds successfully
 - [ ] QR scanning from screenshots works
 - [ ] Auto-fix .conf.txt working
-- [ ] Background monitor running
 - [ ] Signed APK generated
 - [ ] APK hosted on website
 
 **Part 11 Complete When:**
 - [ ] Calendar UI displays correctly
 - [ ] Time windows save/edit
-- [ ] Gaming toggle blocks gaming traffic
-- [ ] Whitelist/blacklist enforced
-- [ ] Quick actions work
+- [ ] Gaming toggle blocks traffic
 - [ ] Weekly report emails send
+
+**Part 12 Complete When:**
+- [ ] All landing pages live
+- [ ] Content from database
+- [ ] Logo/name changeable
+- [ ] NO VIP advertising anywhere!
+
+**Part 13 Complete When:**
+- [ ] DataForge builder works
+- [ ] Can create custom tables
+- [ ] Field types working
+- [ ] Import/export functional
+
+**Part 14 Complete When:**
+- [ ] 50+ forms available
+- [ ] 3 styles per form
+- [ ] Form submissions save
+- [ ] Email notifications work
+
+**Part 15 Complete When:**
+- [ ] 50+ platforms configured
+- [ ] Content calendar loaded
+- [ ] Scheduled posts working
+- [ ] Analytics tracking
+
+**Part 16 Complete When:**
+- [ ] 35 tutorials created
+- [ ] Interactive mode working
+- [ ] Progress tracking
+- [ ] Badges awarding
+
+**Part 17 Complete When:**
+- [ ] 12 workflows automated
+- [ ] Invoices auto-generate
+- [ ] Reminders sending
+- [ ] Reports generating
+
+**Part 18 Complete When:**
+- [ ] Enterprise portal live
+- [ ] License tracking working
+- [ ] Lead capture functional
 
 ---
 
@@ -578,7 +556,7 @@
 3. **Follow:** Each part in order (don't skip!)
 4. **Check:** Boxes as you complete each task
 5. **Test:** After each section before moving on
-6. **Deploy:** When Part 8 is complete
+6. **Deploy:** When all parts complete
 
 ---
 
@@ -598,12 +576,12 @@
 - ✅ Use checklist on second monitor
 - ✅ Keep FTP connection open
 
-**For Fast Building:**
-- ✅ Copy-paste code sections
-- ✅ Test with real devices
-- ✅ Use PayPal sandbox first
-- ✅ Switch to Live when ready
-- ✅ Document any custom changes
+**CRITICAL Rules:**
+- ✅ Use SQLite3 (NOT PDO!)
+- ✅ Server-side WireGuard key generation
+- ✅ Database-driven content (NO hardcoding!)
+- ✅ NEVER advertise VIP publicly
+- ✅ NO placeholders - build it complete!
 
 **For Secret VIP System:**
 - ✅ NEVER advertise VIP publicly
@@ -614,79 +592,76 @@
 
 ---
 
-## 📞 SUPPORT
-
-**If Stuck:**
-1. Check the specific part's verification steps
-2. Review error logs (/logs/error.log)
-3. Check database connections
-4. Verify file permissions (644 files, 755 folders)
-5. Test with different browser
+## 📞 TROUBLESHOOTING
 
 **Common Issues:**
 - Can't access site → Check .htaccess
-- Database errors → Check file permissions
+- Database errors → Check file permissions (644)
 - JWT errors → Verify JWT_SECRET is set
 - PayPal fails → Check credentials in settings
-- Device setup fails → Verify server keys
+- Device setup fails → Verify server keys are REAL
 - Emails not sending → Check SMTP/Gmail settings
 - Workflows not running → Check cron jobs
 - VIP not working → Check VIP list in admin.db
+- Camera not streaming → Check RTSP URL
 
 ---
 
 ## 🎊 WHAT YOU'LL HAVE
 
-**After completing all 11 parts:**
+**After completing all 18 parts:**
 
 A complete VPN business with:
 - ✅ Beautiful marketing website (NO VIP advertising)
-- ✅ 2-tier pricing ($9.99, $14.99) + 7-day trial
+- ✅ 2-tier pricing + 7-day trial
 - ✅ User registration with secret VIP auto-detection
-- ✅ 2-click device setup
+- ✅ 2-click device setup (server-side keys!)
 - ✅ Multi-platform support
-- ✅ 4 VPN servers
+- ✅ 4 VPN servers (with REAL WireGuard keys)
 - ✅ PayPal billing integration
 - ✅ Admin control panel
-- ✅ **Dual email system (SMTP + Gmail)**
-- ✅ **19 professional email templates**
-- ✅ **12 automated workflows running 24/7**
-- ✅ **Support ticket automation**
-- ✅ **Knowledge base system**
+- ✅ Dual email system (SMTP + Gmail)
+- ✅ 19 professional email templates
+- ✅ 12 automated workflows running 24/7
+- ✅ Support ticket automation
+- ✅ Knowledge base system
 - ✅ Port forwarding
 - ✅ Network scanner
-- ✅ Camera dashboard
-- ✅ Parental controls
+- ✅ **FULL Camera Dashboard with live streaming**
+- ✅ **Recording & playback**
+- ✅ **Motion detection**
+- ✅ Advanced parental controls with calendar
+- ✅ Gaming server controls
 - ✅ Secret VIP badge (only after login)
 - ✅ Business transfer wizard
 - ✅ Complete documentation
 - ✅ Ready to transfer to new owner in 30 minutes
 - ✅ Single-person operation
 - ✅ Fully automated
-- ✅ **Server management with auto-failover**
-- ✅ **Health monitoring (5-minute checks)**
-- ✅ **Native Android helper app (TrueVault Helper)**
-- ✅ **QR scanning from screenshots**
-- ✅ **Auto-fix .conf.txt Android issue**
-- ✅ **Advanced parental controls with calendar**
-- ✅ **Gaming server controls (Xbox, PS, Steam)**
-- ✅ **Whitelist/blacklist management**
-- ✅ **Weekly screen time reports**
+- ✅ Server management with auto-failover
+- ✅ Health monitoring (5-minute checks)
+- ✅ Native Android helper app
+- ✅ Database builder (DataForge)
+- ✅ Form library (50+ forms)
+- ✅ Marketing automation (50+ platforms)
+- ✅ Tutorial system (35 lessons)
+- ✅ Business automation
+- ✅ Enterprise portal ready
 
 **Total Build Value:**
-- ~18,500+ lines of production code
-- ~85-110 hours of development time
+- ~25,000+ lines of production code
+- ~120-150 hours of development time
 - Professional, scalable VPN service
 - Recurring revenue business model
 - Transferable in 30 minutes
 - Automated everything
 - Secret VIP system
 - Native Android app included
-- Industry-leading parental controls
-- Complete server infrastructure management
+- Industry-leading features
 
 ---
 
 **NOW GO BUILD YOUR AUTOMATED VPN EMPIRE!** 🚀
 
 Start with Part 1 and follow the checklist step-by-step!
+

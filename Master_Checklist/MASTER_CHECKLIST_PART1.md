@@ -330,16 +330,19 @@ function getDatabase($dbFile) {
             throw new Exception("Database file not found: " . basename($dbFile));
         }
         
-        // Create PDO connection
-        $pdo = new PDO('sqlite:' . $dbFile);
+        // Create SQLite3 connection (NOT PDO!)
+        $db = new SQLite3($dbFile);
         
-        // Set error mode to exceptions
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // Enable exceptions
+        $db->enableExceptions(true);
+        
+        // Set busy timeout
+        $db->busyTimeout(5000);
         
         // Enable foreign keys
-        $pdo->exec('PRAGMA foreign_keys = ON');
+        $db->exec('PRAGMA foreign_keys = ON');
         
-        return $pdo;
+        return $db;
         
     } catch (Exception $e) {
         // Log error
@@ -576,9 +579,9 @@ try {
         throw new Exception('Database already exists! Delete it first if you want to recreate.');
     }
     
-    // Create database
-    $db = new PDO('sqlite:' . DB_USERS);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Create database (SQLite3 - NOT PDO!)
+    $db = new SQLite3(DB_USERS);
+    $db->enableExceptions(true);
     
     // Create users table
     $db->exec("

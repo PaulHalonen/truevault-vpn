@@ -1,7 +1,6 @@
 # TrueVault VPN - Root .htaccess
 # Purpose: Security, redirects, and access control
 # Created: January 2026
-# Location: /home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/
 
 # Enable error handling
 Options -Indexes

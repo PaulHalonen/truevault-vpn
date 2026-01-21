@@ -110,7 +110,9 @@ CREATE TABLE IF NOT EXISTS themes (
 <?php
 require_once '../configs/config.php';
 
-$db = new PDO('sqlite:../databases/admin.db');
+// SQLite3 - NOT PDO!
+$db = new SQLite3('../databases/admin.db');
+$db->enableExceptions(true);
 
 // SEASONAL THEMES (4)
 $themes = [
@@ -434,14 +436,17 @@ requireAdmin();
 $data = json_decode(file_get_contents('php://input'), true);
 $themeId = $data['theme_id'];
 
-$db = new PDO('sqlite:../../databases/admin.db');
+// SQLite3 - NOT PDO!
+$db = new SQLite3('../../databases/admin.db');
+$db->enableExceptions(true);
 
 // Deactivate all themes
 $db->exec("UPDATE themes SET is_active = 0");
 
 // Activate selected theme
-$stmt = $db->prepare("UPDATE themes SET is_active = 1 WHERE id = ?");
-$stmt->execute([$themeId]);
+$stmt = $db->prepare("UPDATE themes SET is_active = 1 WHERE id = :id");
+$stmt->bindValue(':id', $themeId, SQLITE3_INTEGER);
+$stmt->execute();
 
 echo json_encode(['success' => true]);
 ```
@@ -508,10 +513,14 @@ echo json_encode($theme, JSON_PRETTY_PRINT);
 
 require_once __DIR__ . '/../configs/config.php';
 
-$db = new PDO('sqlite:' . __DIR__ . '/../databases/admin.db');
+// SQLite3 - NOT PDO!
+$db = new SQLite3(__DIR__ . '/../databases/admin.db');
+$db->enableExceptions(true);
 
 // Check if auto-switch enabled
-$setting = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'seasonal_auto_switch'")->fetchColumn();
+$result = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'seasonal_auto_switch'");
+$row = $result->fetchArray(SQLITE3_ASSOC);
+$setting = $row ? $row['setting_value'] : '0';
 
 if ($setting !== '1') {
     exit("Seasonal auto-switch disabled\n");
@@ -528,8 +537,11 @@ function getCurrentSeason() {
 
 $season = getCurrentSeason();
 
-// Get seasonal theme
-$theme = $db->query("SELECT * FROM themes WHERE season = '$season' LIMIT 1")->fetch();
+// Get seasonal theme (SQLite3)
+$stmt = $db->prepare("SELECT * FROM themes WHERE season = :season LIMIT 1");
+$stmt->bindValue(':season', $season, SQLITE3_TEXT);
+$result = $stmt->execute();
+$theme = $result->fetchArray(SQLITE3_ASSOC);
 
 if (!$theme) {
     exit("No theme found for $season\n");
@@ -576,9 +588,16 @@ echo "✅ Switched to " . $theme['display_name'] . " for $season\n";
 <?php
 require_once 'configs/config.php';
 
-$themeId = $_GET['id'];
-$db = new PDO('sqlite:databases/admin.db');
-$theme = $db->query("SELECT * FROM themes WHERE id = $themeId")->fetch();
+$themeId = (int)$_GET['id']; // Cast to int for safety
+
+// SQLite3 - NOT PDO!
+$db = new SQLite3('databases/admin.db');
+$db->enableExceptions(true);
+
+$stmt = $db->prepare("SELECT * FROM themes WHERE id = :id");
+$stmt->bindValue(':id', $themeId, SQLITE3_INTEGER);
+$result = $stmt->execute();
+$theme = $result->fetchArray(SQLITE3_ASSOC);
 
 $colors = json_decode($theme['colors'], true);
 $fonts = json_decode($theme['fonts'], true);
