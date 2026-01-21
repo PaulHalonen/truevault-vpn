@@ -341,8 +341,8 @@ Fill in after completing each server:
 |--------|-----|-----------|-----------|------------|
 | New York | 66.94.103.91 | ✅ Running | ✅ Active | `lbriy+env0wv6VmEJscnjoREswmiQdn7D+lKGai9n3s=` |
 | St. Louis | 144.126.133.253 | ✅ Running | ✅ Active | `qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM=` |
-| Dallas | 66.241.124.4 | ⬜ Not Deployed | ⬜ Unknown | |
-| Toronto | 66.241.125.247 | ⬜ Not Deployed | ⬜ Unknown | |
+| Dallas | 66.241.124.4 | ✅ Running | ✅ Active | `dFEz/d9TKfddk0Z6aMN03uO+j0GgQwXSR/+Ay+IXXmk=` |
+| Toronto | 66.241.125.247 | ✅ Running | ✅ Active | `O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=` |
 
 ---
 
