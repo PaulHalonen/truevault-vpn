@@ -91,7 +91,7 @@ define('SESSION_LIFETIME', 604800);
 // SECURITY SETTINGS
 // ============================================
 
-// JWT Secret Key (IMPORTANT: Change this to a random string!)
+// JWT Secret Key (random string for token signing)
 define('JWT_SECRET', 'd0c14e79c13c47d09c49ba0f2057cb0af9e8975527ff4761');
 
 // JWT Expiration (7 days in seconds)
