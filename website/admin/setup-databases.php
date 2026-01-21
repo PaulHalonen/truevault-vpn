@@ -179,6 +179,286 @@ try {
     $results['servers.db'] = 'error';
 }
 
+// ============================================
+// DATABASE 4: BILLING.DB
+// ============================================
+try {
+    echo '<h2>Creating billing.db...</h2>';
+    
+    if (file_exists(DB_BILLING)) {
+        echo '<div class="info">⚠️ billing.db already exists - skipping</div>';
+    } else {
+        $db = new SQLite3(DB_BILLING);
+        
+        $db->exec("CREATE TABLE subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            plan_id TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            paypal_subscription_id TEXT UNIQUE,
+            start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            next_billing_date DATETIME,
+            cancelled_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            subscription_id INTEGER,
+            transaction_type TEXT NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            currency TEXT DEFAULT 'USD',
+            paypal_transaction_id TEXT UNIQUE,
+            status TEXT DEFAULT 'pending',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            invoice_number TEXT NOT NULL UNIQUE,
+            amount DECIMAL(10,2) NOT NULL,
+            status TEXT DEFAULT 'pending',
+            due_date DATETIME,
+            paid_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->close();
+        echo '<div class="success">✅ billing.db created!</div>';
+    }
+    $results['billing.db'] = 'success';
+} catch (Exception $e) {
+    echo '<div class="error">❌ ' . $e->getMessage() . '</div>';
+    $results['billing.db'] = 'error';
+}
+
+// ============================================
+// DATABASE 5: PORT_FORWARDS.DB
+// ============================================
+try {
+    echo '<h2>Creating port_forwards.db...</h2>';
+    
+    if (file_exists(DB_PORT_FORWARDS)) {
+        echo '<div class="info">⚠️ port_forwards.db already exists - skipping</div>';
+    } else {
+        $db = new SQLite3(DB_PORT_FORWARDS);
+        
+        $db->exec("CREATE TABLE port_forwards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            device_id INTEGER NOT NULL,
+            rule_name TEXT NOT NULL,
+            protocol TEXT NOT NULL,
+            external_port INTEGER NOT NULL,
+            internal_ip TEXT NOT NULL,
+            internal_port INTEGER NOT NULL,
+            status TEXT DEFAULT 'active',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE discovered_devices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            ip_address TEXT NOT NULL,
+            mac_address TEXT,
+            device_name TEXT,
+            device_type TEXT,
+            manufacturer TEXT,
+            discovered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->close();
+        echo '<div class="success">✅ port_forwards.db created!</div>';
+    }
+    $results['port_forwards.db'] = 'success';
+} catch (Exception $e) {
+    echo '<div class="error">❌ ' . $e->getMessage() . '</div>';
+    $results['port_forwards.db'] = 'error';
+}
+
+// ============================================
+// DATABASE 6: PARENTAL_CONTROLS.DB
+// ============================================
+try {
+    echo '<h2>Creating parental_controls.db...</h2>';
+    
+    if (file_exists(DB_PARENTAL)) {
+        echo '<div class="info">⚠️ parental_controls.db already exists - skipping</div>';
+    } else {
+        $db = new SQLite3(DB_PARENTAL);
+        
+        $db->exec("CREATE TABLE profiles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            profile_name TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE blocked_sites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id INTEGER NOT NULL,
+            domain TEXT NOT NULL,
+            category TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE schedules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id INTEGER NOT NULL,
+            day_of_week INTEGER NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            is_allowed INTEGER DEFAULT 1
+        )");
+        
+        $db->close();
+        echo '<div class="success">✅ parental_controls.db created!</div>';
+    }
+    $results['parental_controls.db'] = 'success';
+} catch (Exception $e) {
+    echo '<div class="error">❌ ' . $e->getMessage() . '</div>';
+    $results['parental_controls.db'] = 'error';
+}
+
+// ============================================
+// DATABASE 7: ADMIN.DB
+// ============================================
+try {
+    echo '<h2>Creating admin.db...</h2>';
+    
+    if (file_exists(DB_ADMIN)) {
+        echo '<div class="info">⚠️ admin.db already exists - skipping</div>';
+    } else {
+        $db = new SQLite3(DB_ADMIN);
+        
+        $db->exec("CREATE TABLE settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT NOT NULL UNIQUE,
+            setting_value TEXT,
+            setting_type TEXT DEFAULT 'string',
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE admin_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'admin',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        // Insert default settings
+        $db->exec("INSERT INTO settings (setting_key, setting_value) VALUES ('site_name', 'TrueVault VPN')");
+        $db->exec("INSERT INTO settings (setting_key, setting_value) VALUES ('support_email', 'paulhalonen@gmail.com')");
+        $db->exec("INSERT INTO settings (setting_key, setting_value) VALUES ('admin_email', 'admin@the-truth-publishing.com')");
+        
+        $db->close();
+        echo '<div class="success">✅ admin.db created!</div>';
+    }
+    $results['admin.db'] = 'success';
+} catch (Exception $e) {
+    echo '<div class="error">❌ ' . $e->getMessage() . '</div>';
+    $results['admin.db'] = 'error';
+}
+
+// ============================================
+// DATABASE 8: LOGS.DB
+// ============================================
+try {
+    echo '<h2>Creating logs.db...</h2>';
+    
+    if (file_exists(DB_LOGS)) {
+        echo '<div class="info">⚠️ logs.db already exists - skipping</div>';
+    } else {
+        $db = new SQLite3(DB_LOGS);
+        
+        $db->exec("CREATE TABLE activity_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            details TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE connection_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id INTEGER NOT NULL,
+            server_id INTEGER NOT NULL,
+            connected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            disconnected_at DATETIME,
+            bytes_sent INTEGER DEFAULT 0,
+            bytes_received INTEGER DEFAULT 0
+        )");
+        
+        $db->exec("CREATE TABLE error_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            error_type TEXT NOT NULL,
+            message TEXT NOT NULL,
+            file TEXT,
+            line INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->close();
+        echo '<div class="success">✅ logs.db created!</div>';
+    }
+    $results['logs.db'] = 'success';
+} catch (Exception $e) {
+    echo '<div class="error">❌ ' . $e->getMessage() . '</div>';
+    $results['logs.db'] = 'error';
+}
+
+// ============================================
+// DATABASE 9: THEMES.DB
+// ============================================
+try {
+    echo '<h2>Creating themes.db...</h2>';
+    
+    if (file_exists(DB_THEMES)) {
+        echo '<div class="info">⚠️ themes.db already exists - skipping</div>';
+    } else {
+        $db = new SQLite3(DB_THEMES);
+        
+        $db->exec("CREATE TABLE themes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            theme_name TEXT NOT NULL UNIQUE,
+            theme_slug TEXT NOT NULL UNIQUE,
+            category TEXT DEFAULT 'standard',
+            primary_color TEXT DEFAULT '#667eea',
+            secondary_color TEXT DEFAULT '#764ba2',
+            background_color TEXT DEFAULT '#1a1a2e',
+            text_color TEXT DEFAULT '#ffffff',
+            font_family TEXT DEFAULT 'Inter, sans-serif',
+            is_active INTEGER DEFAULT 0,
+            is_default INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $db->exec("CREATE TABLE theme_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT NOT NULL UNIQUE,
+            setting_value TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        // Insert default theme
+        $db->exec("INSERT INTO themes (theme_name, theme_slug, category, is_active, is_default) VALUES ('Professional Dark', 'professional-dark', 'standard', 1, 1)");
+        $db->exec("INSERT INTO theme_settings (setting_key, setting_value) VALUES ('active_theme', 'professional-dark')");
+        
+        $db->close();
+        echo '<div class="success">✅ themes.db created!</div>';
+    }
+    $results['themes.db'] = 'success';
+} catch (Exception $e) {
+    echo '<div class="error">❌ ' . $e->getMessage() . '</div>';
+    $results['themes.db'] = 'error';
+}
+
 // Summary
 echo '<h2>Summary</h2>';
 echo '<div class="info"><ul>';
@@ -187,7 +467,7 @@ foreach ($results as $db => $status) {
     echo "<li>$icon $db</li>";
 }
 echo '</ul></div>';
-echo '<p>Continue to Part 2 for remaining databases.</p>';
+echo '<p><strong>All 9 databases created!</strong> Setup complete.</p>';
 
 ?>
 </div>
