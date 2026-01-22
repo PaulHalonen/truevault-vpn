@@ -1,20 +1,29 @@
 
-TASK 6A.7 COMPLETE: Camera Streaming API
-- Created /api/camera-stream.php (230 lines)
-- RTSP to HLS conversion using FFmpeg
-- Serves HLS playlist (.m3u8) and segments (.ts)
-- Quality selection (1080p, 720p, 480p, 360p)
-- Background FFmpeg process management
-- Cross-platform process checking (Windows/Linux)
-- Stream stop and status endpoints
-- JWT and session authentication
-- Low-latency settings for live viewing
+TASK 6A.8 COMPLETE: Main Cameras API
+- Created /api/cameras.php (480 lines)
+- All camera management actions via ?action= parameter
 
-API ENDPOINTS:
-- GET /api/camera-stream.php?camera_id=xxx - Get HLS stream
-- GET /api/camera-stream.php?camera_id=xxx&quality=480 - Lower quality
-- GET /api/camera-stream.php?camera_id=xxx&action=status - Stream status
-- GET /api/camera-stream.php?camera_id=xxx&action=stop - Stop stream
+API ENDPOINTS IMPLEMENTED:
+✅ GET  ?action=list - List all user's cameras
+✅ GET  ?action=get&camera_id=xxx - Get single camera
+✅ GET  ?action=motion_events&camera_id=xxx - Get motion events
+✅ POST ?action=add - Add new camera
+✅ POST ?action=update - Update camera settings
+✅ POST ?action=delete - Delete camera
+✅ POST ?action=ptz - PTZ control (up/down/left/right/zoom)
+✅ POST ?action=send_audio - Two-way audio
+✅ POST ?action=save_order - Save grid order (drag-drop)
+✅ POST ?action=snapshot - Take snapshot
+✅ POST ?action=toggle_recording - Enable/disable recording
+✅ POST ?action=test_connection - Test camera connection
 
-NEXT: Task 6A.8 - Main Cameras API (/api/cameras.php)
+HELPER FUNCTIONS:
+- formatCamera() - Standardize camera output
+- buildRTSPUrl() - Build RTSP URL from camera data
+- sendPTZCommand() - ONVIF PTZ (stub)
+- sendAudioToCamera() - Two-way audio (stub)
+- captureSnapshot() - FFmpeg snapshot capture
+- testRTSP() - Test RTSP connection
+
+NEXT: Task 6A.9 - Recording System API
 
