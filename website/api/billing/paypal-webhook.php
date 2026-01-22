@@ -2,7 +2,7 @@
 /**
  * PayPal Webhook Handler - SQLITE3 VERSION
  * 
- * PURPOSE: Process PayPal webhook events
+ * PURPOSE: Receive and process PayPal webhook events
  * ENDPOINT: /api/billing/paypal-webhook.php
  * 
  * EVENTS HANDLED:
@@ -29,17 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $body = file_get_contents('php://input');
 $headers = getallheaders();
 
-// Normalize header keys to uppercase
+// Normalize header keys (PayPal uses various cases)
 $normalizedHeaders = [];
 foreach ($headers as $key => $value) {
-    $normalizedHeaders[strtoupper(str_replace('-', '-', $key))] = $value;
+    $normalizedHeaders[strtoupper($key)] = $value;
 }
 
 // Log incoming webhook
 $logsDb = Database::getInstance('logs');
 $stmt = $logsDb->prepare("
-    INSERT INTO webhook_log (source, event_type, payload, received_at)
-    VALUES ('paypal', :event_type, :payload, datetime('now'))
+    INSERT INTO webhook_log (source, event_type, payload, headers, created_at)
+    VALUES ('paypal', :event_type, :payload, :headers, datetime('now'))
 ");
 
 $event = json_decode($body, true);
@@ -47,18 +47,15 @@ $eventType = $event['event_type'] ?? 'unknown';
 
 $stmt->bindValue(':event_type', $eventType, SQLITE3_TEXT);
 $stmt->bindValue(':payload', $body, SQLITE3_TEXT);
+$stmt->bindValue(':headers', json_encode($normalizedHeaders), SQLITE3_TEXT);
 $stmt->execute();
 $webhookLogId = $logsDb->lastInsertRowID();
 
 try {
     // Verify webhook signature (skip in development if needed)
-    $adminDb = Database::getInstance('admin');
-    $stmt = $adminDb->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'paypal_verify_webhooks'");
-    $result = $stmt->execute();
-    $row = $result->fetchArray(SQLITE3_ASSOC);
-    $verifyWebhooks = ($row['setting_value'] ?? 'true') === 'true';
+    $verifySignature = true; // Set to false for testing
     
-    if ($verifyWebhooks) {
+    if ($verifySignature) {
         $isValid = PayPal::verifyWebhookSignature($normalizedHeaders, $body);
         if (!$isValid) {
             logError('PayPal webhook signature verification failed', ['webhook_log_id' => $webhookLogId]);
@@ -68,7 +65,7 @@ try {
         }
     }
     
-    // Process event
+    // Process event based on type
     $resource = $event['resource'] ?? [];
     $subscriptionId = $resource['id'] ?? $resource['billing_agreement_id'] ?? null;
     $customId = $resource['custom_id'] ?? null; // User ID we passed when creating
@@ -96,21 +93,21 @@ try {
             break;
             
         default:
-            // Log unhandled event type
-            logError('Unhandled PayPal event', ['event_type' => $eventType]);
+            // Log unknown event type but return success
+            logError('Unknown PayPal webhook event', ['event_type' => $eventType]);
     }
     
-    // Update webhook log as processed
+    // Update webhook log with processing result
     $stmt = $logsDb->prepare("UPDATE webhook_log SET processed = 1, processed_at = datetime('now') WHERE id = :id");
     $stmt->bindValue(':id', $webhookLogId, SQLITE3_INTEGER);
     $stmt->execute();
     
-    // Always return 200 to PayPal
+    // Return 200 to acknowledge receipt
     http_response_code(200);
-    echo json_encode(['status' => 'processed']);
+    echo json_encode(['success' => true]);
     
 } catch (Exception $e) {
-    logError('PayPal webhook error: ' . $e->getMessage(), ['webhook_log_id' => $webhookLogId]);
+    logError('PayPal webhook processing error: ' . $e->getMessage(), ['webhook_log_id' => $webhookLogId]);
     
     // Update webhook log with error
     $stmt = $logsDb->prepare("UPDATE webhook_log SET error = :error WHERE id = :id");
@@ -118,9 +115,9 @@ try {
     $stmt->bindValue(':id', $webhookLogId, SQLITE3_INTEGER);
     $stmt->execute();
     
-    // Still return 200 to prevent PayPal retries
+    // Still return 200 to prevent PayPal retries (we logged the error)
     http_response_code(200);
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 
 /**
@@ -130,7 +127,7 @@ function handleSubscriptionActivated($subscriptionId, $customId, $resource) {
     $billingDb = Database::getInstance('billing');
     $usersDb = Database::getInstance('users');
     
-    // Find subscription by PayPal ID
+    // Find subscription in our database
     $stmt = $billingDb->prepare("SELECT id, user_id, plan_type FROM subscriptions WHERE paypal_subscription_id = :id");
     $stmt->bindValue(':id', $subscriptionId, SQLITE3_TEXT);
     $result = $stmt->execute();
@@ -151,7 +148,7 @@ function handleSubscriptionActivated($subscriptionId, $customId, $resource) {
         $stmt->bindValue(':id', $subscription['id'], SQLITE3_INTEGER);
         $stmt->execute();
     } else {
-        // Create new subscription record
+        // Create subscription record
         $stmt = $billingDb->prepare("
             INSERT INTO subscriptions (user_id, paypal_subscription_id, plan_type, status, activated_at, created_at, updated_at)
             VALUES (:user_id, :paypal_id, :plan_type, 'active', datetime('now'), datetime('now'), datetime('now'))
@@ -171,7 +168,8 @@ function handleSubscriptionActivated($subscriptionId, $customId, $resource) {
         $stmt->execute();
     }
     
-    logAudit($userId, 'subscription_activated', 'subscription', $subscriptionId);
+    // Log event
+    logAudit($userId, 'subscription_activated', 'subscription', $subscriptionId, ['plan' => $planType]);
 }
 
 /**
@@ -192,18 +190,19 @@ function handleSubscriptionCancelled($subscriptionId, $resource) {
     $stmt->bindValue(':id', $subscriptionId, SQLITE3_TEXT);
     $stmt->execute();
     
-    // Get user ID and downgrade
+    // Get user ID
     $stmt = $billingDb->prepare("SELECT user_id FROM subscriptions WHERE paypal_subscription_id = :id");
     $stmt->bindValue(':id', $subscriptionId, SQLITE3_TEXT);
     $result = $stmt->execute();
     $subscription = $result->fetchArray(SQLITE3_ASSOC);
     
     if ($subscription) {
+        // Update user status (keep tier until subscription period ends)
         $stmt = $usersDb->prepare("UPDATE users SET subscription_status = 'cancelled', updated_at = datetime('now') WHERE id = :id");
         $stmt->bindValue(':id', $subscription['user_id'], SQLITE3_INTEGER);
         $stmt->execute();
         
-        logAudit($subscription['user_id'], 'subscription_cancelled', 'subscription', $subscriptionId);
+        logAudit($subscription['user_id'], 'subscription_cancelled', 'subscription', $subscriptionId, []);
     }
 }
 
@@ -217,24 +216,26 @@ function handleSubscriptionSuspended($subscriptionId, $resource) {
     // Update subscription
     $stmt = $billingDb->prepare("
         UPDATE subscriptions 
-        SET status = 'suspended', updated_at = datetime('now')
+        SET status = 'suspended', 
+            updated_at = datetime('now')
         WHERE paypal_subscription_id = :id
     ");
     $stmt->bindValue(':id', $subscriptionId, SQLITE3_TEXT);
     $stmt->execute();
     
-    // Get user and update status
+    // Get user ID
     $stmt = $billingDb->prepare("SELECT user_id FROM subscriptions WHERE paypal_subscription_id = :id");
     $stmt->bindValue(':id', $subscriptionId, SQLITE3_TEXT);
     $result = $stmt->execute();
     $subscription = $result->fetchArray(SQLITE3_ASSOC);
     
     if ($subscription) {
-        $stmt = $usersDb->prepare("UPDATE users SET subscription_status = 'suspended', updated_at = datetime('now') WHERE id = :id");
+        // Downgrade user to free tier
+        $stmt = $usersDb->prepare("UPDATE users SET tier = 'free', subscription_status = 'suspended', updated_at = datetime('now') WHERE id = :id");
         $stmt->bindValue(':id', $subscription['user_id'], SQLITE3_INTEGER);
         $stmt->execute();
         
-        logAudit($subscription['user_id'], 'subscription_suspended', 'subscription', $subscriptionId);
+        logAudit($subscription['user_id'], 'subscription_suspended', 'subscription', $subscriptionId, []);
     }
 }
 
@@ -246,48 +247,36 @@ function handlePaymentCompleted($resource) {
     
     $amount = $resource['amount']['total'] ?? '0.00';
     $currency = $resource['amount']['currency'] ?? 'USD';
-    $transactionId = $resource['id'] ?? '';
-    $billingAgreementId = $resource['billing_agreement_id'] ?? '';
+    $paymentId = $resource['id'] ?? '';
+    $subscriptionId = $resource['billing_agreement_id'] ?? '';
     
-    // Find subscription
-    $stmt = $billingDb->prepare("SELECT id, user_id, plan_type FROM subscriptions WHERE paypal_subscription_id = :id");
-    $stmt->bindValue(':id', $billingAgreementId, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    $subscription = $result->fetchArray(SQLITE3_ASSOC);
-    
-    if (!$subscription) {
-        return; // Can't find subscription
-    }
-    
-    // Check for duplicate transaction
-    $stmt = $billingDb->prepare("SELECT id FROM invoices WHERE transaction_id = :id");
-    $stmt->bindValue(':id', $transactionId, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    if ($result->fetchArray()) {
-        return; // Already processed
+    // Get subscription info
+    $userId = null;
+    if ($subscriptionId) {
+        $stmt = $billingDb->prepare("SELECT user_id FROM subscriptions WHERE paypal_subscription_id = :id");
+        $stmt->bindValue(':id', $subscriptionId, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        $subscription = $result->fetchArray(SQLITE3_ASSOC);
+        $userId = $subscription['user_id'] ?? null;
     }
     
     // Create invoice
-    $invoiceNumber = 'INV-' . date('Ymd') . '-' . str_pad($subscription['user_id'], 5, '0', STR_PAD_LEFT) . '-' . substr(uniqid(), -4);
+    $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(substr(md5($paymentId), 0, 6));
     
     $stmt = $billingDb->prepare("
-        INSERT INTO invoices (user_id, subscription_id, invoice_number, amount, currency, status, transaction_id, paid_at, created_at)
-        VALUES (:user_id, :sub_id, :invoice_num, :amount, :currency, 'paid', :trans_id, datetime('now'), datetime('now'))
+        INSERT INTO invoices (user_id, invoice_number, amount, currency, status, paypal_payment_id, paid_at, created_at)
+        VALUES (:user_id, :invoice_number, :amount, :currency, 'paid', :payment_id, datetime('now'), datetime('now'))
     ");
-    $stmt->bindValue(':user_id', $subscription['user_id'], SQLITE3_INTEGER);
-    $stmt->bindValue(':sub_id', $subscription['id'], SQLITE3_INTEGER);
-    $stmt->bindValue(':invoice_num', $invoiceNumber, SQLITE3_TEXT);
+    $stmt->bindValue(':user_id', $userId, SQLITE3_INTEGER);
+    $stmt->bindValue(':invoice_number', $invoiceNumber, SQLITE3_TEXT);
     $stmt->bindValue(':amount', $amount, SQLITE3_TEXT);
     $stmt->bindValue(':currency', $currency, SQLITE3_TEXT);
-    $stmt->bindValue(':trans_id', $transactionId, SQLITE3_TEXT);
+    $stmt->bindValue(':payment_id', $paymentId, SQLITE3_TEXT);
     $stmt->execute();
     
-    // Update subscription next billing date
-    $stmt = $billingDb->prepare("UPDATE subscriptions SET next_billing_date = date('now', '+1 month'), updated_at = datetime('now') WHERE id = :id");
-    $stmt->bindValue(':id', $subscription['id'], SQLITE3_INTEGER);
-    $stmt->execute();
-    
-    logAudit($subscription['user_id'], 'payment_received', 'invoice', $invoiceNumber, ['amount' => $amount]);
+    if ($userId) {
+        logAudit($userId, 'payment_completed', 'invoice', $invoiceNumber, ['amount' => $amount, 'currency' => $currency]);
+    }
 }
 
 /**
@@ -296,36 +285,28 @@ function handlePaymentCompleted($resource) {
 function handlePaymentRefunded($resource) {
     $billingDb = Database::getInstance('billing');
     
-    $transactionId = $resource['sale_id'] ?? $resource['id'] ?? '';
+    $paymentId = $resource['sale_id'] ?? $resource['id'] ?? '';
     $refundAmount = $resource['amount']['total'] ?? '0.00';
     
-    // Find and update invoice
+    // Update invoice if found
     $stmt = $billingDb->prepare("
         UPDATE invoices 
         SET status = 'refunded', 
             refunded_at = datetime('now'),
             refund_amount = :amount
-        WHERE transaction_id = :trans_id
+        WHERE paypal_payment_id = :payment_id
     ");
     $stmt->bindValue(':amount', $refundAmount, SQLITE3_TEXT);
-    $stmt->bindValue(':trans_id', $transactionId, SQLITE3_TEXT);
+    $stmt->bindValue(':payment_id', $paymentId, SQLITE3_TEXT);
     $stmt->execute();
     
-    // Get user for logging
-    $stmt = $billingDb->prepare("SELECT user_id FROM invoices WHERE transaction_id = :id");
-    $stmt->bindValue(':id', $transactionId, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    $invoice = $result->fetchArray(SQLITE3_ASSOC);
-    
-    if ($invoice) {
-        logAudit($invoice['user_id'], 'payment_refunded', 'invoice', $transactionId, ['amount' => $refundAmount]);
-    }
+    logError('Payment refunded', ['payment_id' => $paymentId, 'amount' => $refundAmount]);
 }
 
 /**
- * Log audit event
+ * Helper: Log audit event
  */
-function logAudit($userId, $action, $entityType, $entityId, $details = []) {
+function logAudit($userId, $action, $entityType, $entityId, $details) {
     $logsDb = Database::getInstance('logs');
     $stmt = $logsDb->prepare("
         INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address, created_at)

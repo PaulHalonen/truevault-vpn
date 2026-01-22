@@ -1,4 +1,4 @@
-# FTP Upload - Part 5 Billing APIs
+# FTP Upload - Part 5 Billing & PayPal
 $ftpHost = "ftp://the-truth-publishing.com"
 $ftpUser = "kahlen@the-truth-publishing.com"
 $ftpPass = "AndassiAthena8"
@@ -18,37 +18,41 @@ function Create-FtpDir($dir) {
     } catch { }
 }
 
-function Upload-File($local, $remote) {
+function Upload($file, $remote) {
     try {
         $request = [System.Net.FtpWebRequest]::Create("$ftpHost$remote")
         $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
         $request.Credentials = $ftpCred
         $request.UseBinary = $true
-        $content = [System.IO.File]::ReadAllBytes($local)
+        $content = [System.IO.File]::ReadAllBytes($file)
         $request.ContentLength = $content.Length
         $stream = $request.GetRequestStream()
         $stream.Write($content, 0, $content.Length)
         $stream.Close()
         $response = $request.GetResponse()
         $response.Close()
-        Write-Host "Uploaded: $local"
+        Write-Host "Uploaded: $file"
     } catch {
-        Write-Host "Error: $local - $_"
+        Write-Host "Error: $_"
     }
 }
 
 Write-Host "=== Creating directories ==="
 Create-FtpDir "$ftpHost$remotePath/api/billing"
 
-Write-Host "`n=== Uploading PayPal class ==="
-Upload-File "$localPath\includes\PayPal.php" "$remotePath/includes/PayPal.php"
+Write-Host "`n=== Uploading includes ==="
+Upload "$localPath\includes\PayPal.php" "$remotePath/includes/PayPal.php"
 
-Write-Host "`n=== Uploading Billing API files ==="
-Upload-File "$localPath\api\billing\create-subscription.php" "$remotePath/api/billing/create-subscription.php"
-Upload-File "$localPath\api\billing\paypal-webhook.php" "$remotePath/api/billing/paypal-webhook.php"
-Upload-File "$localPath\api\billing\cancel-subscription.php" "$remotePath/api/billing/cancel-subscription.php"
+Write-Host "`n=== Uploading billing API ==="
+Upload "$localPath\api\billing\create-subscription.php" "$remotePath/api/billing/create-subscription.php"
+Upload "$localPath\api\billing\paypal-webhook.php" "$remotePath/api/billing/paypal-webhook.php"
+Upload "$localPath\api\billing\status.php" "$remotePath/api/billing/status.php"
 
-Write-Host "`n=== Uploading Admin migration ==="
-Upload-File "$localPath\admin\add-webhook-table.php" "$remotePath/admin/add-webhook-table.php"
+Write-Host "`n=== Uploading dashboard pages ==="
+Upload "$localPath\dashboard\subscription-success.php" "$remotePath/dashboard/subscription-success.php"
+Upload "$localPath\dashboard\subscription-cancelled.php" "$remotePath/dashboard/subscription-cancelled.php"
+
+Write-Host "`n=== Uploading admin setup ==="
+Upload "$localPath\admin\setup-billing-tables.php" "$remotePath/admin/setup-billing-tables.php"
 
 Write-Host "`n=== Done! ==="
