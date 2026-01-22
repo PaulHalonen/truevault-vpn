@@ -1,29 +1,35 @@
 
-TASK 6A.8 COMPLETE: Main Cameras API
-- Created /api/cameras.php (480 lines)
-- All camera management actions via ?action= parameter
+TASK 6A.9 COMPLETE: Recording System API
+- Created /api/recordings.php (520 lines)
+- Full recording management with multiple modes
 
 API ENDPOINTS IMPLEMENTED:
-✅ GET  ?action=list - List all user's cameras
-✅ GET  ?action=get&camera_id=xxx - Get single camera
-✅ GET  ?action=motion_events&camera_id=xxx - Get motion events
-✅ POST ?action=add - Add new camera
-✅ POST ?action=update - Update camera settings
-✅ POST ?action=delete - Delete camera
-✅ POST ?action=ptz - PTZ control (up/down/left/right/zoom)
-✅ POST ?action=send_audio - Two-way audio
-✅ POST ?action=save_order - Save grid order (drag-drop)
-✅ POST ?action=snapshot - Take snapshot
-✅ POST ?action=toggle_recording - Enable/disable recording
-✅ POST ?action=test_connection - Test camera connection
+✅ GET  ?action=list - List recordings with filters
+✅ GET  ?action=get&recording_id=xxx - Get single recording
+✅ POST ?action=start - Start recording (FFmpeg)
+✅ POST ?action=stop - Stop recording (graceful SIGTERM)
+✅ POST ?action=delete - Delete recording + files
+✅ GET  ?action=storage_stats - Storage usage per user/camera
+✅ POST ?action=set_mode - Set recording mode (manual/continuous/motion/scheduled)
+✅ POST ?action=set_schedule - Set recording schedule
+✅ GET  ?action=download - Download recording file
+✅ POST ?action=share - Generate share link (expires)
+✅ GET  ?action=shared&token=xxx - Access shared recording
+✅ POST ?action=cleanup - Delete old recordings
 
-HELPER FUNCTIONS:
-- formatCamera() - Standardize camera output
-- buildRTSPUrl() - Build RTSP URL from camera data
-- sendPTZCommand() - ONVIF PTZ (stub)
-- sendAudioToCamera() - Two-way audio (stub)
-- captureSnapshot() - FFmpeg snapshot capture
-- testRTSP() - Test RTSP connection
+RECORDING MODES:
+- manual: User-triggered start/stop
+- continuous: 24/7 recording
+- motion: Motion-triggered (requires motion detection)
+- scheduled: Specific days/times only
 
-NEXT: Task 6A.9 - Recording System API
+FEATURES:
+- 50GB default storage quota per user
+- Per-camera storage tracking
+- Automatic thumbnail generation
+- Video duration extraction via FFprobe
+- Share links with expiration
+- Cleanup old recordings by age
+
+NEXT: Task 6A.10 - Playback Interface
 
