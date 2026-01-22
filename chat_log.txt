@@ -1,47 +1,49 @@
 
-TASK 6A.11 COMPLETE: Motion Detection System API
-- Created /api/motion.php (550 lines)
-- Created /api/motion-detector.php (300 lines)
+============================================================
+SESSION: January 22, 2026 - Continued from compacted context
+============================================================
 
-ENDPOINTS IMPLEMENTED:
-✅ GET ?action=status - Get motion status for camera
-✅ POST ?action=enable - Enable motion detection
-✅ POST ?action=disable - Disable motion detection
-✅ POST ?action=configure - Set sensitivity/cooldown/etc
-✅ GET ?action=events - Get motion events with filters
-✅ POST ?action=clear_events - Delete old events
-✅ GET ?action=zones - Get detection zones
-✅ POST ?action=set_zones - Set detection zones
-✅ POST ?action=test - Test motion detection
+TASK 6A.1 COMPLETE: Brute Force Scanner (v3.0)
+- Created /truthvault_scanner.py (850+ lines)
+- Complete rewrite with advanced discovery features
 
-MOTION DETECTOR WORKER:
-✅ Background PHP process
-✅ Frame capture via FFmpeg
-✅ GD library pixel comparison
-✅ ImageMagick fallback
-✅ Cooldown between events
-✅ Automatic recording trigger
-✅ Snapshot + thumbnail creation
-✅ Database event logging
-✅ Graceful signal handling
+BRUTE FORCE FEATURES:
+✅ 25+ camera-related ports scanned
+✅ ONVIF WS-Discovery protocol (multicast probe)
+✅ UPnP SSDP discovery (M-SEARCH)
+✅ mDNS/Bonjour service detection (with zeroconf)
+✅ HTTP fingerprinting (13 camera brands)
+✅ Safe RTSP credential testing (OPTIONS request only)
+✅ HTTP Basic Auth credential testing
+✅ 35+ default credential pairs
+✅ 25+ common RTSP URL paths
+✅ Threaded port scanning (20 threads per device)
 
-TASK 6A.12 COMPLETE: Motion Detection UI
-- Created /dashboard/motion.php (650 lines)
+CAMERA PORTS SCANNED:
+- 554, 8554 (RTSP)
+- 80, 443, 8080, 8000, 8001, 8008, 8443 (HTTP/S)
+- 37777 (Dahua), 34567 (Hikvision), 6668 (Tuya)
+- 3702 (WS-Discovery), 1900 (UPnP), 5353 (mDNS)
+- Plus printer ports: 9100, 515, 631
 
-UI FEATURES:
-✅ Camera list with status indicators
-✅ Enable/disable toggle per camera
-✅ Sensitivity slider (1-100)
-✅ Cooldown and record duration settings
-✅ Snapshot/Recording/Notification toggles
-✅ Detection zone editor (visual)
-✅ Zone list management
-✅ Live preview image
-✅ Test detection button
-✅ Recent events timeline
-✅ Event filtering by camera
-✅ Clear old events
-✅ Stats dashboard (cameras, events today/week)
+HTTP SIGNATURES DETECTED:
+- Hikvision, Dahua, Reolink, Amcrest, Foscam
+- Axis, Uniview, Geeni, Wyze, Ring, Nest
+- TP-Link, Ezviz, Generic cameras
 
-CONTINUING WITH TASK 6A.13-14: Mobile Access
+DEFAULT CREDENTIALS TESTED:
+- admin/admin, admin/12345, root/root
+- Hikvision: admin/Hikvision, admin/hik12345
+- Dahua: 888888/888888, 666666/666666
+- Reolink: admin/(blank)
+- Plus 30+ more common pairs
+
+UI ENHANCEMENTS:
+- Phase indicators (ONVIF → UPnP → mDNS → Ping → Ports → Creds)
+- "With Credentials" filter button
+- ONVIF device count
+- Credentials found count
+- Visual indicators for cameras with working creds
+
+NEXT: Task 6A.11 - Motion Detection System
 
