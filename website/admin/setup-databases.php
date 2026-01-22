@@ -85,6 +85,7 @@ try {
             vip_approved INTEGER DEFAULT 0,
             vip_approved_at DATETIME,
             vip_approved_by TEXT,
+            vip_server_id INTEGER,
             notes TEXT
         )
     ");
@@ -599,13 +600,10 @@ try {
         )
     ");
     
-    // Insert default admin (owner) - CHANGE PASSWORD!
-    $password_hash = password_hash('admin123', PASSWORD_DEFAULT);
-    $stmt = $db->prepare("INSERT INTO admin_users (email, password_hash, full_name, role, status) VALUES (:email, :password, :name, 'super_admin', 'active')");
-    $stmt->bindValue(':email', 'kahlen@truthvault.com', SQLITE3_TEXT);
-    $stmt->bindValue(':password', $password_hash, SQLITE3_TEXT);
-    $stmt->bindValue(':name', 'Kah-Len (Owner)', SQLITE3_TEXT);
-    $stmt->execute();
+    // NOTE: Admin user should be created via reset-database.php or admin panel
+    // Not hardcoded here - this just creates the table structure
+    // Admin credentials are managed through the database, not code
+    echo '<div class="info">ℹ️ Admin users table created (empty - use reset-database.php to add admin)</div>';
     
     // Create system settings table
     $db->exec("
@@ -664,9 +662,10 @@ try {
         )
     ");
     
-    // Add the two known VIPs
-    $db->exec("INSERT INTO vip_list (email, notes, added_by) VALUES ('paulhalonen@gmail.com', 'Owner', 'system')");
-    $db->exec("INSERT INTO vip_list (email, notes, dedicated_server_id, added_by) VALUES ('seige235@yahoo.com', 'Dedicated St. Louis server', 2, 'system')");
+    // NOTE: VIP list entries should be added via reset-database.php or admin panel
+    // Not hardcoded here - this just creates the table structure
+    // VIP list is managed through the database, not code
+    echo '<div class="info">ℹ️ VIP list table created (empty - use reset-database.php to add VIPs)</div>';
     
     $db->close();
     echo '<div class="success">✅ admin.db created with default settings and VIP list!</div>';

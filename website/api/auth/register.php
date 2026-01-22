@@ -143,11 +143,11 @@ try {
     $stmt = $usersDb->prepare("
         INSERT INTO users (
             email, password_hash, first_name, last_name, tier,
-            vip_approved, status, email_verified,
+            vip_approved, vip_server_id, status, email_verified,
             created_at, updated_at
         ) VALUES (
             :email, :password_hash, :first_name, :last_name, :tier,
-            :vip_approved, 'active', 0,
+            :vip_approved, :vip_server_id, 'active', 0,
             datetime('now'), datetime('now')
         )
     ");
@@ -158,6 +158,7 @@ try {
     $stmt->bindValue(':last_name', $lastName, SQLITE3_TEXT);
     $stmt->bindValue(':tier', $tier, SQLITE3_TEXT);
     $stmt->bindValue(':vip_approved', $isVip ? 1 : 0, SQLITE3_INTEGER);
+    $stmt->bindValue(':vip_server_id', $vipServerId, $vipServerId ? SQLITE3_INTEGER : SQLITE3_NULL);
     $stmt->execute();
     
     $userId = $usersDb->lastInsertRowID();
@@ -201,7 +202,7 @@ try {
     ");
     $stmt->bindValue(':user_id', $userId, SQLITE3_INTEGER);
     $stmt->bindValue(':entity_id', $userId, SQLITE3_INTEGER);
-    $stmt->bindValue(':details', json_encode(['tier' => $tier, 'vip' => $isVip]), SQLITE3_TEXT);
+    $stmt->bindValue(':details', json_encode(['tier' => $tier, 'vip' => $isVip, 'dedicated_server_id' => $vipServerId]), SQLITE3_TEXT);
     $stmt->bindValue(':ip', $_SERVER['REMOTE_ADDR'] ?? 'unknown', SQLITE3_TEXT);
     $stmt->execute();
     
@@ -219,7 +220,8 @@ try {
             'first_name' => $firstName,
             'last_name' => $lastName,
             'tier' => $tier,
-            'vip_approved' => $isVip
+            'vip_approved' => $isVip,
+            'dedicated_server_id' => $vipServerId
         ],
         'token' => $token
     ]);
