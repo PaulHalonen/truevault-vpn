@@ -1,6 +1,25 @@
 
-MICRO-TASK 1 COMPLETE: setup-camera-tables.php
-- Created 5 camera tables: cameras, motion_events, camera_recordings, motion_detection_settings, recording_shares
-- Created 5 indexes for performance
-- File: /admin/setup-camera-tables.php (98 lines)
+TASK 6A.1 COMPLETE: Brute Force Network Scanner
+- Updated truthvault_scanner.py to v3.0.0
+- Added 12 camera-specific ports (CAMERA_PORTS)
+- Added 50+ common credentials (COMMON_CREDENTIALS)
+- Added brute_force_ports() function
+- Added test_credentials() for HTTP auth
+- Added test_rtsp_credentials() for RTSP auth
+- Added discover_onvif() for ONVIF protocol
+- Added discover_upnp() for UPnP discovery
+- Added http_fingerprint() for camera detection
+- Updated scan_network() to use all methods
+- UI shows credentials found count
+- File: /scanner/truthvault_scanner.py (550 lines)
+
+CHECKLIST ITEMS COMPLETED:
+✅ Add brute force port scanning
+✅ Test common camera ports on ALL devices
+✅ Implement credential testing (safe, non-destructive)
+✅ Add ONVIF discovery protocol
+✅ Add UPnP camera discovery
+✅ Detect cameras by HTTP fingerprinting
+
+NEXT: Task 6A.2 - CloudBypass.php (Geeni/Tuya bypass)
 
