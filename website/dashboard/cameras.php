@@ -375,6 +375,31 @@ $onlineCount = count(array_filter($cameras, fn($c) => $c['is_online']));
             background: rgba(255,100,100,0.3);
         }
         
+        /* Drag and Drop */
+        .camera-tile[draggable="true"] {
+            cursor: grab;
+        }
+        .camera-tile.dragging {
+            opacity: 0.5;
+            border: 2px dashed #00d9ff;
+            cursor: grabbing;
+        }
+        .camera-tile.drag-over {
+            border: 2px solid #00ff88;
+        }
+        
+        /* Auto-Cycle Indicator */
+        .cycle-indicator {
+            background: rgba(0,217,255,0.2);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .cycle-indicator.active {
+            display: block;
+        }
+        
         @media (max-width: 768px) {
             .camera-grid.grid-2x2,
             .camera-grid.grid-3x3,
@@ -413,7 +438,9 @@ $onlineCount = count(array_filter($cameras, fn($c) => $c['is_online']));
                 <button class="grid-btn" data-grid="3x3">3×3</button>
                 <button class="grid-btn" data-grid="4x4">4×4</button>
             </div>
-            <div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span class="cycle-indicator" id="cycleIndicator">📹 Cycling...</span>
+                <button class="btn btn-secondary" id="cycleBtn" onclick="toggleCycle()">🔄 Auto-Cycle</button>
                 <a href="/dashboard/discover-devices.php" class="btn btn-secondary">🔍 Discover Cameras</a>
                 <button class="btn btn-primary" onclick="addCamera()">+ Add Camera</button>
             </div>
@@ -431,6 +458,7 @@ $onlineCount = count(array_filter($cameras, fn($c) => $c['is_online']));
         <div class="camera-grid grid-2x2" id="cameraGrid">
             <?php foreach ($cameras as $camera): ?>
             <div class="camera-tile <?= $camera['is_online'] ? '' : 'offline' ?>" 
+                 draggable="true"
                  data-camera-id="<?= htmlspecialchars($camera['camera_id']) ?>"
                  data-rtsp="<?= htmlspecialchars($camera['rtsp_url'] ?? '') ?>"
                  onclick="expandCamera('<?= htmlspecialchars($camera['camera_id']) ?>')">
@@ -753,9 +781,121 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
 });
 
+// ============== DRAG TO REARRANGE ==============
+let draggedItem = null;
+
+function initDragDrop() {
+    const grid = document.getElementById('cameraGrid');
+    if (!grid) return;
+    
+    grid.addEventListener('dragstart', (e) => {
+        const tile = e.target.closest('.camera-tile');
+        if (!tile) return;
+        draggedItem = tile;
+        tile.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    grid.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const tile = e.target.closest('.camera-tile');
+        if (tile && tile !== draggedItem) {
+            tile.classList.add('drag-over');
+        }
+    });
+    
+    grid.addEventListener('dragleave', (e) => {
+        const tile = e.target.closest('.camera-tile');
+        if (tile) tile.classList.remove('drag-over');
+    });
+    
+    grid.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const tile = e.target.closest('.camera-tile');
+        if (tile && tile !== draggedItem) {
+            tile.classList.remove('drag-over');
+            const rect = tile.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            if (e.clientY < midY) {
+                grid.insertBefore(draggedItem, tile);
+            } else {
+                grid.insertBefore(draggedItem, tile.nextSibling);
+            }
+            saveCameraOrder();
+        }
+    });
+    
+    grid.addEventListener('dragend', (e) => {
+        if (draggedItem) {
+            draggedItem.classList.remove('dragging');
+            draggedItem = null;
+        }
+        document.querySelectorAll('.drag-over').forEach(t => t.classList.remove('drag-over'));
+    });
+}
+
+async function saveCameraOrder() {
+    const order = Array.from(document.querySelectorAll('.camera-tile'))
+        .map(tile => tile.dataset.cameraId);
+    
+    await fetch('/api/cameras.php?action=save_order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order })
+    });
+}
+
+// ============== AUTO-CYCLE ==============
+let cycleTimer = null;
+let cycleIndex = 0;
+let cycleInterval = 10000; // 10 seconds
+
+function toggleCycle() {
+    if (cycleTimer) {
+        stopCycle();
+    } else {
+        startCycle();
+    }
+}
+
+function startCycle() {
+    if (cameras.length === 0) return;
+    
+    cycleIndex = 0;
+    document.getElementById('cycleBtn').textContent = '⏹️ Stop Cycle';
+    document.getElementById('cycleIndicator').classList.add('active');
+    
+    showCycleCamera();
+    cycleTimer = setInterval(() => {
+        cycleIndex = (cycleIndex + 1) % cameras.length;
+        showCycleCamera();
+    }, cycleInterval);
+}
+
+function stopCycle() {
+    if (cycleTimer) {
+        clearInterval(cycleTimer);
+        cycleTimer = null;
+    }
+    document.getElementById('cycleBtn').textContent = '🔄 Auto-Cycle';
+    document.getElementById('cycleIndicator').classList.remove('active');
+    closeModal();
+}
+
+function showCycleCamera() {
+    const camera = cameras[cycleIndex];
+    if (!camera) return;
+    
+    document.getElementById('cycleIndicator').textContent = 
+        `📹 ${cycleIndex + 1}/${cameras.length}: ${camera.camera_name}`;
+    
+    expandCamera(camera.camera_id);
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     initStreams();
+    initDragDrop();
 });
 </script>
 </body>

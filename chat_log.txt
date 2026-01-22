@@ -1,29 +1,19 @@
 
-TASK 6A.5 COMPLETE: Camera Dashboard with Live Streaming
-- Created /dashboard/cameras.php (450 lines)
-- HLS.js integration for video streaming
-- Grid layout selector (1x1, 2x2, 3x3, 4x4)
-- Full screen modal view
-- Video player controls
-- Quality selection (1080p, 720p, 480p, auto)
-- Snapshot button
-- Audio toggle (mute/unmute)
-- Two-way audio (hold to talk with MediaRecorder)
-- PTZ controls (up/down/left/right/home/zoom)
-- Status display (connection, quality, latency)
-- Recording toggle
-- Responsive design for mobile
+TASK 6A.6 COMPLETE: Multi-Camera Grid View Enhancements
+- Added drag-to-rearrange functionality
+  - CSS for dragging state (.dragging, .drag-over)
+  - dragstart, dragover, dragleave, drop, dragend events
+  - saveCameraOrder() saves order to database
+- Added auto-cycle feature
+  - toggleCycle(), startCycle(), stopCycle()
+  - 10-second interval between cameras
+  - Cycle indicator shows current camera
+  - Stop Cycle button to exit
 
 CHECKLIST ITEMS COMPLETED:
-✅ Update camera dashboard with live streaming
-✅ Integrate HLS.js for video playback
-✅ Add video player controls
-✅ Add quality selection (1080p, 720p, 480p)
-✅ Add full screen mode
-✅ Add snapshot button
-✅ Add audio toggle
-✅ Add two-way audio (talk through camera)
-✅ Add PTZ controls (pan/tilt/zoom)
+✅ Drag to rearrange cameras
+✅ Auto-cycle through cameras
+✅ Grid layout selector (1x1, 2x2, 3x3, 4x4) - already done in 6A.5
 
-NEXT: Task 6A.6 - Multi-Camera Grid View (drag to rearrange, auto-cycle)
+NEXT: Task 6A.7 - Camera Streaming API (/api/camera-stream.php)
 
