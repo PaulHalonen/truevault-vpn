@@ -4,7 +4,7 @@
  * 
  * This script sets up:
  * 1. API secrets for VPN servers in system_settings
- * 2. Server records with correct public keys and API ports
+ * 2. Server records with correct public keys
  * 
  * Run once: https://vpn.the-truth-publishing.com/admin/setup-part9-servers.php
  * 
@@ -15,17 +15,16 @@ define('TRUEVAULT_INIT', true);
 require_once __DIR__ . '/../configs/config.php';
 
 header('Content-Type: text/html; charset=utf-8');
-echo "<html><head><title>Part 9 Server Setup</title>";
-echo "<style>body{font-family:monospace;background:#1a1a2e;color:#0f0;padding:20px;} .ok{color:#0f0;} .err{color:#f00;} h1,h2{color:#0ff;}</style>";
-echo "</head><body>";
-echo "<h1>🔧 Part 9: Server Configuration Setup</h1>";
+echo "<html><head><title>Part 9 Server Setup</title></head><body>";
+echo "<h1>Part 9: Server Configuration Setup</h1>";
 echo "<pre>";
 
 try {
     // ========================================
     // STEP 1: Add API Secrets to system_settings
     // ========================================
-    echo "\n<h2>STEP 1: Setting up API secrets...</h2>\n";
+    echo "STEP 1: Setting up API secrets...\n";
+    echo str_repeat("=", 50) . "\n";
     
     $adminDb = Database::getInstance('admin');
     
@@ -41,14 +40,14 @@ try {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ");
-    echo "<span class='ok'>✓ system_settings table ready</span>\n";
+    echo "✓ system_settings table ready\n";
     
     // API Secrets for each server
     $secrets = [
         ['key' => 'server_api_secret_1', 'value' => 'TrueVault2026NYSecretKey32Chars!', 'desc' => 'New York server API secret'],
         ['key' => 'server_api_secret_2', 'value' => 'TrueVault2026STLSecretKey32Char!', 'desc' => 'St. Louis VIP server API secret'],
-        ['key' => 'server_api_secret_3', 'value' => 'TrueVault2025-FlyAPI-Secret!', 'desc' => 'Dallas (Fly.io) server API secret'],
-        ['key' => 'server_api_secret_4', 'value' => 'TrueVault2025-FlyAPI-Secret!', 'desc' => 'Toronto (Fly.io) server API secret'],
+        ['key' => 'server_api_secret_3', 'value' => 'TrueVault2026DallasSecretKey32!', 'desc' => 'Dallas server API secret'],
+        ['key' => 'server_api_secret_4', 'value' => 'TrueVault2026TorontoSecretKey32', 'desc' => 'Toronto server API secret'],
         ['key' => 'vpn_server_api_secret', 'value' => 'TRUEVAULT_API_SECRET_2026', 'desc' => 'Default/fallback API secret'],
     ];
     
@@ -61,13 +60,14 @@ try {
         $stmt->bindValue(':value', $s['value'], SQLITE3_TEXT);
         $stmt->bindValue(':desc', $s['desc'], SQLITE3_TEXT);
         $stmt->execute();
-        echo "<span class='ok'>✓ Added {$s['key']}</span>\n";
+        echo "✓ Added {$s['key']}\n";
     }
     
     // ========================================
     // STEP 2: Setup Servers Table
     // ========================================
-    echo "\n<h2>STEP 2: Setting up servers table...</h2>\n";
+    echo "\nSTEP 2: Setting up servers table...\n";
+    echo str_repeat("=", 50) . "\n";
     
     $serversDb = Database::getInstance('servers');
     
@@ -100,9 +100,9 @@ try {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ");
-    echo "<span class='ok'>✓ servers table ready</span>\n";
+    echo "✓ servers table ready\n";
     
-    // All 4 VPN Servers - VERIFIED January 22, 2026
+    // Server Data
     $servers = [
         [
             'id' => 1,
@@ -111,7 +111,7 @@ try {
             'country_code' => 'US',
             'ip_address' => '66.94.103.91',
             'listen_port' => 51820,
-            'api_port' => 8443,  // Contabo uses 8443
+            'api_port' => 8443,
             'public_key' => 'lbriy+env0wv6VmEJscnjoREswmiQdn7D+lKGai9n3s=',
             'endpoint' => '66.94.103.91:51820',
             'provider' => 'Contabo',
@@ -129,7 +129,7 @@ try {
             'country_code' => 'US',
             'ip_address' => '144.126.133.253',
             'listen_port' => 51820,
-            'api_port' => 8443,  // Contabo uses 8443
+            'api_port' => 8443,
             'public_key' => 'qs6zminmBmqHfYzqvQ71xURDVGdC3aBLJsWjrevJHAM=',
             'endpoint' => '144.126.133.253:51820',
             'provider' => 'Contabo',
@@ -147,8 +147,8 @@ try {
             'country_code' => 'US',
             'ip_address' => '66.241.124.4',
             'listen_port' => 51820,
-            'api_port' => 8080,  // Fly.io uses 8080
-            'public_key' => 'dFEz/d9TKfddk0Z6aMN03uO+j0GgQwXSR/+Ay+IXXmk=',
+            'api_port' => 8443,
+            'public_key' => '',
             'endpoint' => '66.241.124.4:51820',
             'provider' => 'Fly.io',
             'vip_only' => 0,
@@ -165,8 +165,8 @@ try {
             'country_code' => 'CA',
             'ip_address' => '66.241.125.247',
             'listen_port' => 51820,
-            'api_port' => 8080,  // Fly.io uses 8080
-            'public_key' => 'O3wtZKY+62QGZArL7W8vicyZecjN1IBDjHTvdnon1mk=',
+            'api_port' => 8443,
+            'public_key' => '',
             'endpoint' => '66.241.125.247:51820',
             'provider' => 'Fly.io',
             'vip_only' => 0,
@@ -178,51 +178,22 @@ try {
         ],
     ];
     
+    // Clear existing and insert fresh
+    $serversDb->exec("DELETE FROM servers");
+    echo "✓ Cleared existing servers\n";
+    
     foreach ($servers as $s) {
-        // Check if server exists
-        $stmt = $serversDb->prepare("SELECT id FROM servers WHERE id = :id");
-        $stmt->bindValue(':id', $s['id'], SQLITE3_INTEGER);
-        $result = $stmt->execute();
-        $exists = $result->fetchArray(SQLITE3_ASSOC);
-        
-        if ($exists) {
-            // Update existing
-            $stmt = $serversDb->prepare("
-                UPDATE servers SET
-                    name = :name,
-                    location = :location,
-                    country_code = :country_code,
-                    ip_address = :ip_address,
-                    listen_port = :listen_port,
-                    api_port = :api_port,
-                    public_key = :public_key,
-                    endpoint = :endpoint,
-                    provider = :provider,
-                    vip_only = :vip_only,
-                    dedicated_user_email = :dedicated_email,
-                    streaming_optimized = :streaming,
-                    ip_pool_start = :pool_start,
-                    ip_pool_end = :pool_end,
-                    monthly_cost = :cost,
-                    updated_at = datetime('now')
-                WHERE id = :id
-            ");
-            echo "<span class='ok'>✓ Updating: {$s['name']}</span>\n";
-        } else {
-            // Insert new
-            $stmt = $serversDb->prepare("
-                INSERT INTO servers (
-                    id, name, location, country_code, ip_address, listen_port, api_port,
-                    public_key, endpoint, provider, vip_only, dedicated_user_email,
-                    streaming_optimized, ip_pool_start, ip_pool_end, monthly_cost
-                ) VALUES (
-                    :id, :name, :location, :country_code, :ip_address, :listen_port, :api_port,
-                    :public_key, :endpoint, :provider, :vip_only, :dedicated_email,
-                    :streaming, :pool_start, :pool_end, :cost
-                )
-            ");
-            echo "<span class='ok'>✓ Inserting: {$s['name']}</span>\n";
-        }
+        $stmt = $serversDb->prepare("
+            INSERT INTO servers (
+                id, name, location, country_code, ip_address, listen_port, api_port,
+                public_key, endpoint, provider, vip_only, dedicated_user_email,
+                streaming_optimized, ip_pool_start, ip_pool_end, monthly_cost, status
+            ) VALUES (
+                :id, :name, :location, :country_code, :ip_address, :listen_port, :api_port,
+                :public_key, :endpoint, :provider, :vip_only, :dedicated_email,
+                :streaming, :pool_start, :pool_end, :cost, 'active'
+            )
+        ");
         
         $stmt->bindValue(':id', $s['id'], SQLITE3_INTEGER);
         $stmt->bindValue(':name', $s['name'], SQLITE3_TEXT);
@@ -241,53 +212,53 @@ try {
         $stmt->bindValue(':pool_end', $s['ip_pool_end'], SQLITE3_TEXT);
         $stmt->bindValue(':cost', $s['monthly_cost'], SQLITE3_FLOAT);
         $stmt->execute();
+        
+        $status = $s['vip_only'] ? ' (VIP ONLY)' : '';
+        echo "✓ Added server: {$s['name']}{$status}\n";
     }
     
     // ========================================
     // STEP 3: Verify Setup
     // ========================================
-    echo "\n<h2>STEP 3: Verification...</h2>\n";
+    echo "\nSTEP 3: Verifying setup...\n";
+    echo str_repeat("=", 50) . "\n";
     
-    $stmt = $serversDb->prepare("SELECT * FROM servers ORDER BY id");
-    $result = $stmt->execute();
+    // Count servers
+    $result = $serversDb->query("SELECT COUNT(*) as count FROM servers");
+    $count = $result->fetchArray(SQLITE3_ASSOC)['count'];
+    echo "✓ Total servers: {$count}\n";
     
-    echo "\n<span style='color:#ff0'>SERVERS IN DATABASE:</span>\n";
-    echo str_repeat("-", 100) . "\n";
-    printf("%-3s | %-20s | %-18s | %-6s | %-18s | %-8s | %-4s\n", 
-        "ID", "Name", "IP Address", "VIP", "Public Key", "Provider", "Port");
-    echo str_repeat("-", 100) . "\n";
+    // List all servers
+    $result = $serversDb->query("SELECT id, name, ip_address, public_key, vip_only, dedicated_user_email FROM servers ORDER BY id");
+    echo "\nServer List:\n";
+    echo str_repeat("-", 80) . "\n";
+    printf("%-3s %-20s %-18s %-10s %s\n", "ID", "Name", "IP Address", "VIP Only", "Dedicated To");
+    echo str_repeat("-", 80) . "\n";
     
     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-        printf("%-3s | %-20s | %-18s | %-6s | %-18s | %-8s | %-4s\n",
-            $row['id'],
-            $row['name'],
-            $row['ip_address'],
-            $row['vip_only'] ? 'YES' : 'NO',
-            substr($row['public_key'], 0, 16) . '...',
-            $row['provider'],
-            $row['api_port']
-        );
+        $vip = $row['vip_only'] ? 'YES' : 'No';
+        $dedicated = $row['dedicated_user_email'] ?: '-';
+        printf("%-3s %-20s %-18s %-10s %s\n", 
+            $row['id'], $row['name'], $row['ip_address'], $vip, $dedicated);
     }
     
-    echo str_repeat("-", 100) . "\n";
+    // Count API secrets
+    $result = $adminDb->query("SELECT COUNT(*) as count FROM system_settings WHERE setting_key LIKE 'server_api_secret%'");
+    $secretCount = $result->fetchArray(SQLITE3_ASSOC)['count'];
+    echo "\n✓ API secrets configured: {$secretCount}\n";
     
-    // Check API secrets
-    echo "\n<span style='color:#ff0'>API SECRETS:</span>\n";
-    $stmt = $adminDb->prepare("SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE 'server_api_secret%'");
-    $result = $stmt->execute();
-    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-        echo "  {$row['setting_key']}: " . substr($row['setting_value'], 0, 20) . "...\n";
-    }
+    echo "\n" . str_repeat("=", 50) . "\n";
+    echo "✅ PART 9 SERVER SETUP COMPLETE!\n";
+    echo str_repeat("=", 50) . "\n";
     
-    echo "\n<h2 style='color:#0f0'>✅ SETUP COMPLETE!</h2>\n";
-    echo "\nNOTES:\n";
-    echo "- Contabo servers (NY, STL) use API port 8443\n";
-    echo "- Fly.io servers (Dallas, Toronto) use API port 8080\n";
-    echo "- St. Louis server is VIP-only for seige235@yahoo.com\n";
-    echo "- All servers have server-side key generation\n";
+    echo "\nNOTE: Fly.io servers (Dallas, Toronto) need API deployment.\n";
+    echo "Contabo servers (New York, St. Louis) are already configured.\n";
     
 } catch (Exception $e) {
-    echo "<span class='err'>ERROR: " . htmlspecialchars($e->getMessage()) . "</span>\n";
+    echo "\n❌ ERROR: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n";
 }
 
-echo "</pre></body></html>";
+echo "</pre>";
+echo "<p><a href='/admin/dashboard.php'>← Back to Admin Dashboard</a></p>";
+echo "</body></html>";
