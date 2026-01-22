@@ -1,17 +1,29 @@
 
-TASK 6A.2, 6A.3, 6A.4 COMPLETE: CloudBypass.php
-- Created /includes/CloudBypass.php (280 lines)
-- Geeni/Tuya bypass: bypassGeeniTuya() - Tuya protocol, RTSP probe
-- Wyze bypass: bypassWyze() - RTSP firmware detection + instructions
-- Ring bypass: bypassRing() - ONVIF/local mode detection
-- Generic bypass: bypassGeneric() - ONVIF + RTSP probe
-- Helper functions: checkPort, probeRTSP, testRTSPUrl, checkONVIF
+TASK 6A.5 COMPLETE: Camera Dashboard with Live Streaming
+- Created /dashboard/cameras.php (450 lines)
+- HLS.js integration for video streaming
+- Grid layout selector (1x1, 2x2, 3x3, 4x4)
+- Full screen modal view
+- Video player controls
+- Quality selection (1080p, 720p, 480p, auto)
+- Snapshot button
+- Audio toggle (mute/unmute)
+- Two-way audio (hold to talk with MediaRecorder)
+- PTZ controls (up/down/left/right/home/zoom)
+- Status display (connection, quality, latency)
+- Recording toggle
+- Responsive design for mobile
 
 CHECKLIST ITEMS COMPLETED:
-✅ Task 6A.2: Geeni/Tuya cloud bypass
-✅ Task 6A.3: Wyze cloud bypass + firmware instructions
-✅ Task 6A.4: Ring cloud bypass (limited)
-✅ Generic ONVIF/RTSP bypass
+✅ Update camera dashboard with live streaming
+✅ Integrate HLS.js for video playback
+✅ Add video player controls
+✅ Add quality selection (1080p, 720p, 480p)
+✅ Add full screen mode
+✅ Add snapshot button
+✅ Add audio toggle
+✅ Add two-way audio (talk through camera)
+✅ Add PTZ controls (pan/tilt/zoom)
 
-NEXT: Task 6A.5 - Live Video Player (cameras.php dashboard)
+NEXT: Task 6A.6 - Multi-Camera Grid View (drag to rearrange, auto-cycle)
 
