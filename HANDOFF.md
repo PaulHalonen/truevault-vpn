@@ -12,6 +12,7 @@
 3. **FOLLOW THE METHODOLOGY** - Build first, test last, small chunks, commit often
 4. **CHECK chat_log.txt** - Contains all progress and what's been done
 5. **USER HAS VISUAL IMPAIRMENT** - Claude does ALL editing, user cannot see code
+6. **YOU MUST BUILD EXACTLY FROM CHECKLIST ONLY** - Anything else or questions, ASK User!
 
 ---
 
