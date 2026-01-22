@@ -1,19 +1,21 @@
 <?php
 /**
- * Add/Provision Device API - SQLITE3 VERSION
+ * Add/Provision Device API - SERVER-SIDE KEY GENERATION
  * 
- * PURPOSE: Create new device with SERVER-SIDE WireGuard key generation
+ * PURPOSE: Create new device with WireGuard keys generated on VPN SERVER
  * METHOD: POST
  * ENDPOINT: /api/devices/add.php
  * REQUIRES: Bearer token
  * 
- * CORRECTED ARCHITECTURE: Server generates keys, not browser!
- * 
- * REQUEST: { "device_name": "iPhone", "device_type": "mobile" }
- * RESPONSE: { "success": true, "device": {...}, "config": "...", "private_key": "..." }
+ * ARCHITECTURE:
+ * 1. User requests device
+ * 2. Web server calls VPN server API at port 8443
+ * 3. VPN server generates keys and adds peer to WireGuard
+ * 4. VPN server returns config
+ * 5. Web server stores in database and returns to user
  * 
  * @created January 2026
- * @version 1.0.0
+ * @version 2.0.0 - Now uses VPN server-side key generation
  */
 
 define('TRUEVAULT_INIT', true);
@@ -33,6 +35,40 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     exit;
+}
+
+/**
+ * Call VPN Server API to create peer
+ */
+function callVpnServerApi($serverIp, $apiPort, $apiSecret, $endpoint, $data = []) {
+    $url = "http://{$serverIp}:{$apiPort}{$endpoint}";
+    
+    $options = [
+        'http' => [
+            'method' => empty($data) ? 'GET' : 'POST',
+            'header' => [
+                'Content-Type: application/json',
+                'X-API-Key: ' . $apiSecret
+            ],
+            'content' => empty($data) ? '' : json_encode($data),
+            'timeout' => 30,
+            'ignore_errors' => true
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $response = @file_get_contents($url, false, $context);
+    
+    if ($response === false) {
+        return ['success' => false, 'error' => 'Failed to connect to VPN server'];
+    }
+    
+    $decoded = json_decode($response, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return ['success' => false, 'error' => 'Invalid response from VPN server'];
+    }
+    
+    return $decoded;
 }
 
 try {
@@ -68,6 +104,7 @@ try {
     
     $deviceName = $validator->get('device_name');
     $deviceType = $validator->get('device_type');
+    $requestedServerId = $data['server_id'] ?? null;
     
     // ============================================
     // STEP 3: CHECK DEVICE LIMIT
@@ -109,11 +146,22 @@ try {
     $serversDb = Database::getInstance('servers');
     
     if ($vipServerId) {
-        // User has dedicated VIP server
+        // User has dedicated VIP server - MUST use it
         $stmt = $serversDb->prepare("SELECT * FROM servers WHERE id = :id AND status = 'active'");
         $stmt->bindValue(':id', $vipServerId, SQLITE3_INTEGER);
+    } elseif ($requestedServerId) {
+        // User requested specific server - verify access
+        $stmt = $serversDb->prepare("
+            SELECT * FROM servers 
+            WHERE id = :id 
+            AND status = 'active' 
+            AND (vip_only = 0 OR :tier IN ('vip', 'admin'))
+            AND dedicated_user_email IS NULL
+        ");
+        $stmt->bindValue(':id', $requestedServerId, SQLITE3_INTEGER);
+        $stmt->bindValue(':tier', $userTier, SQLITE3_TEXT);
     } else {
-        // Select server with lowest load that user can access
+        // Auto-select server with lowest load
         $stmt = $serversDb->prepare("
             SELECT * FROM servers 
             WHERE status = 'active' 
@@ -133,84 +181,66 @@ try {
     }
     
     // ============================================
-    // STEP 6: ALLOCATE IP ADDRESS
+    // STEP 6: GET API SECRET FOR THIS SERVER
     // ============================================
     
-    // Find next available IP in server's pool
-    $poolParts = explode('.', $server['ip_pool_start']);
-    $baseIP = $poolParts[0] . '.' . $poolParts[1] . '.' . $poolParts[2];
-    $startOctet = (int)$poolParts[3];
-    $endOctet = (int)explode('.', $server['ip_pool_end'])[3];
-    
-    // Get all used IPs for this server
-    $stmt = $devicesDb->prepare("SELECT ipv4_address FROM devices WHERE current_server_id = :server_id");
-    $stmt->bindValue(':server_id', $server['id'], SQLITE3_INTEGER);
+    $adminDb = Database::getInstance('admin');
+    $stmt = $adminDb->prepare("SELECT setting_value FROM system_settings WHERE setting_key = :key");
+    $stmt->bindValue(':key', 'server_api_secret_' . $server['id'], SQLITE3_TEXT);
     $result = $stmt->execute();
+    $secretRow = $result->fetchArray(SQLITE3_ASSOC);
     
-    $usedIPs = [];
-    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-        $usedIPs[] = $row['ipv4_address'];
+    // Fallback to global API secret if per-server not set
+    if (!$secretRow) {
+        $stmt = $adminDb->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'vpn_server_api_secret'");
+        $result = $stmt->execute();
+        $secretRow = $result->fetchArray(SQLITE3_ASSOC);
     }
     
-    // Find first available IP
-    $allocatedIP = null;
-    for ($i = $startOctet; $i <= $endOctet; $i++) {
-        $testIP = "{$baseIP}.{$i}";
-        if (!in_array($testIP, $usedIPs)) {
-            $allocatedIP = $testIP;
-            break;
-        }
-    }
-    
-    if (!$allocatedIP) {
-        throw new Exception('Server IP pool exhausted. Please try a different server.');
-    }
+    $apiSecret = $secretRow['setting_value'] ?? 'TRUEVAULT_API_SECRET_2026';
+    $apiPort = $server['api_port'] ?? 8443;
     
     // ============================================
-    // STEP 7: GENERATE WIREGUARD KEYS (SERVER-SIDE!)
+    // STEP 7: CALL VPN SERVER TO CREATE PEER
     // ============================================
     
-    /**
-     * Generate WireGuard keypair
-     * Try multiple methods for compatibility
-     */
-    function generateWireGuardKeys() {
-        // Method 1: Try PHP sodium extension
-        if (function_exists('sodium_crypto_box_keypair')) {
-            $keypair = sodium_crypto_box_keypair();
-            return [
-                'private' => base64_encode(sodium_crypto_box_secretkey($keypair)),
-                'public' => base64_encode(sodium_crypto_box_publickey($keypair))
-            ];
-        }
+    $vpnResponse = callVpnServerApi(
+        $server['ip_address'],
+        $apiPort,
+        $apiSecret,
+        '/api/create-peer',
+        [
+            'device_name' => $deviceName,
+            'device_type' => $deviceType,
+            'user_id' => $userId,
+            'user_email' => $userEmail
+        ]
+    );
+    
+    if (!isset($vpnResponse['success']) || !$vpnResponse['success']) {
+        // Log the failure
+        $logsDb = Database::getInstance('logs');
+        $stmt = $logsDb->prepare("
+            INSERT INTO error_log (error_type, message, context, created_at)
+            VALUES ('vpn_api', :msg, :ctx, datetime('now'))
+        ");
+        $stmt->bindValue(':msg', $vpnResponse['error'] ?? 'VPN server API call failed', SQLITE3_TEXT);
+        $stmt->bindValue(':ctx', json_encode([
+            'server' => $server['name'],
+            'server_ip' => $server['ip_address'],
+            'user_id' => $userId
+        ]), SQLITE3_TEXT);
+        $stmt->execute();
         
-        // Method 2: Try wg command (if WireGuard tools installed)
-        if (function_exists('shell_exec')) {
-            $output = shell_exec('wg genkey 2>/dev/null');
-            $privateKey = $output ? trim($output) : '';
-            if ($privateKey && strlen($privateKey) === 44) {
-                $pubOutput = shell_exec("echo '$privateKey' | wg pubkey 2>/dev/null");
-                $publicKey = $pubOutput ? trim($pubOutput) : '';
-                if ($publicKey && strlen($publicKey) === 44) {
-                    return ['private' => $privateKey, 'public' => $publicKey];
-                }
-            }
-        }
-        
-        // Method 3: Generate random 32-byte keys (fallback - works for testing)
-        // Note: Public key won't be derived from private, but configs will work
-        $privateKey = base64_encode(random_bytes(32));
-        $publicKey = base64_encode(random_bytes(32));
-        
-        return ['private' => $privateKey, 'public' => $publicKey];
+        throw new Exception('Failed to provision device on VPN server: ' . ($vpnResponse['error'] ?? 'Unknown error'));
     }
     
-    $keys = generateWireGuardKeys();
-    $privateKey = $keys['private'];
-    $publicKey = $keys['public'];
-    
-    // Generate preshared key for extra security
-    $presharedKey = base64_encode(random_bytes(32));
+    // Extract data from VPN server response
+    $privateKey = $vpnResponse['private_key'];
+    $publicKey = $vpnResponse['public_key'];
+    $allocatedIP = $vpnResponse['client_ip'];
+    $config = $vpnResponse['config'];
+    $presharedKey = $vpnResponse['preshared_key'] ?? null;
     
     // ============================================
     // STEP 8: INSERT DEVICE INTO DATABASE
@@ -230,7 +260,7 @@ try {
     $stmt->bindValue(':device_name', $deviceName, SQLITE3_TEXT);
     $stmt->bindValue(':device_type', $deviceType, SQLITE3_TEXT);
     $stmt->bindValue(':public_key', $publicKey, SQLITE3_TEXT);
-    $stmt->bindValue(':private_key', $privateKey, SQLITE3_TEXT); // Encrypted in production
+    $stmt->bindValue(':private_key', $privateKey, SQLITE3_TEXT);
     $stmt->bindValue(':preshared_key', $presharedKey, SQLITE3_TEXT);
     $stmt->bindValue(':ipv4_address', $allocatedIP, SQLITE3_TEXT);
     $stmt->bindValue(':server_id', $server['id'], SQLITE3_INTEGER);
@@ -239,37 +269,12 @@ try {
     $deviceId = $devicesDb->lastInsertRowID();
     
     // Update server client count
-    $stmt = $serversDb->prepare("UPDATE servers SET current_clients = current_clients + 1, ip_pool_current = :ip WHERE id = :id");
-    $stmt->bindValue(':ip', $allocatedIP, SQLITE3_TEXT);
+    $stmt = $serversDb->prepare("UPDATE servers SET current_clients = current_clients + 1 WHERE id = :id");
     $stmt->bindValue(':id', $server['id'], SQLITE3_INTEGER);
     $stmt->execute();
     
     // ============================================
-    // STEP 9: GENERATE WIREGUARD CONFIG
-    // ============================================
-    
-    $config = "[Interface]\n";
-    $config .= "# TrueVault VPN - {$deviceName}\n";
-    $config .= "# Server: {$server['name']} ({$server['location']})\n";
-    $config .= "PrivateKey = {$privateKey}\n";
-    $config .= "Address = {$allocatedIP}/32\n";
-    $config .= "DNS = 1.1.1.1, 1.0.0.1\n\n";
-    
-    $config .= "[Peer]\n";
-    $config .= "# TrueVault VPN Server\n";
-    $config .= "PublicKey = {$server['public_key']}\n";
-    $config .= "PresharedKey = {$presharedKey}\n";
-    // Check if endpoint already includes port
-    $endpoint = $server['endpoint'];
-    if (strpos($endpoint, ':') === false) {
-        $endpoint .= ':' . $server['listen_port'];
-    }
-    $config .= "Endpoint = {$endpoint}\n";
-    $config .= "AllowedIPs = 0.0.0.0/0, ::/0\n";
-    $config .= "PersistentKeepalive = 25\n";
-    
-    // ============================================
-    // STEP 10: STORE CONFIG IN DATABASE
+    // STEP 9: STORE CONFIG IN DATABASE
     // ============================================
     
     $stmt = $devicesDb->prepare("
@@ -283,7 +288,7 @@ try {
     $stmt->execute();
     
     // ============================================
-    // STEP 11: LOG EVENT
+    // STEP 10: LOG EVENT
     // ============================================
     
     $logsDb = Database::getInstance('logs');
@@ -296,13 +301,14 @@ try {
     $stmt->bindValue(':details', json_encode([
         'device_name' => $deviceName,
         'server' => $server['name'],
-        'ip' => $allocatedIP
+        'ip' => $allocatedIP,
+        'method' => 'vpn_server_api'
     ]), SQLITE3_TEXT);
     $stmt->bindValue(':ip', $_SERVER['REMOTE_ADDR'] ?? 'unknown', SQLITE3_TEXT);
     $stmt->execute();
     
     // ============================================
-    // STEP 12: RETURN SUCCESS
+    // STEP 11: RETURN SUCCESS
     // ============================================
     
     http_response_code(201);
