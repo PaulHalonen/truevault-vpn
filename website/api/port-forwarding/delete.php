@@ -1,6 +1,12 @@
 <?php
 /**
- * Delete Port Forwarding Rule - SQLITE3 VERSION
+ * Port Forwarding - Delete Rule API
+ * 
+ * METHOD: POST/DELETE
+ * ENDPOINT: /api/port-forwarding/delete.php
+ * REQUIRES: Bearer token
+ * 
+ * REQUEST: { "rule_id": 123 }
  * 
  * @created January 2026
  */
@@ -24,8 +30,10 @@ try {
     $payload = JWT::requireAuth();
     $userId = $payload['user_id'];
     
-    $input = json_decode(file_get_contents('php://input'), true);
-    $ruleId = (int)($input['rule_id'] ?? $_GET['rule_id'] ?? 0);
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
+    $ruleId = (int)($data['rule_id'] ?? $_GET['rule_id'] ?? 0);
     
     if (!$ruleId) {
         http_response_code(400);
@@ -36,7 +44,7 @@ try {
     $pfDb = Database::getInstance('port_forwards');
     
     // Verify ownership
-    $stmt = $pfDb->prepare("SELECT id, rule_name FROM port_forwarding_rules WHERE id = :id AND user_id = :user_id");
+    $stmt = $pfDb->prepare("SELECT rule_name FROM port_forwarding_rules WHERE id = :id AND user_id = :user_id");
     $stmt->bindValue(':id', $ruleId, SQLITE3_INTEGER);
     $stmt->bindValue(':user_id', $userId, SQLITE3_INTEGER);
     $result = $stmt->execute();
@@ -48,24 +56,18 @@ try {
         exit;
     }
     
-    // Delete
+    // Delete rule
     $stmt = $pfDb->prepare("DELETE FROM port_forwarding_rules WHERE id = :id");
     $stmt->bindValue(':id', $ruleId, SQLITE3_INTEGER);
     $stmt->execute();
     
-    // Log
-    $logsDb = Database::getInstance('logs');
-    $stmt = $logsDb->prepare("INSERT INTO audit_log (user_id, action, entity_type, entity_id, details, ip_address, created_at) VALUES (:user_id, 'port_rule_deleted', 'port_rule', :rule_id, :details, :ip, datetime('now'))");
-    $stmt->bindValue(':user_id', $userId, SQLITE3_INTEGER);
-    $stmt->bindValue(':rule_id', $ruleId, SQLITE3_INTEGER);
-    $stmt->bindValue(':details', json_encode(['rule_name' => $rule['rule_name']]), SQLITE3_TEXT);
-    $stmt->bindValue(':ip', $_SERVER['REMOTE_ADDR'] ?? 'unknown', SQLITE3_TEXT);
-    $stmt->execute();
-    
-    echo json_encode(['success' => true, 'message' => 'Rule deleted']);
+    echo json_encode([
+        'success' => true,
+        'message' => "Rule '{$rule['rule_name']}' deleted"
+    ]);
     
 } catch (Exception $e) {
-    logError('Delete port rule failed: ' . $e->getMessage());
+    logError('Delete port forwarding rule failed: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Failed to delete rule']);
 }
