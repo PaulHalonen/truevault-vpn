@@ -1,19 +1,20 @@
 
-TASK 6A.6 COMPLETE: Multi-Camera Grid View Enhancements
-- Added drag-to-rearrange functionality
-  - CSS for dragging state (.dragging, .drag-over)
-  - dragstart, dragover, dragleave, drop, dragend events
-  - saveCameraOrder() saves order to database
-- Added auto-cycle feature
-  - toggleCycle(), startCycle(), stopCycle()
-  - 10-second interval between cameras
-  - Cycle indicator shows current camera
-  - Stop Cycle button to exit
+TASK 6A.7 COMPLETE: Camera Streaming API
+- Created /api/camera-stream.php (230 lines)
+- RTSP to HLS conversion using FFmpeg
+- Serves HLS playlist (.m3u8) and segments (.ts)
+- Quality selection (1080p, 720p, 480p, 360p)
+- Background FFmpeg process management
+- Cross-platform process checking (Windows/Linux)
+- Stream stop and status endpoints
+- JWT and session authentication
+- Low-latency settings for live viewing
 
-CHECKLIST ITEMS COMPLETED:
-✅ Drag to rearrange cameras
-✅ Auto-cycle through cameras
-✅ Grid layout selector (1x1, 2x2, 3x3, 4x4) - already done in 6A.5
+API ENDPOINTS:
+- GET /api/camera-stream.php?camera_id=xxx - Get HLS stream
+- GET /api/camera-stream.php?camera_id=xxx&quality=480 - Lower quality
+- GET /api/camera-stream.php?camera_id=xxx&action=status - Stream status
+- GET /api/camera-stream.php?camera_id=xxx&action=stop - Stop stream
 
-NEXT: Task 6A.7 - Camera Streaming API (/api/camera-stream.php)
+NEXT: Task 6A.8 - Main Cameras API (/api/cameras.php)
 
