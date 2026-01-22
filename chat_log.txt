@@ -1,25 +1,17 @@
 
-TASK 6A.1 COMPLETE: Brute Force Network Scanner
-- Updated truthvault_scanner.py to v3.0.0
-- Added 12 camera-specific ports (CAMERA_PORTS)
-- Added 50+ common credentials (COMMON_CREDENTIALS)
-- Added brute_force_ports() function
-- Added test_credentials() for HTTP auth
-- Added test_rtsp_credentials() for RTSP auth
-- Added discover_onvif() for ONVIF protocol
-- Added discover_upnp() for UPnP discovery
-- Added http_fingerprint() for camera detection
-- Updated scan_network() to use all methods
-- UI shows credentials found count
-- File: /scanner/truthvault_scanner.py (550 lines)
+TASK 6A.2, 6A.3, 6A.4 COMPLETE: CloudBypass.php
+- Created /includes/CloudBypass.php (280 lines)
+- Geeni/Tuya bypass: bypassGeeniTuya() - Tuya protocol, RTSP probe
+- Wyze bypass: bypassWyze() - RTSP firmware detection + instructions
+- Ring bypass: bypassRing() - ONVIF/local mode detection
+- Generic bypass: bypassGeneric() - ONVIF + RTSP probe
+- Helper functions: checkPort, probeRTSP, testRTSPUrl, checkONVIF
 
 CHECKLIST ITEMS COMPLETED:
-✅ Add brute force port scanning
-✅ Test common camera ports on ALL devices
-✅ Implement credential testing (safe, non-destructive)
-✅ Add ONVIF discovery protocol
-✅ Add UPnP camera discovery
-✅ Detect cameras by HTTP fingerprinting
+✅ Task 6A.2: Geeni/Tuya cloud bypass
+✅ Task 6A.3: Wyze cloud bypass + firmware instructions
+✅ Task 6A.4: Ring cloud bypass (limited)
+✅ Generic ONVIF/RTSP bypass
 
-NEXT: Task 6A.2 - CloudBypass.php (Geeni/Tuya bypass)
+NEXT: Task 6A.5 - Live Video Player (cameras.php dashboard)
 
