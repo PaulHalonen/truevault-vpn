@@ -2940,3 +2940,42 @@ NEXT: Part 4 - Device Management API
    - /api/devices/config.php
 
 =================================================================
+
+
+=================================================================
+DATABASE CLEANUP & VIP FIX - January 21, 2026 - 6:05 PM CST
+=================================================================
+
+COMPLETED:
+✅ Removed ALL test users from database
+✅ Removed hardcoded admin credentials from setup-databases.php
+✅ Removed hardcoded VIP list from setup-databases.php
+✅ Added vip_server_id column to users table
+✅ Updated register.php to save dedicated_server_id to user record
+
+DATABASE-DRIVEN VIP LIST (admin.db -> vip_list table):
+   1. paulhalonen@gmail.com - Regular VIP (no dedicated server)
+   2. seige235@yahoo.com - VIP with dedicated_server_id=2 (St. Louis)
+
+DATABASE-DRIVEN ADMIN (admin.db -> admin_users table):
+   Email: paulhalonen@gmail.com
+   Password: Asasasas4!
+   Role: super_admin
+
+REGISTRATION TEST RESULTS:
+   ✅ seige235@yahoo.com -> tier=vip, dedicated_server_id=2 (St. Louis)
+   ✅ paulhalonen@gmail.com -> tier=vip, dedicated_server_id=null
+
+NO HARDCODED CREDENTIALS ANYWHERE!
+   - Admin credentials: stored in admin.db
+   - VIP list: stored in admin.db  
+   - Servers: stored in servers.db
+   - All managed through database, not code
+
+SECURITY CLEANUP:
+   ✅ Deleted reset-database.php from server
+   ✅ Deleted fix-users-table.php from server
+
+GIT COMMIT: ee0e753
+
+=================================================================
