@@ -1,63 +1,46 @@
 
 ============================================================
-PART 9 PROGRESS UPDATE - 7:15 AM CST
+PLAN RESTRICTIONS UPDATE - 7:45 AM CST January 22, 2026
 ============================================================
 
-PART 9 FILES CREATED:
+USER CLARIFIED PLAN RULES:
 
-1. /admin/setup-part9-servers.php (230 lines)
-   - Sets up API secrets in system_settings
-   - Populates servers table with all 4 servers
-   - Server public keys stored
+BASIC PLAN ($9.97):
+- 3 VPN devices (laptop, phone, tablet)
+- 3 home network devices (scanned)
+- Only 1 camera allowed
+- Max 2 port forwarding devices
+- Port forwarding ONLY on NY Contabo
 
-2. /admin/servers.php (320 lines)
-   - Admin server management dashboard
-   - Real-time server status checking
-   - View connected peers
-   - Copy public keys
-   - Theme-integrated UI
+FAMILY PLAN ($14.97):
+- 5 VPN devices
+- 5 home network devices
+- Only 2 cameras allowed
+- Max 5 port forwarding devices
+- Port forwarding ONLY on NY Contabo
+- Parental controls included
 
-3. /api/servers/test-api.php (85 lines)
-   - Tests VPN server API connectivity
-   - Returns latency and status
+DEDICATED PLAN ($29.97):
+- 99 devices total
+- Unlimited cameras
+- Unlimited port forwarding
+- Own dedicated server + all shared servers
 
-4. /api/servers/list-peers.php (100 lines)
-   - Lists peers from VPN server (with auth)
-   - Calls VPN server /api/list-peers endpoint
+SERVER RESTRICTIONS:
+- NY Contabo (66.94.103.91): ALL features allowed
+- St. Louis (144.126.133.253): DEDICATED to seige235@yahoo.com ONLY
+- Dallas Fly.io: NO port forwarding, NO Xbox/gaming, NO uTorrent
+- Toronto Fly.io: NO port forwarding, NO Xbox/gaming, NO uTorrent
 
-5. /cron/check-servers.php (220 lines)
-   - Server health monitoring cron
-   - Checks all servers every 5 minutes
-   - Updates status in database
-   - Logs health history
-   - Triggers alerts on server down
+KEY RULE: St. Louis is NOT a "VIP server" - it's DEDICATED!
+Only seige235@yahoo.com can see or use it.
+Other VIPs cannot see St. Louis at all.
 
-6. /api/devices/add.php (UPDATED - 250 lines)
-   - NOW calls VPN server API for key generation
-   - Keys generated SERVER-SIDE not browser!
-   - Proper architecture implemented
+FILES CREATED:
+1. MASTER_BLUEPRINT/SECTION_25_PLAN_RESTRICTIONS.md
+2. Master_Checklist/PLAN_RESTRICTIONS_CHECKLIST.md
+3. website/api/servers/list.php (v2.1.0)
+4. website/admin/setup-plan-restrictions.php
 
-7. /api/devices/delete.php (UPDATED - 170 lines)
-   - NOW calls VPN server to remove peer
-   - Peer removed from WireGuard on delete
-
-SERVER-SIDE KEY GENERATION VERIFIED:
-✅ New York (66.94.103.91) - API running on 8443
-✅ St. Louis (144.126.133.253) - API running on 8443
-⏳ Dallas (66.241.124.4) - Fly.io needs API deployment
-⏳ Toronto (66.241.125.247) - Fly.io needs API deployment
-
-SERVER DATA:
-- ID 1: New York | 66.94.103.91 | Contabo | Public
-- ID 2: St. Louis | 144.126.133.253 | Contabo | VIP (seige235@yahoo.com)
-- ID 3: Dallas | 66.241.124.4 | Fly.io | Public (streaming)
-- ID 4: Toronto | 66.241.125.247 | Fly.io | Public (Canada)
-
-API SECRETS CONFIGURED:
-- server_api_secret_1: TrueVault2026NYSecretKey32Chars!
-- server_api_secret_2: TrueVault2026STLSecretKey32Char!
-- server_api_secret_3: TrueVault2026DallasSecretKey32!
-- server_api_secret_4: TrueVault2026TorontoSecretKey32
-
-NEXT: Commit to git and continue with Part 9 completion...
+NEXT: Commit changes...
 
