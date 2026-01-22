@@ -1,0 +1,94 @@
+{
+    "name": "TrueVault VPN - Camera Monitor",
+    "short_name": "TrueVault",
+    "description": "Monitor your security cameras securely through VPN",
+    "start_url": "/mobile/cameras.php",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#00d4ff",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/icons/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["security", "utilities"],
+    "screenshots": [
+        {
+            "src": "/screenshots/mobile-cameras.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Live Cameras",
+            "short_name": "Cameras",
+            "description": "View live camera feeds",
+            "url": "/mobile/cameras.php",
+            "icons": [{ "src": "/icons/camera.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Recordings",
+            "short_name": "Recordings",
+            "description": "View recorded clips",
+            "url": "/dashboard/recordings.php",
+            "icons": [{ "src": "/icons/recording.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Motion Events",
+            "short_name": "Events",
+            "description": "View motion detection events",
+            "url": "/dashboard/motion.php",
+            "icons": [{ "src": "/icons/motion.png", "sizes": "96x96" }]
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+}
