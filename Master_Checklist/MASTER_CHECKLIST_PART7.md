@@ -88,7 +88,7 @@ CREATE INDEX idx_email_queue_status ON email_queue(status, scheduled_for);
 - [ ] Test email sending
 
 **Key Features:**
-- SMTP for customer emails (admin@vpn.the-truth-publishing.com)
+- SMTP for customer emails (admin@the-truth-publishing.com)
 - Gmail for admin notifications (paulhalonen@gmail.com)
 - Template system with variable replacement
 - Email queue for bulk operations
@@ -102,12 +102,13 @@ CREATE INDEX idx_email_queue_status ON email_queue(status, scheduled_for);
 
 - [ ] Add email configuration section
 - [ ] Fields needed:
-  - SMTP Host
-  - SMTP Port
-  - SMTP Username (admin@vpn.the-truth-publishing.com)
-  - SMTP Password
+  - SMTP Host the-truth-publishing.com (Imap)
+  - Imap Port 993 (incoming)
+  - SMTP Port 465 (outgoing)
+  - SMTP Username (admin@the-truth-publishing.com)
+  - SMTP Password A'ndassiAthena8
   - Gmail Username (paulhalonen@gmail.com)
-  - Gmail App Password
+  - Gmail App Password ezdq mgqk mrcn xovx
 - [ ] Save to system_settings table
 - [ ] Test email sending from settings page
 
@@ -988,9 +989,9 @@ CREATE TABLE media_library (
 - `site_tagline` = "Your Complete Digital Fortress"
 - `site_logo` = "/assets/logo.png"
 - `site_favicon` = "/assets/favicon.ico"
-- `contact_email` = "support@vpn.the-truth-publishing.com"
-- `support_email` = "support@vpn.the-truth-publishing.com"
-- `admin_email` = "admin@vpn.the-truth-publishing.com"
+- `contact_email` = "admin@the-truth-publishing.com"
+- `support_email` = "admin@the-truth-publishing.com"
+- `admin_email` = "admin@the-truth-publishing.com"
 - `company_name` = "TrueVault VPN"
 - `company_address` = "(to be filled by owner)"
 - `support_phone` = "(to be filled by owner)"
@@ -1019,8 +1020,8 @@ CREATE TABLE media_library (
 - `trial_days` = 7
 
 **Pricing (for display):**
-- `price_standard` = 9.99
-- `price_pro` = 14.99
+- `price_standard` = 9.97
+- `price_pro` = 14.97
 - `currency_symbol` = "$"
 
 **Verification:**
