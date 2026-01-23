@@ -45,3 +45,7 @@ node_modules/
 # Cache
 /cache/
 *.cache
+
+# Binary downloads (upload via FTP, not git)
+website/downloads/*.apk
+website/downloads/*.exe

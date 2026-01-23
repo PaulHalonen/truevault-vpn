@@ -273,3 +273,80 @@ Added Android Device Download Requirement section
 3. Continue with Part 12 landing pages
 
 ================================================================================
+
+
+================================================================================
+SESSION: January 23, 2026 - 12:50 AM CST (continued)
+================================================================================
+
+## TASK 10.9 IMPLEMENTED: Android APK Bundle with Config Downloads
+
+### Files Created
+
+**website/downloads/ (new folder)**
+- `.htaccess` - Allows APK/EXE downloads with correct MIME types
+- `version.json` - App version info (v1.1.0, 4.8MB, Android 8.0+)
+- `TrueVaultHelper.apk` - Copied from android/app/release/
+- `README.md` - Instructions for updating APK
+
+### Files Modified
+
+**website/dashboard/setup-device.php** (complete rewrite)
+- Added platform selector (Android vs iOS) for mobile devices
+- Added Android Helper section with:
+  - App info (version, size, features)
+  - Download APK button (green gradient)
+  - Step-by-step instructions (1. Install APK, 2. Download config, 3. Open app)
+  - Feature tags (Auto-fix, QR Scanner, 1-Tap Import, Full Device Scan)
+- Auto-detects platform from user agent
+- Shows Android helper only for Android users
+- Updated success messages for Android users
+
+**.gitignore** (updated)
+- Added `website/downloads/*.apk`
+- Added `website/downloads/*.exe`
+- APK not stored in git, upload via FTP
+
+### User Flow (Android)
+
+```
+1. User selects "Mobile Phone" → Platform selector appears
+2. User clicks "Android" button
+3. User enters device name, clicks "Setup Device"
+4. SUCCESS PAGE SHOWS:
+   ┌─────────────────────────────────────────────────┐
+   │ ✅ Device Ready!                                │
+   │ Name: My Phone | IP: 10.0.0.5 | Server: Dallas │
+   ├─────────────────────────────────────────────────┤
+   │ 📱 Step 1: Install TrueVault Helper App        │
+   │                                                 │
+   │ [🛡️] TrueVault Helper                          │
+   │      v1.1.0 • 4.8 MB • Android 8.0+           │
+   │                                                 │
+   │ ✓ Auto-fix  ✓ QR Scanner  ✓ 1-Tap Import      │
+   │                                                 │
+   │ [📥 Download TrueVault Helper APK]             │
+   │                                                 │
+   │ Instructions:                                   │
+   │ 1. Download & Install APK                       │
+   │ 2. Download Your Config Below                   │
+   │ 3. Open TrueVault Helper                        │
+   ├─────────────────────────────────────────────────┤
+   │ 📄 Step 2: Download Your Config                │
+   │ [📥 Download Config File (.conf)]              │
+   │                                                 │
+   │ Or scan QR code: [QR CODE]                     │
+   └─────────────────────────────────────────────────┘
+```
+
+### APK Management
+
+APK stored at: `website/downloads/TrueVaultHelper.apk`
+- NOT in git (binary files)
+- Upload via FTP after building new versions
+- Update version.json when releasing new versions
+
+### Commit
+- Committing now...
+
+================================================================================

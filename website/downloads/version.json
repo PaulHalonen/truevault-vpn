@@ -1,0 +1,33 @@
+{
+    "android_app": {
+        "version": "1.1.0",
+        "version_code": 2,
+        "filename": "TrueVaultHelper.apk",
+        "size_mb": "4.8",
+        "size_bytes": 5042614,
+        "min_android": "8.0",
+        "updated": "2026-01-23",
+        "changelog": [
+            "Full device scan - finds configs anywhere on your phone",
+            "Auto-fix .conf.txt files automatically",
+            "Refresh button to rescan anytime",
+            "Close button to exit app",
+            "Shows file location for each config found"
+        ],
+        "features": [
+            "Scan QR codes from screenshots",
+            "Scan QR codes with camera",
+            "Auto-fix .conf.txt to .conf",
+            "One-tap import to WireGuard",
+            "Full device file search"
+        ]
+    },
+    "windows_app": {
+        "version": "1.0.0",
+        "filename": "TrueVaultSetup.exe",
+        "size_mb": "12.5",
+        "min_windows": "10",
+        "updated": "2026-01-23",
+        "status": "coming_soon"
+    }
+}

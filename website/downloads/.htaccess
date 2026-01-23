@@ -1,0 +1,15 @@
+# Allow APK and installer downloads
+<IfModule mod_mime.c>
+    AddType application/vnd.android.package-archive .apk
+    AddType application/x-msdownload .exe
+    AddType application/octet-stream .conf
+</IfModule>
+
+# Force download instead of display
+<FilesMatch "\.(apk|exe|conf)$">
+    Header set Content-Disposition attachment
+</FilesMatch>
+
+# Allow access to this directory
+Order allow,deny
+Allow from all
