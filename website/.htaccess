@@ -2,6 +2,9 @@
 # Purpose: Security, redirects, and access control
 # Created: January 2026
 
+# Set default index file
+DirectoryIndex index.php index.html
+
 # Enable error handling
 Options -Indexes
 
@@ -16,11 +19,10 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     Deny from all
 </FilesMatch>
 
-# Block access to sensitive folders
+# Block access to sensitive folders (HTTP access only, not PHP includes)
 RewriteRule ^databases/ - [F,L]
 RewriteRule ^logs/ - [F,L]
 RewriteRule ^configs/ - [F,L]
-RewriteRule ^includes/ - [F,L]
 
 # Security headers
 <IfModule mod_headers.c>
@@ -30,7 +32,7 @@ RewriteRule ^includes/ - [F,L]
     Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-# PHP Settings
+# PHP Settings (if mod_php available)
 <IfModule mod_php.c>
     php_value upload_max_filesize 10M
     php_value post_max_size 10M

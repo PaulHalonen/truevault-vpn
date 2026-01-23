@@ -3,24 +3,33 @@
  * TrueVault VPN - Homepage
  * Part 12 - Database-driven landing page
  * ALL content from database - NO hardcoding
+ * Data sources: content.db tables (settings, features, testimonials, etc.)
  */
 
 require_once __DIR__ . '/includes/content-functions.php';
 
-// Get page data from database
+// Get ALL content from database
 $pageData = getPage('homepage');
 $features = getFeatures();
 $testimonials = getTestimonials(true); // Featured only
 $faqs = getFAQs();
 $plans = getPricingPlans();
+$trustBadges = getTrustBadges();
+$howItWorks = getHowItWorks();
 
-// Get hero stats from settings
-$statsEncryption = getSetting('hero_stats_encryption', '256-bit');
-$statsPolicy = getSetting('hero_stats_policy', 'Zero');
-$statsServers = getSetting('hero_stats_servers', '50+');
-$statsDevices = getSetting('hero_stats_devices', '∞');
+// Get hero stats from settings (FROM BLUEPRINT - 4 servers, not 50+ countries)
+$heroStats = [
+    ['value' => getSetting('hero_stats_encryption', '256-bit'), 'label' => getSetting('hero_stats_encryption_label', 'Military-Grade Encryption')],
+    ['value' => getSetting('hero_stats_policy', 'Zero'), 'label' => getSetting('hero_stats_policy_label', 'Log Policy')],
+    ['value' => getSetting('hero_stats_servers', '4'), 'label' => getSetting('hero_stats_servers_label', 'Server Locations')],
+    ['value' => getSetting('hero_stats_setup', '2-Click'), 'label' => getSetting('hero_stats_setup_label', 'Device Setup')],
+];
 
-// Include header (contains <html>, <head>, opening <body> and <main>)
+// Get refund days for CTA section
+$refundDays = getSetting('feature_refund_days', '30');
+$trialDays = getSetting('feature_trial_days', '7');
+
+// Include header
 include __DIR__ . '/templates/header.php';
 ?>
 
@@ -29,51 +38,43 @@ include __DIR__ . '/templates/header.php';
     <div class="container">
         <div class="hero-content">
             <h1 class="hero-title"><?= e($pageData['hero_title'] ?? 'Your Complete Digital Fortress') ?></h1>
-            <p class="hero-subtitle"><?= e($pageData['hero_subtitle'] ?? 'The world\'s first all-in-one privacy platform') ?></p>
+            <p class="hero-subtitle"><?= e($pageData['hero_subtitle'] ?? '') ?></p>
             
             <div class="hero-cta">
                 <a href="<?= e($pageData['hero_cta_url'] ?? '/register.php') ?>" class="btn btn-primary btn-lg">
-                    <?= e($pageData['hero_cta_text'] ?? 'Start Your Free Trial') ?>
+                    <?= e($pageData['hero_cta_text'] ?? 'Start Free Trial') ?>
                 </a>
-                <a href="/pricing.php" class="btn btn-secondary btn-lg">View Pricing</a>
+                <a href="/pricing.php" class="btn btn-secondary btn-lg"><?= e(getSetting('cta_secondary_text', 'View Pricing')) ?></a>
             </div>
             
+            <!-- Trust badges from database -->
             <div class="hero-trust">
-                <span>✓ 7-Day Free Trial</span>
-                <span>✓ No Credit Card Required</span>
-                <span>✓ Cancel Anytime</span>
+                <?php foreach ($trustBadges as $badge): ?>
+                <span><?= e($badge['icon']) ?> <?= e($badge['text']) ?></span>
+                <?php endforeach; ?>
             </div>
         </div>
         
+        <!-- Hero stats from database settings -->
         <div class="hero-stats">
+            <?php foreach ($heroStats as $stat): ?>
             <div class="stat">
-                <div class="stat-value"><?= e($statsEncryption) ?></div>
-                <div class="stat-label">Military-Grade Encryption</div>
+                <div class="stat-value"><?= e($stat['value']) ?></div>
+                <div class="stat-label"><?= e($stat['label']) ?></div>
             </div>
-            <div class="stat">
-                <div class="stat-value"><?= e($statsPolicy) ?></div>
-                <div class="stat-label">Log Policy</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value"><?= e($statsServers) ?></div>
-                <div class="stat-label">Countries</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value"><?= e($statsDevices) ?></div>
-                <div class="stat-label">Devices</div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
 
-<!-- Features Section -->
+<!-- Features Section (from database) -->
 <section class="section features-section" id="features">
     <div class="container">
-        <h2 class="section-title">Revolutionary Features</h2>
-        <p class="section-subtitle">TrueVault isn't just another VPN. It's a complete digital identity and privacy platform.</p>
+        <h2 class="section-title">What Makes TrueVault Different</h2>
+        <p class="section-subtitle">Most VPNs just hide your IP. TrueVault actually solves real problems.</p>
         
         <div class="features-grid">
-            <?php foreach ($features as $feature): ?>
+            <?php foreach (array_slice($features, 0, 6) as $feature): ?>
             <div class="feature-card">
                 <div class="feature-icon"><?= e($feature['icon']) ?></div>
                 <h3 class="feature-title"><?= e($feature['title']) ?></h3>
@@ -88,33 +89,27 @@ include __DIR__ . '/templates/header.php';
     </div>
 </section>
 
-<!-- How It Works Section -->
+<!-- How It Works Section (from database) -->
+<?php if (!empty($howItWorks)): ?>
 <section class="section how-it-works">
     <div class="container">
         <h2 class="section-title">How It Works</h2>
         <p class="section-subtitle">Get protected in under 2 minutes</p>
         
         <div class="steps-grid">
+            <?php foreach ($howItWorks as $step): ?>
             <div class="step">
-                <div class="step-number">1</div>
-                <h3>Sign Up</h3>
-                <p>Create your account in seconds. No credit card required for the free trial.</p>
+                <div class="step-number"><?= e($step['step_number']) ?></div>
+                <h3><?= e($step['title']) ?></h3>
+                <p><?= e($step['description']) ?></p>
             </div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <h3>Download</h3>
-                <p>Get the WireGuard app and download your personal config file.</p>
-            </div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <h3>Connect</h3>
-                <p>Import your config and tap Connect. That's it — you're protected!</p>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
+<?php endif; ?>
 
-<!-- Pricing Preview Section -->
+<!-- Pricing Preview Section (from database) -->
 <section class="section pricing-preview">
     <div class="container">
         <h2 class="section-title">Choose Your Plan</h2>
@@ -129,13 +124,13 @@ include __DIR__ . '/templates/header.php';
                 
                 <h3 class="plan-name"><?= e($plan['plan_name']) ?></h3>
                 <div class="plan-price">
-                    <span class="price-amount">$<?= number_format($plan['price_monthly'], 2) ?></span>
+                    <span class="price-amount">$<?= number_format($plan['price_monthly_usd'], 2) ?></span>
                     <span class="price-period">/month</span>
                 </div>
                 <p class="plan-desc"><?= e($plan['description']) ?></p>
                 
                 <ul class="plan-features">
-                    <?php foreach ($plan['features'] as $feature): ?>
+                    <?php foreach (array_slice($plan['features'], 0, 5) as $feature): ?>
                     <li>✓ <?= e($feature) ?></li>
                     <?php endforeach; ?>
                 </ul>
@@ -153,7 +148,7 @@ include __DIR__ . '/templates/header.php';
     </div>
 </section>
 
-<!-- Testimonials Section -->
+<!-- Testimonials Section (from database) -->
 <?php if (!empty($testimonials)): ?>
 <section class="section testimonials-section">
     <div class="container">
@@ -165,9 +160,9 @@ include __DIR__ . '/templates/header.php';
                 <div class="testimonial-rating"><?= renderStars($testimonial['rating']) ?></div>
                 <p class="testimonial-content">"<?= e($testimonial['content']) ?>"</p>
                 <div class="testimonial-author">
-                    <strong><?= e($testimonial['author_name']) ?></strong>
-                    <?php if ($testimonial['author_title']): ?>
-                    <span><?= e($testimonial['author_title']) ?></span>
+                    <strong><?= e($testimonial['name']) ?></strong>
+                    <?php if (!empty($testimonial['role'])): ?>
+                    <span><?= e($testimonial['role']) ?></span>
                     <?php endif; ?>
                 </div>
             </div>
@@ -177,7 +172,7 @@ include __DIR__ . '/templates/header.php';
 </section>
 <?php endif; ?>
 
-<!-- FAQ Section -->
+<!-- FAQ Section (from database) -->
 <?php if (!empty($faqs)): ?>
 <section class="section faq-section">
     <div class="container">
@@ -195,14 +190,14 @@ include __DIR__ . '/templates/header.php';
 </section>
 <?php endif; ?>
 
-<!-- Final CTA Section -->
+<!-- Final CTA Section (uses database settings) -->
 <section class="section cta-section">
     <div class="container">
         <div class="cta-box">
-            <h2>Your Privacy. Your Keys. Your Control.</h2>
-            <p>Join thousands who've upgraded from basic VPN to complete digital sovereignty.</p>
-            <a href="/register.php" class="btn btn-primary btn-lg">Start 7-Day Free Trial</a>
-            <p class="cta-note">No credit card required • Cancel anytime • Full refund guarantee</p>
+            <h2>Your Privacy. Your Control.</h2>
+            <p>Join thousands who've upgraded from basic VPN to complete digital protection.</p>
+            <a href="/register.php" class="btn btn-primary btn-lg">Start <?= e($trialDays) ?>-Day Free Trial</a>
+            <p class="cta-note">No credit card required • Cancel anytime • <?= e($refundDays) ?>-day money back guarantee</p>
         </div>
     </div>
 </section>
@@ -219,371 +214,160 @@ include __DIR__ . '/templates/header.php';
 .hero::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
                 radial-gradient(circle at 80% 50%, rgba(0, 255, 136, 0.1) 0%, transparent 50%);
     pointer-events: none;
 }
 
-.hero-content {
-    text-align: center;
-    position: relative;
-    z-index: 1;
-}
+.hero-content { text-align: center; position: relative; z-index: 1; }
 
 .hero-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    margin-bottom: 20px;
+    font-size: 3.5rem; font-weight: 800; margin-bottom: 20px;
     background: linear-gradient(90deg, var(--text-primary), var(--primary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 
 .hero-subtitle {
-    font-size: 1.3rem;
-    color: var(--text-secondary);
-    max-width: 700px;
-    margin: 0 auto 30px;
-    line-height: 1.6;
+    font-size: 1.3rem; color: var(--text-secondary);
+    max-width: 700px; margin: 0 auto 30px; line-height: 1.6;
 }
 
-.hero-cta {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-.btn-lg {
-    padding: 16px 32px;
-    font-size: 1.1rem;
-}
+.hero-cta { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
+.btn-lg { padding: 16px 32px; font-size: 1.1rem; }
 
 .hero-trust {
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    flex-wrap: wrap;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
+    display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;
+    color: var(--text-secondary); font-size: 0.95rem;
 }
 
-.hero-trust span {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.hero-trust span { display: flex; align-items: center; gap: 8px; }
 
 .hero-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 30px;
-    margin-top: 60px;
-    padding-top: 40px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px;
+    margin-top: 60px; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.stat {
-    text-align: center;
-}
+.stat { text-align: center; }
 
 .stat-value {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 2.5rem; font-weight: 700;
     background: linear-gradient(90deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 
-.stat-label {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-top: 5px;
-}
+.stat-label { color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px; }
 
 /* Sections */
-.section {
-    padding: 80px 0;
-}
+.section { padding: 80px 0; }
 
 .section-title {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: var(--text-primary);
+    text-align: center; font-size: 2.5rem; font-weight: 700;
+    margin-bottom: 15px; color: var(--text-primary);
 }
 
 .section-subtitle {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    margin-bottom: 50px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    text-align: center; color: var(--text-secondary); font-size: 1.1rem;
+    margin-bottom: 50px; max-width: 600px; margin-left: auto; margin-right: auto;
 }
 
-.section-cta {
-    text-align: center;
-    margin-top: 40px;
-}
+.section-cta { text-align: center; margin-top: 40px; }
 
 /* Features Grid */
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-}
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
 
 .feature-card {
-    background: var(--card-bg);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 30px;
-    transition: all 0.3s;
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px; padding: 30px; transition: all 0.3s;
 }
 
 .feature-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--primary);
+    transform: translateY(-5px); border-color: var(--primary);
     box-shadow: 0 20px 40px rgba(0, 217, 255, 0.1);
 }
 
-.feature-icon {
-    font-size: 3rem;
-    margin-bottom: 20px;
-}
-
-.feature-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-    color: var(--primary);
-}
-
-.feature-desc {
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
+.feature-icon { font-size: 3rem; margin-bottom: 20px; }
+.feature-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 12px; color: var(--primary); }
+.feature-desc { color: var(--text-secondary); line-height: 1.6; }
 
 /* How It Works */
-.steps-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-}
-
-.step {
-    text-align: center;
-    position: relative;
-}
+.steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.step { text-align: center; position: relative; }
 
 .step-number {
-    width: 60px;
-    height: 60px;
+    width: 60px; height: 60px;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--background);
-    margin: 0 auto 20px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 700; color: var(--background); margin: 0 auto 20px;
 }
 
-.step h3 {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-}
-
-.step p {
-    color: var(--text-secondary);
-}
+.step h3 { font-size: 1.3rem; margin-bottom: 10px; }
+.step p { color: var(--text-secondary); }
 
 /* Pricing Grid */
 .pricing-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    max-width: 1000px;
-    margin: 0 auto;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+    max-width: 1000px; margin: 0 auto;
 }
 
 .pricing-card {
-    background: var(--card-bg);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 30px;
-    position: relative;
-    transition: all 0.3s;
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 30px; position: relative; transition: all 0.3s;
 }
 
-.pricing-card.popular {
-    border-color: var(--primary);
-    transform: scale(1.05);
-}
+.pricing-card.popular { border-color: var(--primary); transform: scale(1.05); }
 
 .popular-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
     background: linear-gradient(90deg, var(--primary), var(--secondary));
-    color: var(--background);
-    padding: 6px 20px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    color: var(--background); padding: 6px 20px; border-radius: 20px;
+    font-size: 0.85rem; font-weight: 600;
 }
 
-.plan-name {
-    font-size: 1.3rem;
-    margin-bottom: 15px;
-}
-
-.plan-price {
-    margin-bottom: 15px;
-}
-
-.price-amount {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-
-.price-period {
-    color: var(--text-secondary);
-}
-
-.plan-desc {
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-}
-
-.plan-features {
-    list-style: none;
-    margin-bottom: 25px;
-}
-
-.plan-features li {
-    padding: 8px 0;
-    color: var(--text-secondary);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.btn-block {
-    display: block;
-    width: 100%;
-    text-align: center;
-}
+.plan-name { font-size: 1.3rem; margin-bottom: 15px; text-align: center; }
+.plan-price { margin-bottom: 15px; text-align: center; }
+.price-amount { font-size: 2.5rem; font-weight: 700; color: var(--primary); }
+.price-period { color: var(--text-secondary); }
+.plan-desc { color: var(--text-secondary); margin-bottom: 20px; text-align: center; }
+.plan-features { list-style: none; margin-bottom: 25px; }
+.plan-features li { padding: 8px 0; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.05); }
+.btn-block { display: block; width: 100%; text-align: center; }
 
 /* Testimonials */
-.testimonials-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-}
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
 
 .testimonial-card {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 30px;
+    background: var(--card-bg); border-radius: 16px; padding: 30px;
     border: 1px solid rgba(255,255,255,0.05);
 }
 
-.testimonial-rating {
-    margin-bottom: 15px;
-}
-
-.testimonial-content {
-    color: var(--text-secondary);
-    font-style: italic;
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-
-.testimonial-author strong {
-    display: block;
-    color: var(--text-primary);
-}
-
-.testimonial-author span {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
+.testimonial-rating { margin-bottom: 15px; }
+.testimonial-content { color: var(--text-secondary); font-style: italic; line-height: 1.6; margin-bottom: 20px; }
+.testimonial-author strong { display: block; color: var(--text-primary); }
+.testimonial-author span { color: var(--text-secondary); font-size: 0.9rem; }
 
 /* FAQ */
 .faq-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-    max-width: 1000px;
-    margin: 0 auto;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;
+    max-width: 1000px; margin: 0 auto;
 }
 
 .faq-item {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 25px;
+    background: var(--card-bg); border-radius: 12px; padding: 25px;
     border: 1px solid rgba(255,255,255,0.05);
 }
 
-.faq-question {
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-    color: var(--primary);
-}
-
-.faq-answer {
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
+.faq-question { font-size: 1.1rem; margin-bottom: 12px; color: var(--primary); }
+.faq-answer { color: var(--text-secondary); line-height: 1.6; }
 
 /* CTA Section */
-.cta-section {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    padding: 80px 0;
-    margin-top: 0;
-}
-
-.cta-box {
-    text-align: center;
-    color: var(--background);
-}
-
-.cta-box h2 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
-}
-
-.cta-box p {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    opacity: 0.9;
-}
-
-.cta-box .btn-primary {
-    background: var(--background);
-    color: var(--text-primary);
-}
-
-.cta-box .btn-primary:hover {
-    background: var(--card-bg);
-}
-
-.cta-note {
-    margin-top: 20px;
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
+.cta-section { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 80px 0; }
+.cta-box { text-align: center; color: var(--background); }
+.cta-box h2 { font-size: 2.5rem; margin-bottom: 15px; }
+.cta-box p { font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9; }
+.cta-box .btn-primary { background: var(--background); color: var(--text-primary); }
+.cta-box .btn-primary:hover { background: var(--card-bg); }
+.cta-note { margin-top: 20px; font-size: 0.9rem; opacity: 0.8; }
 
 /* Responsive */
 @media (max-width: 900px) {

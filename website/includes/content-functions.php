@@ -3,6 +3,7 @@
  * TrueVault VPN - Content Functions
  * Part 12 - Database-driven content helpers
  * ALL landing page content comes from database
+ * NO HARDCODING - Everything from content.db
  */
 
 /**
@@ -12,6 +13,9 @@ function getContentDB() {
     static $db = null;
     if ($db === null) {
         $dbPath = __DIR__ . '/../databases/content.db';
+        if (!file_exists($dbPath)) {
+            die("Database not found. Please run /setup.php first.");
+        }
         $db = new PDO("sqlite:$dbPath");
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
@@ -90,23 +94,25 @@ function getPage($pageKey) {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT * FROM pages WHERE page_key = ? AND is_published = 1");
         $stmt->execute([$pageKey]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     } catch (Exception $e) {
-        return null;
+        return [];
     }
 }
 
 /**
- * Get pricing plans
+ * Get pricing plans with decoded features
  */
 function getPricingPlans() {
     try {
         $db = getContentDB();
         $stmt = $db->query("SELECT * FROM pricing_plans WHERE is_active = 1 ORDER BY sort_order");
         $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        // Decode features JSON
         foreach ($plans as &$plan) {
             $plan['features'] = json_decode($plan['features'], true) ?: [];
+            // Add shorthand for templates
+            $plan['price_monthly'] = $plan['price_monthly_usd'];
+            $plan['price_yearly'] = $plan['price_yearly_usd'];
         }
         return $plans;
     } catch (Exception $e) {
@@ -115,12 +121,69 @@ function getPricingPlans() {
 }
 
 /**
- * Get features
+ * Get plan comparison table data (FROM SECTION 25)
  */
-function getFeatures() {
+function getPlanComparison() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM features WHERE is_active = 1 ORDER BY sort_order");
+        $stmt = $db->query("SELECT * FROM plan_comparison WHERE is_active = 1 ORDER BY sort_order");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get features, optionally filtered by category
+ */
+function getFeatures($category = null) {
+    try {
+        $db = getContentDB();
+        if ($category) {
+            $stmt = $db->prepare("SELECT * FROM features WHERE is_active = 1 AND category = ? ORDER BY sort_order");
+            $stmt->execute([$category]);
+        } else {
+            $stmt = $db->query("SELECT * FROM features WHERE is_active = 1 ORDER BY sort_order");
+        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get feature comparison (TrueVault vs Traditional VPN)
+ */
+function getFeatureComparison() {
+    try {
+        $db = getContentDB();
+        $stmt = $db->query("SELECT * FROM feature_comparison WHERE is_active = 1 ORDER BY sort_order");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get trust badges for hero section
+ */
+function getTrustBadges() {
+    try {
+        $db = getContentDB();
+        $stmt = $db->query("SELECT * FROM trust_badges WHERE is_active = 1 ORDER BY sort_order");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get how it works steps
+ */
+function getHowItWorks() {
+    try {
+        $db = getContentDB();
+        $stmt = $db->query("SELECT * FROM how_it_works WHERE is_active = 1 ORDER BY sort_order");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         return [];
@@ -137,7 +200,7 @@ function getFAQs($category = null) {
             $stmt = $db->prepare("SELECT * FROM faqs WHERE is_active = 1 AND category = ? ORDER BY sort_order");
             $stmt->execute([$category]);
         } else {
-            $stmt = $db->query("SELECT * FROM faqs WHERE is_active = 1 ORDER BY sort_order");
+            $stmt = $db->query("SELECT * FROM faqs WHERE is_active = 1 ORDER BY category, sort_order");
         }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
@@ -162,20 +225,6 @@ function getTestimonials($featuredOnly = false) {
 }
 
 /**
- * Save contact form submission
- */
-function saveContactSubmission($name, $email, $subject, $message) {
-    try {
-        $db = getContentDB();
-        $stmt = $db->prepare("INSERT INTO contact_submissions (name, email, subject, message, ip_address) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $email, $subject, $message, $_SERVER['REMOTE_ADDR'] ?? '']);
-        return true;
-    } catch (Exception $e) {
-        return false;
-    }
-}
-
-/**
  * Get theme from Part 8 themes database
  */
 function getActiveTheme() {
@@ -193,7 +242,7 @@ function getActiveTheme() {
 }
 
 /**
- * Default theme fallback
+ * Default theme fallback (database-driven when themes.db exists)
  */
 function getDefaultTheme() {
     return [
@@ -243,5 +292,13 @@ function renderStars($rating) {
  */
 function e($str) {
     return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Format price with currency
+ */
+function formatPrice($amount, $currency = 'USD') {
+    $symbol = $currency === 'CAD' ? 'C$' : '$';
+    return $symbol . number_format($amount, 2);
 }
 ?>
