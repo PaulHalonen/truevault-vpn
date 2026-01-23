@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Header -->
+        <!-- Header with Close Button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -27,8 +27,9 @@
                 app:tint="@color/primary" />
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:layout_marginStart="12dp">
 
@@ -47,6 +48,16 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
             </LinearLayout>
+
+            <!-- Close Button -->
+            <ImageView
+                android:id="@+id/btnClose"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_close"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/text_secondary" />
         </LinearLayout>
 
         <!-- Status Card -->
@@ -186,7 +197,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Monitors Downloads and fixes file extensions"
+                            android:text="Automatically fixes file extensions"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp"
                             android:layout_marginTop="4dp" />
@@ -212,7 +223,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Recent Configs -->
+        <!-- Config Files Section -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -227,14 +238,46 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Header with Refresh Button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="📁 Recent Configs"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="📁 VPN Config Files"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRefresh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="🔄 Scan"
+                        android:textColor="@color/primary"
+                        android:textSize="12sp"
+                        app:backgroundTint="@color/surface_dark"
+                        app:cornerRadius="6dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:minWidth="0dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvScanStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Scanning entire device..."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvConfigs"
@@ -246,7 +289,7 @@
                     android:id="@+id/tvNoConfigs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="No config files found yet"
+                    android:text="Tap 'Scan' to search your device"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp"
                     android:gravity="center"
@@ -258,6 +301,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             app:cardBackgroundColor="@color/card_background"
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp">
@@ -297,6 +341,18 @@
                     app:cornerRadius="8dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
+
+        <!-- Exit Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="❌ Close App"
+            android:textColor="@color/error"
+            app:backgroundTint="@color/surface_dark"
+            app:cornerRadius="8dp"
+            app:strokeColor="@color/error"
+            app:strokeWidth="1dp" />
 
     </LinearLayout>
 </ScrollView>

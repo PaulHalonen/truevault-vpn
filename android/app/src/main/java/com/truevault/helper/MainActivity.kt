@@ -22,13 +22,15 @@ import android.Manifest
 import android.os.Build
 import android.provider.Settings
 import java.io.File
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private var autoFixEnabled = false
+    private var autoFixEnabled = true  // Default to ON
     private lateinit var configAdapter: ConfigAdapter
     private val configList = mutableListOf<ConfigFile>()
+    private var scanJob: Job? = null
 
     // Image picker result
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -51,6 +53,10 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         checkWireGuardInstalled()
         
+        // Set auto-fix to ON by default
+        binding.switchAutoFix.isChecked = true
+        autoFixEnabled = true
+        
         // Auto-scan on launch
         requestStoragePermissionAndScan()
     }
@@ -59,11 +65,30 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // Rescan when app comes back to foreground
         if (hasStoragePermission()) {
-            scanAndFixConfigs()
+            scanEntireDevice()
         }
     }
 
     private fun setupUI() {
+        // Close button (X in header)
+        binding.btnClose.setOnClickListener {
+            finishAndRemoveTask()
+        }
+        
+        // Exit button at bottom
+        binding.btnExit.setOnClickListener {
+            finishAndRemoveTask()
+        }
+        
+        // Refresh/Scan button
+        binding.btnRefresh.setOnClickListener {
+            if (hasStoragePermission()) {
+                scanEntireDevice()
+            } else {
+                requestStoragePermissionAndScan()
+            }
+        }
+
         // Scan from screenshot button
         binding.btnScanScreenshot.setOnClickListener {
             requestStoragePermission {
@@ -91,12 +116,8 @@ class MainActivity : AppCompatActivity() {
             autoFixEnabled = isChecked
             if (isChecked) {
                 startFileMonitorService()
-                binding.tvAutoFixStatus.text = "✅ Monitoring Downloads folder..."
+                binding.tvAutoFixStatus.text = "✅ Auto-fix enabled"
                 binding.tvAutoFixStatus.visibility = android.view.View.VISIBLE
-                // Scan immediately when enabled
-                if (hasStoragePermission()) {
-                    scanAndFixConfigs()
-                }
             } else {
                 stopFileMonitorService()
                 binding.tvAutoFixStatus.text = "Auto-fix is disabled"
@@ -133,18 +154,19 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                     intent.data = Uri.parse("package:$packageName")
                     startActivity(intent)
+                    showToast("Please enable 'All files access' and return")
                 } catch (e: Exception) {
                     val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                     startActivity(intent)
                 }
             } else {
-                scanAndFixConfigs()
+                scanEntireDevice()
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             PermissionX.init(this)
                 .permissions(Manifest.permission.READ_MEDIA_IMAGES)
                 .request { allGranted, _, _ ->
-                    if (allGranted) scanAndFixConfigs()
+                    if (allGranted) scanEntireDevice()
                 }
         } else {
             PermissionX.init(this)
@@ -153,7 +175,7 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                 )
                 .request { allGranted, _, _ ->
-                    if (allGranted) scanAndFixConfigs()
+                    if (allGranted) scanEntireDevice()
                 }
         }
     }
@@ -166,122 +188,149 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scanAndFixConfigs() {
-        val foundConfigs = mutableListOf<ConfigFile>()
+    private fun scanEntireDevice() {
+        // Cancel any existing scan
+        scanJob?.cancel()
         
-        // Scan Downloads folder
-        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        
-        if (downloadDir.exists() && downloadDir.isDirectory) {
-            downloadDir.listFiles()?.forEach { file ->
-                // Find .conf.txt files and auto-fix them
-                if (file.name.endsWith(".conf.txt")) {
-                    val newFile = File(file.parent, file.name.replace(".conf.txt", ".conf"))
-                    try {
-                        if (file.renameTo(newFile)) {
-                            foundConfigs.add(ConfigFile(
-                                file = newFile,
-                                name = newFile.name,
-                                wasFixed = true,
-                                status = "✅ Auto-fixed! Tap to import"
-                            ))
-                        } else {
-                            foundConfigs.add(ConfigFile(
-                                file = file,
-                                name = file.name,
-                                wasFixed = false,
-                                status = "⚠️ Needs fixing (rename to .conf)"
-                            ))
-                        }
-                    } catch (e: Exception) {
-                        foundConfigs.add(ConfigFile(
-                            file = file,
-                            name = file.name,
-                            wasFixed = false,
-                            status = "⚠️ ${e.message}"
-                        ))
-                    }
-                }
-                // Also find already-correct .conf files
-                else if (file.name.endsWith(".conf") && !file.name.endsWith(".conf.txt")) {
-                    // Check if it's a WireGuard config
-                    try {
-                        val content = file.readText()
-                        if (content.contains("[Interface]") || content.contains("[Peer]")) {
-                            foundConfigs.add(ConfigFile(
-                                file = file,
-                                name = file.name,
-                                wasFixed = false,
-                                status = "Ready to import"
-                            ))
-                        }
-                    } catch (e: Exception) {
-                        // Skip files we can't read
-                    }
-                }
-            }
-        }
-        
-        // Also check common VPN folder names
-        val vpnFolders = listOf("TrueVault", "WireGuard", "VPN")
-        vpnFolders.forEach { folderName ->
-            val vpnDir = File(downloadDir, folderName)
-            if (vpnDir.exists() && vpnDir.isDirectory) {
-                vpnDir.listFiles()?.forEach { file ->
-                    if (file.name.endsWith(".conf") || file.name.endsWith(".conf.txt")) {
-                        processConfigFile(file, foundConfigs)
-                    }
-                }
-            }
-        }
-
-        // Update UI
+        // Show scanning status
         runOnUiThread {
-            if (foundConfigs.isEmpty()) {
-                binding.tvNoConfigs.visibility = android.view.View.VISIBLE
-                binding.rvConfigs.visibility = android.view.View.GONE
-                binding.tvStatus.text = "No VPN configs found in Downloads"
-            } else {
-                binding.tvNoConfigs.visibility = android.view.View.GONE
-                binding.rvConfigs.visibility = android.view.View.VISIBLE
-                binding.tvStatus.text = "Found ${foundConfigs.size} config file(s)"
-                configAdapter.updateConfigs(foundConfigs)
+            binding.tvScanStatus.visibility = android.view.View.VISIBLE
+            binding.tvScanStatus.text = "🔍 Scanning entire device..."
+            binding.btnRefresh.isEnabled = false
+            binding.btnRefresh.text = "⏳"
+        }
+        
+        scanJob = CoroutineScope(Dispatchers.IO).launch {
+            val foundConfigs = mutableListOf<ConfigFile>()
+            var scannedDirs = 0
+            
+            // Start from external storage root
+            val storageRoot = Environment.getExternalStorageDirectory()
+            
+            // Recursively scan all directories
+            scanDirectory(storageRoot, foundConfigs) { currentDir ->
+                scannedDirs++
+                if (scannedDirs % 50 == 0) {
+                    runOnUiThread {
+                        binding.tvScanStatus.text = "🔍 Scanning... ($scannedDirs folders, ${foundConfigs.size} found)"
+                    }
+                }
+            }
+            
+            // Also check internal app directories
+            val internalDirs = listOf(
+                filesDir,
+                cacheDir,
+                getExternalFilesDir(null)
+            )
+            internalDirs.filterNotNull().forEach { dir ->
+                scanDirectory(dir, foundConfigs) {}
+            }
+            
+            // Update UI with results
+            runOnUiThread {
+                binding.tvScanStatus.visibility = android.view.View.GONE
+                binding.btnRefresh.isEnabled = true
+                binding.btnRefresh.text = "🔄 Scan"
+                
+                if (foundConfigs.isEmpty()) {
+                    binding.tvNoConfigs.visibility = android.view.View.VISIBLE
+                    binding.rvConfigs.visibility = android.view.View.GONE
+                    binding.tvNoConfigs.text = "No .conf or .conf.txt files found"
+                    binding.tvStatus.text = "Scanned $scannedDirs folders - no configs found"
+                } else {
+                    binding.tvNoConfigs.visibility = android.view.View.GONE
+                    binding.rvConfigs.visibility = android.view.View.VISIBLE
+                    binding.tvStatus.text = "✅ Found ${foundConfigs.size} config file(s)"
+                    
+                    // Sort by most recent first
+                    foundConfigs.sortByDescending { it.file.lastModified() }
+                    configAdapter.updateConfigs(foundConfigs)
+                }
             }
         }
     }
 
-    private fun processConfigFile(file: File, foundConfigs: MutableList<ConfigFile>) {
-        if (file.name.endsWith(".conf.txt")) {
-            val newFile = File(file.parent, file.name.replace(".conf.txt", ".conf"))
-            try {
-                if (file.renameTo(newFile)) {
-                    foundConfigs.add(ConfigFile(
-                        file = newFile,
-                        name = newFile.name,
-                        wasFixed = true,
-                        status = "✅ Auto-fixed! Tap to import"
-                    ))
+    private fun scanDirectory(dir: File, foundConfigs: MutableList<ConfigFile>, onProgress: (String) -> Unit) {
+        if (!dir.exists() || !dir.isDirectory || !dir.canRead()) return
+        
+        // Skip certain directories to speed up scan
+        val skipDirs = listOf("Android/data", "Android/obb", ".cache", ".thumbnails", "DCIM/.thumbnails")
+        if (skipDirs.any { dir.absolutePath.contains(it) }) return
+        
+        onProgress(dir.name)
+        
+        try {
+            dir.listFiles()?.forEach { file ->
+                if (file.isDirectory) {
+                    scanDirectory(file, foundConfigs, onProgress)
+                } else {
+                    processFile(file, foundConfigs)
                 }
-            } catch (e: Exception) {
+            }
+        } catch (e: Exception) {
+            // Skip directories we can't read
+        }
+    }
+
+    private fun processFile(file: File, foundConfigs: MutableList<ConfigFile>) {
+        val name = file.name.lowercase()
+        
+        // Find .conf.txt files and auto-fix them
+        if (name.endsWith(".conf.txt")) {
+            if (autoFixEnabled) {
+                val newFile = File(file.parent, file.name.replace(".conf.txt", ".conf"))
+                try {
+                    if (file.renameTo(newFile)) {
+                        synchronized(foundConfigs) {
+                            foundConfigs.add(ConfigFile(
+                                file = newFile,
+                                name = newFile.name,
+                                wasFixed = true,
+                                status = "✅ Fixed! ${getShortPath(newFile)}"
+                            ))
+                        }
+                        return
+                    }
+                } catch (e: Exception) { }
+            }
+            // Couldn't fix or auto-fix disabled
+            synchronized(foundConfigs) {
                 foundConfigs.add(ConfigFile(
                     file = file,
                     name = file.name,
                     wasFixed = false,
-                    status = "⚠️ Needs manual rename"
+                    status = "⚠️ Needs rename: ${getShortPath(file)}"
                 ))
             }
-        } else if (file.name.endsWith(".conf")) {
+        }
+        // Find already-correct .conf files
+        else if (name.endsWith(".conf")) {
             try {
-                val content = file.readText()
+                val content = file.readText(Charsets.UTF_8)
                 if (content.contains("[Interface]") || content.contains("[Peer]")) {
-                    foundConfigs.add(ConfigFile(
-                        file = file,
-                        name = file.name,
-                        wasFixed = false,
-                        status = "Ready to import"
-                    ))
+                    synchronized(foundConfigs) {
+                        foundConfigs.add(ConfigFile(
+                            file = file,
+                            name = file.name,
+                            wasFixed = false,
+                            status = "📂 ${getShortPath(file)}"
+                        ))
+                    }
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                // Skip files we can't read
+            }
+        }
+    }
+
+    private fun getShortPath(file: File): String {
+        val path = file.absolutePath
+        val storage = Environment.getExternalStorageDirectory().absolutePath
+        return if (path.startsWith(storage)) {
+            path.removePrefix(storage).trimStart('/')
+        } else {
+            file.parentFile?.name ?: ""
         }
     }
 
@@ -468,5 +517,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        scanJob?.cancel()
     }
 }
