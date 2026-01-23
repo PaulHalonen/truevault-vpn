@@ -134,3 +134,34 @@ Continuing with Task 11.4...
 
 ### Finishing Part 11 - Device Rules UI & Polish...
 
+
+### Starting Part 12 - Landing Pages (Database-Driven PHP)
+Time: January 23, 2026 10:15 AM EST
+
+Creating:
+- Task 12.1: Database tables (pages, settings, navigation)
+- Task 12.2: Templates (header.php, footer.php)
+- Task 12.3-12.10: All 8 landing pages
+
+
+### Android App Update - Auto-Scan & Fix Feature
+Time: January 23, 2026 10:45 AM EST
+
+Updated TrueVault Helper app with:
+1. Auto-scan Downloads folder on app launch
+2. Auto-fix .conf.txt → .conf file extension
+3. Show list of all found configs
+4. Tap "Import" button to send to WireGuard
+5. Added MANAGE_EXTERNAL_STORAGE permission for Android 11+
+
+Files changed:
+- MainActivity.kt - Full scan/fix/list functionality
+- ConfigAdapter.kt - RecyclerView adapter for config list
+- item_config.xml - Layout for each config item
+- config_item_bg.xml - Background drawable
+- ic_config.xml - Config file icon
+- AndroidManifest.xml - Added MANAGE_EXTERNAL_STORAGE permission
+
+User needs to rebuild APK in Android Studio:
+Build → Generate Signed Bundle / APK → APK → Next → Select release → Create
+
