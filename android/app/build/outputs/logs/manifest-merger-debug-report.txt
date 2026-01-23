@@ -312,7 +312,7 @@ ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transform
 		ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
-permission#com.truevault.helper.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.truevault.helper.debug.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
@@ -322,7 +322,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
-uses-permission#com.truevault.helper.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.truevault.helper.debug.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
