@@ -301,4 +301,151 @@ function formatPrice($amount, $currency = 'USD') {
     $symbol = $currency === 'CAD' ? 'C$' : '$';
     return $symbol . number_format($amount, 2);
 }
+
+// ===========================================
+// NEW FUNCTIONS FOR PRICING COMPARISON PAGE
+// FROM SECTION 26 - All content from database
+// ===========================================
+
+/**
+ * Get page sections by page_key
+ */
+function getPageSections($pageKey) {
+    try {
+        $db = getContentDB();
+        $stmt = $db->prepare("SELECT * FROM page_sections WHERE page_key = ? AND is_active = 1 ORDER BY sort_order");
+        $stmt->execute([$pageKey]);
+        $sections = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $sections[$row['section_key']] = $row;
+        }
+        return $sections;
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get a single page section
+ */
+function getPageSection($pageKey, $sectionKey) {
+    try {
+        $db = getContentDB();
+        $stmt = $db->prepare("SELECT * FROM page_sections WHERE page_key = ? AND section_key = ?");
+        $stmt->execute([$pageKey, $sectionKey]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get competitors data
+ */
+function getCompetitors() {
+    try {
+        $db = getContentDB();
+        $stmt = $db->query("SELECT * FROM competitors WHERE is_active = 1 ORDER BY sort_order");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get single competitor by key
+ */
+function getCompetitor($key) {
+    try {
+        $db = getContentDB();
+        $stmt = $db->prepare("SELECT * FROM competitors WHERE competitor_key = ?");
+        $stmt->execute([$key]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get competitor comparison table rows
+ */
+function getCompetitorComparison() {
+    try {
+        $db = getContentDB();
+        $stmt = $db->query("SELECT * FROM competitor_comparison WHERE is_active = 1 ORDER BY sort_order");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get unique features (features only TrueVault offers)
+ */
+function getUniqueFeatures($pageKey = 'pricing-comparison') {
+    try {
+        $db = getContentDB();
+        $stmt = $db->prepare("SELECT * FROM unique_features WHERE page_key = ? AND is_active = 1 ORDER BY sort_order");
+        $stmt->execute([$pageKey]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get use cases (who should choose what)
+ */
+function getUseCases() {
+    try {
+        $db = getContentDB();
+        $stmt = $db->query("SELECT * FROM use_cases WHERE is_active = 1 ORDER BY sort_order");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get honest assessment items by type
+ */
+function getHonestAssessment($type = null) {
+    try {
+        $db = getContentDB();
+        if ($type) {
+            $stmt = $db->prepare("SELECT * FROM honest_assessment WHERE type = ? AND is_active = 1 ORDER BY sort_order");
+            $stmt->execute([$type]);
+        } else {
+            $stmt = $db->query("SELECT * FROM honest_assessment WHERE is_active = 1 ORDER BY type, sort_order");
+        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get trust badges filtered by page
+ */
+function getTrustBadgesByPage($pageKey = 'all') {
+    try {
+        $db = getContentDB();
+        $stmt = $db->prepare("SELECT * FROM trust_badges WHERE (page_key = ? OR page_key = 'all') AND is_active = 1 ORDER BY sort_order");
+        $stmt->execute([$pageKey]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Replace template variables in text
+ * e.g., {days} becomes the actual value
+ */
+function replaceVars($text, $vars = []) {
+    foreach ($vars as $key => $value) {
+        $text = str_replace('{' . $key . '}', $value, $text);
+    }
+    return $text;
+}
 ?>

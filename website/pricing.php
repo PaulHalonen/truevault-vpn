@@ -13,6 +13,13 @@ $plans = getPricingPlans();
 $comparison = getPlanComparison(); // FROM SECTION 25
 $faqs = getFAQs('billing');
 $refundDays = getSetting('feature_refund_days', '30');
+$yearlyDiscount = getSetting('feature_yearly_discount', '17');
+$popularBadge = getSetting('ui_popular_badge', 'Most Popular');
+$comparePlansTitle = getSetting('ui_compare_plans', 'Compare Plans');
+$billingFaqTitle = getSetting('ui_billing_faq', 'Billing FAQ');
+$guaranteeTitle = getSetting('ui_guarantee_title', '{days}-Day Money-Back Guarantee');
+$guaranteeText = getSetting('ui_guarantee_text', 'Try TrueVault VPN risk-free.');
+$refundBtnText = getSetting('ui_refund_btn_text', 'Learn About Our Refund Policy');
 
 include __DIR__ . '/templates/header.php';
 ?>
@@ -36,7 +43,7 @@ include __DIR__ . '/templates/header.php';
             </label>
             <span class="toggle-label" data-period="yearly">
                 Yearly
-                <span class="save-badge">Save 17%</span>
+                <span class="save-badge">Save <?= e($yearlyDiscount) ?>%</span>
             </span>
         </div>
         
@@ -55,7 +62,7 @@ include __DIR__ . '/templates/header.php';
             <?php foreach ($plans as $plan): ?>
             <div class="pricing-card <?= $plan['is_popular'] ? 'popular' : '' ?>" data-plan="<?= e($plan['plan_key']) ?>">
                 <?php if ($plan['is_popular']): ?>
-                <div class="popular-badge">Most Popular</div>
+                <div class="popular-badge"><?= e($popularBadge) ?></div>
                 <?php endif; ?>
                 
                 <h3 class="plan-name"><?= e($plan['plan_name']) ?></h3>
@@ -110,7 +117,7 @@ include __DIR__ . '/templates/header.php';
 <?php if (!empty($comparison)): ?>
 <section class="comparison-section">
     <div class="container">
-        <h2 class="section-title">Compare Plans</h2>
+        <h2 class="section-title"><?= e($comparePlansTitle) ?></h2>
         
         <div class="comparison-table-wrapper">
             <table class="comparison-table">
@@ -142,7 +149,7 @@ include __DIR__ . '/templates/header.php';
 <?php if (!empty($faqs)): ?>
 <section class="section faq-section">
     <div class="container">
-        <h2 class="section-title">Billing FAQ</h2>
+        <h2 class="section-title"><?= e($billingFaqTitle) ?></h2>
         
         <div class="faq-list">
             <?php foreach ($faqs as $faq): ?>
@@ -166,9 +173,9 @@ include __DIR__ . '/templates/header.php';
     <div class="container">
         <div class="guarantee-box">
             <div class="guarantee-icon">🛡️</div>
-            <h2><?= e($refundDays) ?>-Day Money-Back Guarantee</h2>
-            <p>Try TrueVault VPN risk-free. If you're not completely satisfied within <?= e($refundDays) ?> days, we'll refund 100% of your payment. No questions asked.</p>
-            <a href="/refund.php" class="btn btn-secondary">Learn About Our Refund Policy</a>
+            <h2><?= e(str_replace('{days}', $refundDays, $guaranteeTitle)) ?></h2>
+            <p><?= e(str_replace('{days}', $refundDays, $guaranteeText)) ?></p>
+            <a href="/refund.php" class="btn btn-secondary"><?= e($refundBtnText) ?></a>
         </div>
     </div>
 </section>
