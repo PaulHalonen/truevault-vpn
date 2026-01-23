@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#00FF88</color>
+    <color name="background_dark">#0F0F1A</color>
+    <color name="black">#000000</color>
+    <color name="card_background">#252540</color>
+    <color name="error">#FF5252</color>
+    <color name="primary">#00D9FF</color>
+    <color name="primary_dark">#00A8C9</color>
+    <color name="success">#00FF88</color>
+    <color name="surface_dark">#1A1A2E</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="warning">#FF9800</color>
+    <color name="white">#FFFFFF</color>
+    <string name="app_name">TrueVault Helper</string>
+    <string name="auto_fix_disabled">Auto-Fix Disabled</string>
+    <string name="auto_fix_enabled">Auto-Fix Enabled</string>
+    <string name="config_fixed">Config file fixed successfully</string>
+    <string name="config_found">Config file found!</string>
+    <string name="import_to_wireguard">Import to WireGuard</string>
+    <string name="install_wireguard">Install WireGuard</string>
+    <string name="monitoring_downloads">Monitoring Downloads folder...</string>
+    <string name="no_qr_found">No QR code found in image</string>
+    <string name="permission_required">Permission required to access files</string>
+    <string name="scan_qr_camera">Scan QR with Camera</string>
+    <string name="scan_qr_screenshot">Scan QR from Screenshot</string>
+    <string name="select_screenshot">Select Screenshot</string>
+    <string name="wireguard_not_installed">WireGuard app not installed</string>
+    <style name="Theme.TrueVaultHelper" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:statusBarColor">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+    </style>
+</resources>

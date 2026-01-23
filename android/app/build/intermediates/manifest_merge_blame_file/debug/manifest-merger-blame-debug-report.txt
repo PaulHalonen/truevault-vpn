@@ -1,0 +1,238 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.truevault.helper"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- Permissions -->
+12    <uses-permission android:name="android.permission.CAMERA" />
+12-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:6:5-65
+12-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:6:22-62
+13    <uses-permission
+13-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:7:5-8:38
+14        android:name="android.permission.READ_EXTERNAL_STORAGE"
+14-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:7:22-77
+15        android:maxSdkVersion="32" />
+15-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:8:9-35
+16    <uses-permission
+16-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:9:5-10:38
+17        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+17-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:9:22-78
+18        android:maxSdkVersion="29" />
+18-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:10:9-35
+19    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+19-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:11:5-76
+19-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:11:22-73
+20    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+20-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:12:5-77
+20-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:12:22-74
+21    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+21-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:13:5-87
+21-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:13:22-84
+22    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+22-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:14:5-77
+22-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:14:22-74
+23
+24    <uses-feature
+24-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:16:5-85
+25        android:name="android.hardware.camera"
+25-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:16:19-57
+26        android:required="false" />
+26-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:16:58-82
+27
+28    <permission
+28-->[androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+29        android:name="com.truevault.helper.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+29-->[androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+30        android:protectionLevel="signature" />
+30-->[androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+31
+32    <uses-permission android:name="com.truevault.helper.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+32-->[androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+32-->[androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+33
+34    <uses-feature
+34-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:28:5-30:36
+35        android:name="android.hardware.camera.front"
+35-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:29:9-53
+36        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+36-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:30:9-33
+37    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+38    <uses-feature
+38-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:33:5-35:36
+39        android:name="android.hardware.camera.autofocus"
+39-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:34:9-57
+40        android:required="false" />
+40-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:35:9-33
+41    <uses-feature
+41-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:36:5-38:36
+42        android:name="android.hardware.camera.flash"
+42-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:37:9-53
+43        android:required="false" />
+43-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:38:9-33
+44    <uses-feature
+44-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:39:5-41:36
+45        android:name="android.hardware.screen.landscape"
+45-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:40:9-57
+46        android:required="false" />
+46-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:41:9-33
+47    <uses-feature
+47-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:42:5-44:36
+48        android:name="android.hardware.wifi"
+48-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:43:9-45
+49        android:required="false" />
+49-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:44:9-33
+50
+51    <application
+51-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:18:5-54:19
+52        android:allowBackup="true"
+52-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:19:9-35
+53        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+53-->[androidx.core:core:1.12.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+54        android:debuggable="true"
+55        android:extractNativeLibs="false"
+56        android:icon="@mipmap/ic_launcher"
+56-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:20:9-43
+57        android:label="@string/app_name"
+57-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:21:9-41
+58        android:roundIcon="@mipmap/ic_launcher_round"
+58-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:22:9-54
+59        android:supportsRtl="true"
+59-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:23:9-35
+60        android:testOnly="true"
+61        android:theme="@style/Theme.TrueVaultHelper" >
+61-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:24:9-53
+62        <activity
+62-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:27:9-35:20
+63            android:name="com.truevault.helper.MainActivity"
+63-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:28:13-41
+64            android:exported="true"
+64-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:29:13-36
+65            android:theme="@style/Theme.TrueVaultHelper" >
+65-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:30:13-57
+66            <intent-filter>
+66-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:31:13-34:29
+67                <action android:name="android.intent.action.MAIN" />
+67-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:32:17-69
+67-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:32:25-66
+68
+69                <category android:name="android.intent.category.LAUNCHER" />
+69-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:33:17-77
+69-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:33:27-74
+70            </intent-filter>
+71        </activity>
+72
+73        <!-- File Monitor Service -->
+74        <service
+74-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:38:9-41:56
+75            android:name="com.truevault.helper.FileMonitorService"
+75-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:39:13-47
+76            android:exported="false"
+76-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:40:13-37
+77            android:foregroundServiceType="dataSync" />
+77-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:41:13-53
+78
+79        <!-- FileProvider for sharing configs -->
+80        <provider
+81            android:name="androidx.core.content.FileProvider"
+81-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:45:13-62
+82            android:authorities="com.truevault.helper.fileprovider"
+82-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:46:13-64
+83            android:exported="false"
+83-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:47:13-37
+84            android:grantUriPermissions="true" >
+84-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:48:13-47
+85            <meta-data
+85-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:49:13-51:54
+86                android:name="android.support.FILE_PROVIDER_PATHS"
+86-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:50:17-67
+87                android:resource="@xml/file_paths" />
+87-->E:\Documents\GitHub\truevault-vpn\android\app\src\main\AndroidManifest.xml:51:17-51
+88        </provider>
+89        <provider
+89-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+90            android:name="androidx.startup.InitializationProvider"
+90-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+91            android:authorities="com.truevault.helper.androidx-startup"
+91-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+92            android:exported="false" >
+92-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+93            <meta-data
+93-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+94                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+94-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+95                android:value="androidx.startup" />
+95-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\40af677edc9e981bf1ec9bb11c8b1d32\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+96            <meta-data
+96-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\01096349b0936ba7f741e909295c017b\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+97                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+97-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\01096349b0936ba7f741e909295c017b\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+98                android:value="androidx.startup" />
+98-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\01096349b0936ba7f741e909295c017b\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+99            <meta-data
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+100                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+101                android:value="androidx.startup" />
+101-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+102        </provider>
+103
+104        <receiver
+104-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+105            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+105-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+106            android:directBootAware="false"
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+107            android:enabled="true"
+107-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+108            android:exported="true"
+108-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+109            android:permission="android.permission.DUMP" >
+109-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+110            <intent-filter>
+110-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+111                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+111-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+111-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+112            </intent-filter>
+113            <intent-filter>
+113-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+114                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+114-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+114-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+115            </intent-filter>
+116            <intent-filter>
+116-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+117                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+117-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+117-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+118            </intent-filter>
+119            <intent-filter>
+119-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+120                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+120-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+120-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\4dbbd11a74d28bd64c37893cccf57482\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+121            </intent-filter>
+122        </receiver>
+123
+124        <activity
+124-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:47:9-53:63
+125            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+125-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:48:13-74
+126            android:clearTaskOnLaunch="true"
+126-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:49:13-45
+127            android:screenOrientation="sensorLandscape"
+127-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:50:13-56
+128            android:stateNotNeeded="true"
+128-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:51:13-42
+129            android:theme="@style/zxing_CaptureTheme"
+129-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:52:13-54
+130            android:windowSoftInputMode="stateAlwaysHidden" />
+130-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Kah-Len\.gradle\caches\transforms-3\5bae5ef1b9b1699e683a9a2124c85e6b\transformed\zxing-android-embedded-4.3.0\AndroidManifest.xml:53:13-60
+131    </application>
+132
+133</manifest>
