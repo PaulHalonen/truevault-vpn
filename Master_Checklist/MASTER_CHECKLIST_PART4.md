@@ -1106,6 +1106,20 @@ try {
 
 ---
 
+## 📱 ANDROID DEVICE DOWNLOAD REQUIREMENT
+
+**CRITICAL:** When a customer selects "Android" as their device type:
+
+1. **Show TrueVault Helper APK download** prominently BEFORE config download
+2. **Include clear instructions** for installing the helper app
+3. **Reference PART 10 (Task 10.9)** for full implementation details
+
+The TrueVault Helper app solves the .conf.txt extension issue that causes 90% of Android support tickets.
+
+**See:** `MASTER_CHECKLIST_PART10.md → Task 10.9` for complete implementation.
+
+---
+
 **CHECKPOINT: Day 4 Afternoon Part 1 Complete**
 
 **Completed So Far:**

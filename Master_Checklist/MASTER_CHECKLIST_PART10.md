@@ -504,6 +504,81 @@ Before starting PART 10, ensure:
 
 ---
 
+## 🔧 TASK 10.9: Bundle APK with Android Config Downloads
+
+**Time Estimate:** 1 hour  
+**Priority:** HIGH - Essential for customer experience
+
+### Overview
+When a customer selects "Android" as their device type and downloads their VPN config, the TrueVault Helper APK must also be available for download alongside the .conf file.
+
+### 10.9.1 Add APK to Server
+- [ ] Upload signed release APK to `/downloads/` folder
+- [ ] File: `/downloads/TrueVaultHelper.apk`
+- [ ] Keep APK updated when new versions released
+
+### 10.9.2 Update Device Setup Page
+- [ ] Modify `/dashboard/setup-device.php`
+- [ ] When device_type = "mobile" AND platform = "Android":
+  - Show "Download TrueVault Helper App" button prominently
+  - Display message: "This app helps import your VPN config into WireGuard"
+  - Make APK download button BEFORE config download button
+
+### 10.9.3 Download Flow for Android Users
+```
+1. User selects "Android" device type
+2. User clicks "Generate Config"
+3. Page shows TWO download options:
+   ┌─────────────────────────────────────────┐
+   │  📱 Step 1: Install Helper App         │
+   │  [Download TrueVault Helper APK]       │
+   │                                         │
+   │  📄 Step 2: Get Your Config            │
+   │  [Download VPN Config (.conf)]         │
+   │                                         │
+   │  📷 Or Scan QR Code:                   │
+   │  [QR CODE IMAGE]                       │
+   └─────────────────────────────────────────┘
+```
+
+### 10.9.4 APK Versioning
+- [ ] Create `/downloads/version.json`:
+  ```json
+  {
+    "android_app": {
+      "version": "1.1.0",
+      "version_code": 2,
+      "filename": "TrueVaultHelper.apk",
+      "size": "3.2 MB",
+      "updated": "2026-01-23"
+    }
+  }
+  ```
+- [ ] Display version info on download page
+- [ ] Show "What's New" link
+
+### 10.9.5 Instructions Text
+Add clear instructions for Android users:
+```
+📱 Android Setup Instructions:
+
+1. Download and install TrueVault Helper app (tap "Install" when prompted)
+2. Download your VPN config file
+3. Open TrueVault Helper - it will automatically find your config
+4. Tap "Import" to add config to WireGuard
+5. Connect to your VPN!
+
+Note: You may need to enable "Install from unknown sources" in your phone settings.
+```
+
+### Verification:
+- [ ] APK downloadable from server
+- [ ] Android users see helper app download option
+- [ ] Instructions are clear and visible
+- [ ] Version info displays correctly
+
+---
+
 ## 📝 DOCUMENTATION
 
 After completing PART 10:
