@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TrueVault Helper</string>
+    <string name="scan_qr_screenshot">Scan QR from Screenshot</string>
+    <string name="scan_qr_camera">Scan QR with Camera</string>
+    <string name="auto_fix_enabled">Auto-Fix Enabled</string>
+    <string name="auto_fix_disabled">Auto-Fix Disabled</string>
+    <string name="monitoring_downloads">Monitoring Downloads folder...</string>
+    <string name="config_found">Config file found!</string>
+    <string name="config_fixed">Config file fixed successfully</string>
+    <string name="import_to_wireguard">Import to WireGuard</string>
+    <string name="no_qr_found">No QR code found in image</string>
+    <string name="select_screenshot">Select Screenshot</string>
+    <string name="permission_required">Permission required to access files</string>
+    <string name="wireguard_not_installed">WireGuard app not installed</string>
+    <string name="install_wireguard">Install WireGuard</string>
+</resources>
