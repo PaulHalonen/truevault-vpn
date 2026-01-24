@@ -1,24 +1,25 @@
 # MASTER CHECKLIST - PART 17: BUSINESS AUTOMATION
 
 **Created:** January 18, 2026 - 11:20 PM CST  
-**Blueprint:** SECTION_20_BUSINESS_AUTOMATION.md (2,737 lines)  
-**Status:** ⏳ NOT STARTED  
+**Updated:** January 24, 2026 - Support Automation Tiered System Added  
+**Blueprint:** SECTION_20_BUSINESS_AUTOMATION.md  
+**Status:** ⏳ IN PROGRESS  
 **Priority:** 🟢 LOW - But CRITICAL for single-person operation  
-**Estimated Time:** 6-8 hours  
-**Estimated Lines:** ~1,000 lines  
+**Estimated Time:** 10-12 hours  
+**Estimated Lines:** ~2,550 lines  
 
 ---
 
 ## 📋 OVERVIEW
 
-Build complete business automation system with 12 automated workflows and 19 email templates.
+Build complete business automation system with 12 automated workflows, 19 email templates, AND a **5-Tier Support Failsafe System** for handling hundreds of customers with minimal human intervention.
 
 **Core Principle:** *"Run entire business with 5-10 minutes/day"*
 
 **What This Automates:**
 - Customer onboarding (welcome → setup → follow-up)
 - Payment failures (4-stage escalation: Day 0, 3, 7, 8)
-- Support tickets (auto-categorize → assign → notify)
+- Support tickets (5-tier failsafe: auto-resolve → self-service → canned → manual → VIP)
 - Complaints (apology → flag → follow-up)
 - Server alerts (notify admin immediately)
 - Cancellations (survey → retention → win-back)
@@ -27,532 +28,670 @@ Build complete business automation system with 12 automated workflows and 19 ema
 
 ---
 
+## 🎯 SUPPORT AUTOMATION TIERS (FAILSAFE SYSTEM)
+
+```
+TICKET COMES IN
+      ↓
+┌─────────────────────────────────────────────────────────┐
+│ TIER 1: AUTO-RESOLUTION (No human needed)               │
+│ - Knowledge base keyword match → Auto-reply sent        │
+│ - Customer gets resolution steps immediately            │
+│ - Ticket marked "auto-resolved, pending confirmation"   │
+│ - If customer replies "didn't work" → escalate Tier 3   │
+└─────────────────────────────────────────────────────────┘
+      ↓ (no KB match)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 2: SELF-SERVICE REDIRECT (No human needed)         │
+│ - System detects intent (password, billing, config)     │
+│ - Auto-reply: "You can do this yourself! [LINK]"        │
+│ - Links to self-service portal action                   │
+│ - Ticket auto-closed if customer completes action       │
+└─────────────────────────────────────────────────────────┘
+      ↓ (can't self-serve)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 3: CANNED RESPONSE (1-click human action)          │
+│ - Dashboard shows suggested canned response             │
+│ - Admin clicks "Send" - done in 2 seconds               │
+│ - Variables auto-filled ({name}, {ticket_id}, etc.)     │
+└─────────────────────────────────────────────────────────┘
+      ↓ (no canned response fits)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 4: MANUAL RESPONSE (Human writes reply)            │
+│ - Only for unique/complex issues                        │
+│ - After resolving, option to "Save as Canned Response"  │
+│ - System learns from your manual resolutions            │
+└─────────────────────────────────────────────────────────┘
+      ↓ (VIP customer detected)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 5: VIP ESCALATION (Immediate priority)             │
+│ - Bypasses auto-resolution, goes straight to top        │
+│ - SMS/email alert to admin                              │
+│ - Dedicated server issues = highest priority            │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 🎯 KEY FEATURES
 
 ✅ 12 automated workflows  
 ✅ 19 professional email templates  
 ✅ Dual email system (SMTP for customers, Gmail for admin)  
+✅ 5-Tier Support Failsafe System  
 ✅ Knowledge base auto-resolution  
-✅ Support ticket categorization  
+✅ Self-Service Customer Portal  
+✅ Canned Response Library  
+✅ Smart Ticket Dashboard  
 ✅ Payment escalation sequence  
 ✅ Scheduled task processing  
 ✅ 100% automated operation  
 
 ---
 
-## 💾 TASK 17.1: Create Database Schema
+## 💾 TASK 17.1: Create Database Schema ✅ COMPLETE
 
 **Time:** 30 minutes  
 **Lines:** ~150 lines  
 **File:** `/admin/automation/setup-automation.php`
 
-### **Create automation tables (add to main.db):**
+### **Tables Created:**
+- [x] email_log - All sent emails
+- [x] scheduled_tasks - Delayed workflow steps
+- [x] automation_log - Workflow execution history
+- [x] knowledge_base - Support auto-resolution
+- [x] email_templates - 19 templates
+- [x] workflow_definitions - 12 workflows
+
+---
+
+## 📧 TASK 17.2: Create 19 Email Templates ✅ COMPLETE
+
+**Time:** 2 hours  
+**Lines:** ~400 lines  
+**File:** `/admin/automation/setup-automation.php`
+
+### **All 19 Templates Seeded:**
+- [x] welcome_basic, welcome_formal, welcome_vip
+- [x] payment_success_basic, payment_success_formal
+- [x] payment_failed_reminder1, reminder2, final
+- [x] ticket_received, ticket_resolved
+- [x] complaint_acknowledge, complaint_resolved
+- [x] server_down, server_restored
+- [x] cancellation_survey, retention_offer, winback_campaign
+- [x] vip_request_received, vip_welcome_package
+
+---
+
+## 🤖 TASK 17.3: Build 12 Automated Workflows ✅ COMPLETE
+
+**Time:** 2 hours  
+**Lines:** ~550 lines  
+**File:** `/admin/automation/workflows.php`
+
+### **All 12 Workflows Built:**
+- [x] new_customer_onboarding
+- [x] payment_failed_escalation
+- [x] payment_success
+- [x] support_ticket_created
+- [x] support_ticket_resolved
+- [x] complaint_handling
+- [x] server_down_alert
+- [x] server_restored
+- [x] cancellation_request
+- [x] monthly_invoicing
+- [x] vip_request_received
+- [x] vip_approved
+
+---
+
+## ⏰ TASK 17.4: Scheduled Task Processor ✅ COMPLETE
+
+**Time:** 1 hour  
+**Lines:** ~310 lines  
+**File:** `/admin/automation/task-processor.php`
+
+### **Features Built:**
+- [x] Process pending tasks
+- [x] Mark completed/failed
+- [x] Cleanup old tasks
+- [x] Task statistics
+- [x] Retry failed tasks
+- [x] CLI and web trigger support
+
+---
+
+## 🎛️ TASK 17.5: Automation Admin Dashboard ✅ COMPLETE
+
+**Time:** 1 hour  
+**Lines:** ~660 lines  
+**File:** `/admin/automation/index.php`
+
+### **Features Built:**
+- [x] Statistics overview (workflows, executions, emails)
+- [x] Workflow list with manual triggers
+- [x] Scheduled tasks preview
+- [x] Recent execution history
+- [x] Process tasks button
+
+---
+
+## 📚 TASK 17.6: Support Automation Database Schema
+
+**Time:** 30 minutes  
+**Lines:** ~200 lines  
+**File:** `/admin/automation/setup-support.php`
+
+### **Create NEW support tables:**
 
 ```sql
--- TABLE 1: email_log (all sent emails)
-CREATE TABLE IF NOT EXISTS email_log (
+-- TABLE: support_tickets (enhanced for tiered system)
+CREATE TABLE IF NOT EXISTS support_tickets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    recipient_email TEXT NOT NULL,
-    recipient_name TEXT,
+    ticket_number TEXT UNIQUE,              -- TV-2026-00001
+    customer_id INTEGER,
+    customer_email TEXT NOT NULL,
+    customer_name TEXT,
     subject TEXT NOT NULL,
-    template_name TEXT,
-    email_type TEXT,                        -- customer, admin
-    method TEXT,                            -- smtp, gmail
-    status TEXT DEFAULT 'pending',          -- pending, sent, failed
-    sent_at TEXT,
-    opened_at TEXT,
-    clicked_at TEXT,
-    error_message TEXT,
-    metadata TEXT                           -- JSON: customer_id, etc.
-);
-
--- TABLE 2: scheduled_tasks (delayed workflow steps)
-CREATE TABLE IF NOT EXISTS scheduled_tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    workflow_name TEXT NOT NULL,
-    task_type TEXT NOT NULL,                -- send_email, update_status, etc.
-    execute_at TEXT NOT NULL,               -- When to run this task
-    task_data TEXT NOT NULL,                -- JSON: all data needed
-    status TEXT DEFAULT 'pending',          -- pending, completed, failed
-    executed_at TEXT,
-    error_message TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-
--- TABLE 3: automation_log (workflow execution history)
-CREATE TABLE IF NOT EXISTS automation_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    workflow_name TEXT NOT NULL,
-    trigger_type TEXT NOT NULL,
-    trigger_data TEXT,                      -- JSON: what triggered this
-    status TEXT DEFAULT 'running',          -- running, completed, failed
-    steps_completed INTEGER DEFAULT 0,
-    steps_total INTEGER,
-    started_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    completed_at TEXT,
-    error_message TEXT
-);
-
--- TABLE 4: knowledge_base (support auto-resolution)
-CREATE TABLE IF NOT EXISTS knowledge_base (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    category TEXT NOT NULL,                 -- billing, technical, account
-    keywords TEXT NOT NULL,                 -- Comma-separated search terms
-    question TEXT NOT NULL,
-    answer TEXT NOT NULL,
-    resolution_steps TEXT,                  -- JSON: step-by-step
-    success_rate REAL DEFAULT 0.0,          -- How often this resolves issues
-    times_used INTEGER DEFAULT 0,
+    message TEXT NOT NULL,
+    category TEXT,                          -- billing, technical, account, general
+    priority TEXT DEFAULT 'normal',         -- low, normal, high, urgent
+    status TEXT DEFAULT 'new',              -- new, auto_resolved, pending_confirmation, 
+                                           -- awaiting_response, in_progress, resolved, closed
+    tier_resolved INTEGER,                  -- 1-5 which tier resolved it
+    resolution_method TEXT,                 -- auto, self_service, canned, manual, vip
+    assigned_to TEXT,
+    is_vip INTEGER DEFAULT 0,
+    auto_resolution_id INTEGER,             -- FK to knowledge_base if auto-resolved
+    canned_response_id INTEGER,             -- FK to canned_responses if used
+    self_service_action TEXT,               -- What self-service action was suggested
+    customer_rating INTEGER,                -- 1-5 satisfaction
+    response_count INTEGER DEFAULT 0,
+    first_response_at TEXT,
+    resolved_at TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
--- TABLE 5: email_templates (19 templates)
-CREATE TABLE IF NOT EXISTS email_templates (
+-- TABLE: ticket_responses (conversation thread)
+CREATE TABLE IF NOT EXISTS ticket_responses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,              -- welcome_basic, payment_failed_1, etc.
-    tier TEXT,                              -- basic, formal, vip
-    category TEXT NOT NULL,                 -- onboarding, payment, support, etc.
-    subject TEXT NOT NULL,
+    ticket_id INTEGER NOT NULL,
+    sender_type TEXT NOT NULL,              -- customer, admin, system
+    message TEXT NOT NULL,
+    is_auto_response INTEGER DEFAULT 0,
+    canned_response_id INTEGER,
+    attachments TEXT,                       -- JSON array of file paths
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+);
+
+-- TABLE: canned_responses (pre-written replies)
+CREATE TABLE IF NOT EXISTS canned_responses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,                 -- billing, technical, account, general
+    title TEXT NOT NULL,                    -- Short name for admin to identify
+    trigger_keywords TEXT,                  -- Comma-separated keywords that suggest this response
+    subject TEXT,                           -- Optional email subject override
     body TEXT NOT NULL,                     -- HTML with {variables}
-    variables TEXT,                         -- JSON: list of required variables
-    active INTEGER DEFAULT 1,
+    variables TEXT,                         -- JSON: list of variables used
+    times_used INTEGER DEFAULT 0,
+    success_rate REAL DEFAULT 0.0,          -- How often customers are satisfied
+    is_active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- TABLE: self_service_actions (portal capabilities)
+CREATE TABLE IF NOT EXISTS self_service_actions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action_key TEXT UNIQUE NOT NULL,        -- reset_password, download_config, etc.
+    display_name TEXT NOT NULL,
+    description TEXT,
+    trigger_keywords TEXT,                  -- Keywords that suggest this action
+    portal_url TEXT NOT NULL,               -- Deep link to portal action
+    instructions TEXT,                      -- Step-by-step for customer
+    category TEXT,                          -- account, billing, technical
+    is_active INTEGER DEFAULT 1,
+    times_used INTEGER DEFAULT 0
+);
+
+-- TABLE: ticket_escalations (escalation history)
+CREATE TABLE IF NOT EXISTS ticket_escalations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL,
+    from_tier INTEGER,
+    to_tier INTEGER,
+    reason TEXT,
+    escalated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
 );
 ```
 
 ### **Verification:**
 - [ ] All 5 tables created
-- [ ] Can insert test data
-- [ ] Indexes created
+- [ ] Indexes on ticket_number, customer_email, status
+- [ ] Foreign keys work
 
 ---
 
-## 📧 TASK 17.2: Create 19 Email Templates
+## 📖 TASK 17.7: Knowledge Base System (Tier 1)
 
-**Time:** 2 hours  
+**Time:** 1.5 hours  
 **Lines:** ~400 lines  
-**File:** `/admin/automation/email-templates-seeder.php`
-
-### **Insert all 19 templates:**
-
-**Category 1: Onboarding (3 templates)**
-1. **welcome_basic** - Standard tier welcome
-2. **welcome_formal** - Pro tier welcome  
-3. **welcome_vip** - VIP tier welcome (SECRET - never mentions VIP)
-
-**Category 2: Payments (5 templates)**
-4. **payment_success_basic** - Standard payment confirmation
-5. **payment_success_formal** - Pro payment confirmation
-6. **payment_failed_reminder1** - Day 0 (friendly)
-7. **payment_failed_reminder2** - Day 3 (urgent)
-8. **payment_failed_final** - Day 7 (final warning)
-
-**Category 3: Support (2 templates)**
-9. **ticket_received** - Support ticket acknowledgment
-10. **ticket_resolved** - Support ticket resolution
-
-**Category 4: Complaints (2 templates)**
-11. **complaint_acknowledge** - Complaint apology/acknowledgment
-12. **complaint_resolved** - Complaint resolution follow-up
-
-**Category 5: Server Alerts (2 templates)**
-13. **server_down** - Server offline notification (admin)
-14. **server_restored** - Server back online notification
-
-**Category 6: Retention (3 templates)**
-15. **cancellation_survey** - Exit survey
-16. **retention_offer** - Special offer to stay (50% off 3 months)
-17. **winback_campaign** - Win-back offer (30 days after cancel)
-
-**Category 7: VIP (2 templates)**
-18. **vip_request_received** - VIP request acknowledgment
-19. **vip_welcome_package** - VIP approval (executive style)
-
-### **Template Format:**
-```sql
-INSERT INTO email_templates (name, tier, category, subject, body, variables) VALUES (
-    'welcome_basic',
-    'basic',
-    'onboarding',
-    'Welcome to TrueVault VPN!',
-    '<h2>Welcome {first_name}!</h2><p>Thank you for joining TrueVault VPN...</p>',
-    '["first_name", "email", "dashboard_url"]'
-);
-```
-
-### **Verification:**
-- [ ] All 19 templates inserted
-- [ ] HTML valid
-- [ ] Variables correct
-- [ ] No hardcoded values
-
----
-
-## 🤖 TASK 17.3: Build 12 Automated Workflows
-
-**Time:** 2 hours  
-**Lines:** ~350 lines  
-**File:** `/admin/automation/workflows.php`
-
-### **Workflow Class:**
-
-```php
-class AutomationWorkflow {
-    // Workflow 1: New Customer Onboarding
-    public function newCustomerOnboarding($customerId) {
-        // Step 1: Send welcome email (immediate)
-        $this->sendEmail('welcome_basic', $customerId);
-        
-        // Step 2: Schedule setup guide (1 hour later)
-        $this->scheduleTask('send_email', '+1 hour', [
-            'template' => 'setup_guide',
-            'customer_id' => $customerId
-        ]);
-        
-        // Step 3: Schedule follow-up (24 hours later)
-        $this->scheduleTask('send_email', '+24 hours', [
-            'template' => 'onboarding_followup',
-            'customer_id' => $customerId
-        ]);
-        
-        // Step 4: Log workflow
-        $this->logWorkflow('new_customer_onboarding', $customerId, 3);
-    }
-    
-    // Workflow 2: Payment Failed Escalation
-    public function paymentFailedEscalation($customerId, $amount) {
-        // Day 0: Friendly reminder
-        $this->sendEmail('payment_failed_reminder1', $customerId);
-        $this->updateStatus($customerId, 'grace_period');
-        
-        // Day 3: Urgent notice
-        $this->scheduleTask('send_email', '+3 days', [
-            'template' => 'payment_failed_reminder2',
-            'customer_id' => $customerId
-        ]);
-        
-        // Day 7: Final warning
-        $this->scheduleTask('send_email', '+7 days', [
-            'template' => 'payment_failed_final',
-            'customer_id' => $customerId
-        ]);
-        
-        // Day 8: Suspend service
-        $this->scheduleTask('suspend_service', '+8 days', [
-            'customer_id' => $customerId
-        ]);
-    }
-    
-    // Workflow 3: Support Ticket Created
-    public function supportTicketCreated($ticketId) {
-        // Auto-categorize (billing/technical/account)
-        $category = $this->categorizeTicket($ticketId);
-        
-        // Check knowledge base for solution
-        $solution = $this->searchKnowledgeBase($ticketId);
-        
-        // Send acknowledgment email
-        $this->sendEmail('ticket_received', $ticketId);
-        
-        // Assign priority
-        $priority = $this->assignPriority($ticketId);
-        
-        // If VIP, escalate immediately
-        if ($this->isVIP($ticketId)) {
-            $this->flagForImmediateAttention($ticketId);
-        }
-        
-        // Auto-escalate if unresolved after 24 hours
-        $this->scheduleTask('escalate_ticket', '+24 hours', [
-            'ticket_id' => $ticketId
-        ]);
-    }
-    
-    // ... 9 more workflows
-}
-```
-
-### **All 12 Workflows:**
-
-1. **New Customer Onboarding** - 3 steps
-2. **Payment Failed Escalation** - 4 stages
-3. **Payment Success** - Invoice + thank you
-4. **Support Ticket Created** - Auto-categorize + assign
-5. **Support Ticket Resolved** - Resolution notification + survey
-6. **Complaint Handling** - Apology + flag + follow-up
-7. **Server Down Alert** - Notify admin immediately
-8. **Server Restored** - All-clear notification
-9. **Cancellation Request** - Survey + retention offer
-10. **Monthly Invoicing** - Generate + send invoices
-11. **VIP Request Received** - Acknowledgment (SECRET)
-12. **VIP Approved** - Upgrade + provision (SECRET)
-
-### **Verification:**
-- [ ] All 12 workflows work
-- [ ] Emails send correctly
-- [ ] Tasks schedule properly
-- [ ] Status updates work
-
----
-
-## ⏰ TASK 17.4: Scheduled Task Processor
-
-**Time:** 1 hour  
-**Lines:** ~150 lines  
-**File:** `/admin/automation/task-processor.php`
-
-### **Cron Job Script:**
-
-```php
-<?php
-// Run this via cron every 5 minutes:
-// */5 * * * * php /path/to/task-processor.php
-
-require_once 'config.php';
-
-class TaskProcessor {
-    public function processScheduledTasks() {
-        // Get tasks that are due
-        $tasks = $this->db->query("
-            SELECT * FROM scheduled_tasks 
-            WHERE status = 'pending' 
-            AND execute_at <= datetime('now')
-            ORDER BY execute_at ASC
-        ")->fetchAll();
-        
-        foreach ($tasks as $task) {
-            try {
-                // Execute task based on type
-                switch ($task['task_type']) {
-                    case 'send_email':
-                        $this->sendScheduledEmail($task);
-                        break;
-                    case 'update_status':
-                        $this->updateCustomerStatus($task);
-                        break;
-                    case 'suspend_service':
-                        $this->suspendService($task);
-                        break;
-                    case 'escalate_ticket':
-                        $this->escalateTicket($task);
-                        break;
-                }
-                
-                // Mark as completed
-                $this->markCompleted($task['id']);
-                
-            } catch (Exception $e) {
-                // Log error
-                $this->markFailed($task['id'], $e->getMessage());
-            }
-        }
-    }
-}
-
-$processor = new TaskProcessor();
-$processor->processScheduledTasks();
-```
-
-### **Setup Cron Job:**
-```bash
-# Add to crontab:
-*/5 * * * * php /home/eybn38fwc55z/public_html/vpn.the-truth-publishing.com/admin/automation/task-processor.php
-```
-
-### **Verification:**
-- [ ] Cron job configured
-- [ ] Tasks execute on time
-- [ ] Errors logged
-- [ ] Completed tasks marked
-
----
-
-## 📚 TASK 17.5: Knowledge Base System
-
-**Time:** 1 hour  
-**Lines:** ~150 lines  
 **File:** `/admin/automation/knowledge-base.php`
 
-### **Seed Knowledge Base:**
+### **Features:**
+- [ ] Admin CRUD interface for KB entries
+- [ ] Category management (billing, technical, account, setup, general)
+- [ ] Keyword tagging system
+- [ ] Resolution steps editor (JSON)
+- [ ] Success rate tracking
+- [ ] Times used counter
+- [ ] Search/filter functionality
+- [ ] Import/export capability
 
-```sql
--- Common billing questions
-INSERT INTO knowledge_base (category, keywords, question, answer) VALUES
-('billing', 'payment failed, card declined, billing error', 
- 'Why did my payment fail?',
- 'Check if: 1) Card expired 2) Insufficient funds 3) Billing address mismatch. Update payment method in dashboard.');
-
--- Technical issues
-INSERT INTO knowledge_base (category, keywords, question, answer) VALUES
-('technical', 'slow connection, vpn slow, speed issues',
- 'Why is my VPN connection slow?',
- 'Try: 1) Switch to closer server 2) Test without VPN 3) Restart device 4) Check local internet speed.');
-
--- ... 20+ more entries
+### **Auto-Resolution Engine:**
+```php
+class KnowledgeBase {
+    /**
+     * Attempt auto-resolution for a ticket
+     * Returns: KB entry if match found, null if no match
+     */
+    public function attemptAutoResolution($ticketContent) {
+        $keywords = $this->extractKeywords($ticketContent);
+        
+        // Score each KB entry
+        $matches = [];
+        foreach ($this->getAllActiveEntries() as $entry) {
+            $score = $this->calculateMatchScore($keywords, $entry['keywords']);
+            if ($score >= 0.6) { // 60% confidence threshold
+                $matches[] = ['entry' => $entry, 'score' => $score];
+            }
+        }
+        
+        // Sort by score, return best match
+        usort($matches, fn($a, $b) => $b['score'] <=> $a['score']);
+        
+        return $matches[0]['entry'] ?? null;
+    }
+}
 ```
 
-### **Auto-Resolution Function:**
+### **Seed 25+ KB Entries:**
+- [ ] Billing (6 entries): payment failed, refund, change plan, invoices, pricing, promo codes
+- [ ] Technical (8 entries): slow connection, can't connect, IP leak, kill switch, split tunneling, streaming, protocols, router setup
+- [ ] Account (6 entries): change email, reset password, 2FA, delete account, device limit, change username
+- [ ] Setup (3 entries): install guide, download configs, first connection
+- [ ] General (2 entries): what is VPN, logging policy
 
+### **Verification:**
+- [ ] KB entries display correctly
+- [ ] Search works
+- [ ] Auto-resolution triggers on new tickets
+- [ ] Success rate updates after customer feedback
+
+---
+
+## 🔧 TASK 17.8: Self-Service Portal (Tier 2)
+
+**Time:** 2 hours  
+**Lines:** ~500 lines  
+**File:** `/customer/self-service/index.php`
+
+### **Self-Service Actions (9 total):**
+
+| Action | Description | Ticket-Deflecting |
+|--------|-------------|-------------------|
+| Reset Password | Change account password | ✅ High |
+| Download Configs | Get VPN configs for all devices | ✅ High |
+| View Invoices | See billing history, download PDFs | ✅ Medium |
+| Update Payment | Change card via PayPal | ✅ High |
+| View Devices | See connected devices | ✅ Medium |
+| Regenerate Keys | New WireGuard keypair | ✅ High |
+| Pause Subscription | 30-day pause (keeps data) | ✅ Medium |
+| Cancel Subscription | Request cancellation | ✅ Medium |
+| Run Connection Test | Diagnose VPN issues | ✅ High |
+
+### **Portal Features:**
+- [ ] Dashboard with all actions as cards
+- [ ] Deep-linkable URLs (e.g., /self-service/reset-password)
+- [ ] Progress indicators for multi-step actions
+- [ ] Success confirmation with "Still need help?" link
+- [ ] Track action completion (close ticket if completed)
+- [ ] Mobile-responsive design
+
+### **Intent Detection for Ticket Auto-Redirect:**
 ```php
-public function searchKnowledgeBase($ticketContent) {
-    // Extract keywords from ticket
-    $keywords = $this->extractKeywords($ticketContent);
+class SelfServiceDetector {
+    private $actionMappings = [
+        'reset_password' => ['password', 'forgot', 'login', 'can\'t sign in', 'locked out'],
+        'download_config' => ['config', 'download', 'setup', 'install', 'wireguard file'],
+        'view_invoices' => ['invoice', 'receipt', 'billing history', 'payment history'],
+        'update_payment' => ['card', 'payment method', 'update billing', 'new card'],
+        'regenerate_keys' => ['new key', 'regenerate', 'keypair', 'certificate'],
+        'connection_test' => ['not working', 'can\'t connect', 'connection issue', 'troubleshoot']
+    ];
     
-    // Search knowledge base
-    foreach ($keywords as $keyword) {
-        $results = $this->db->query("
-            SELECT * FROM knowledge_base 
-            WHERE keywords LIKE '%$keyword%' 
-            ORDER BY success_rate DESC 
-            LIMIT 3
-        ")->fetchAll();
-        
-        if (!empty($results)) {
-            return $results[0]; // Return best match
-        }
+    public function detectIntent($ticketContent) {
+        // Returns action_key if self-service can handle it
     }
-    
-    return null;
 }
 ```
 
 ### **Verification:**
-- [ ] Knowledge base seeded
-- [ ] Search works
-- [ ] Returns relevant results
-- [ ] Success rate tracked
+- [ ] All 9 actions work
+- [ ] Deep links function correctly
+- [ ] Mobile responsive
+- [ ] Ticket auto-closes when action completed
 
 ---
 
-## 🎛️ TASK 17.6: Admin Dashboard
+## 💬 TASK 17.9: Canned Response Library (Tier 3)
 
-**Time:** 30 minutes  
-**Lines:** ~100 lines  
-**File:** `/admin/automation/dashboard.php`
+**Time:** 1 hour  
+**Lines:** ~300 lines  
+**File:** `/admin/automation/canned-responses.php`
+
+### **Admin Interface:**
+- [ ] CRUD for canned responses
+- [ ] Category filter (billing, technical, account, general)
+- [ ] Keyword tagging for suggestion engine
+- [ ] Variable placeholder editor
+- [ ] Preview with sample data
+- [ ] Usage statistics
+- [ ] Success rate tracking
+
+### **Seed 20+ Canned Responses:**
+
+**Billing (5):**
+1. Payment retry instructions
+2. Refund confirmation
+3. Plan upgrade confirmation
+4. Invoice resend
+5. Promo code applied
+
+**Technical (8):**
+1. Server switching guide
+2. Clear cache/reinstall
+3. Firewall/antivirus check
+4. Protocol change guide
+5. Speed test instructions
+6. Router reset guide
+7. DNS leak fix
+8. Kill switch enable
+
+**Account (5):**
+1. Password reset sent
+2. 2FA setup guide
+3. Device limit reached
+4. Account deletion confirmed
+5. Email change confirmed
+
+**General (2):**
+1. Thank you for patience
+2. Escalation notice
+
+### **Variable Support:**
+```
+{first_name} - Customer first name
+{ticket_id} - Ticket number
+{plan_name} - Current plan
+{device_count} - Active devices
+{days_as_customer} - Account age
+{dashboard_url} - Link to dashboard
+{self_service_url} - Link to specific action
+```
+
+### **Verification:**
+- [ ] Canned responses display in ticket dashboard
+- [ ] Variables auto-fill correctly
+- [ ] 1-click send works
+- [ ] Usage tracked
+
+---
+
+## 🎫 TASK 17.10: Smart Ticket Dashboard (Tier 3-4)
+
+**Time:** 2 hours  
+**Lines:** ~600 lines  
+**File:** `/admin/automation/ticket-dashboard.php`
 
 ### **Dashboard Layout:**
-
 ```
-┌────────────────────────────────────────────────────────────┐
-│ 🤖 Business Automation Control                            │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│ STATISTICS                                                  │
-│ ┌────────────┬────────────┬────────────┬────────────┐      │
-│ │ Workflows  │ Executions │ Scheduled  │ Emails     │      │
-│ │ Active: 12 │ Today: 34  │ Pending: 8 │ Sent: 127  │      │
-│ └────────────┴────────────┴────────────┴────────────┘      │
-│                                                            │
-│ RECENT WORKFLOW EXECUTIONS                                  │
-│ ┌──────────┬──────────────────┬────────┬─────────┐         │
-│ │ Time     │ Workflow         │ Status │ Details │         │
-│ ├──────────┼──────────────────┼────────┼─────────┤         │
-│ │ 11:05 AM │ New Customer     │ ✅ OK  │ john@.. │         │
-│ │ 10:30 AM │ Payment Failed   │ ✅ OK  │ sara@.. │         │
-│ │ 09:15 AM │ Ticket Created   │ ✅ OK  │ #1234   │         │
-│ └──────────┴──────────────────┴────────┴─────────┘         │
-│                                                            │
-│ SCHEDULED TASKS (Next 24 Hours)                             │
-│ - 2:00 PM: Send setup guide to 3 customers                 │
-│ - 5:00 PM: Payment reminder (Day 3) to 1 customer          │
-│ - 9:00 AM Tomorrow: Monthly invoicing (all customers)      │
-│                                                            │
-│ [⚙️ Settings] [📊 Analytics] [📧 Email Log]               │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│ 🎫 Support Tickets                           [New Ticket] [Refresh]   │
+├────────────────────────────────────────────────────────────────────────┤
+│ FILTER: [All ▼] [Open ▼] [Billing ▼]  SEARCH: [____________] 🔍      │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│ ┌─────────────────────────────────────────────────────────────────┐   │
+│ │ #TV-2026-00042  ⚡ URGENT  VIP                                   │   │
+│ │ "Can't connect to dedicated server"                              │   │
+│ │ john@example.com • 5 min ago • Technical                         │   │
+│ │ ┌──────────────────────────────────────────────────────────────┐│   │
+│ │ │ 🤖 SUGGESTED: KB Match 85% - "Connection Issues"              ││   │
+│ │ │ [Send Auto-Reply] [View KB Entry]                             ││   │
+│ │ └──────────────────────────────────────────────────────────────┘│   │
+│ │ ┌──────────────────────────────────────────────────────────────┐│   │
+│ │ │ 💬 TOP CANNED RESPONSES:                                      ││   │
+│ │ │ 1. Server switching guide [Send]                              ││   │
+│ │ │ 2. Clear cache/reinstall [Send]                               ││   │
+│ │ │ 3. Protocol change guide [Send]                               ││   │
+│ │ └──────────────────────────────────────────────────────────────┘│   │
+│ │ CUSTOMER CONTEXT: VIP • Dedicated Plan • 847 days • 3 prev tix  │   │
+│ │ [📧 Reply] [⏫ Escalate] [✅ Resolve] [🔄 Self-Service]          │   │
+│ └─────────────────────────────────────────────────────────────────┘   │
+│                                                                        │
+│ ┌─────────────────────────────────────────────────────────────────┐   │
+│ │ #TV-2026-00041  NORMAL                                           │   │
+│ │ "How do I download my config?"                                   │   │
+│ │ sarah@example.com • 2 hours ago • Technical                      │   │
+│ │ ┌──────────────────────────────────────────────────────────────┐│   │
+│ │ │ 🔧 SELF-SERVICE REDIRECT SUGGESTED:                           ││   │
+│ │ │ "Download Configs" action available                           ││   │
+│ │ │ [Send Self-Service Link] [View Action]                        ││   │
+│ │ └──────────────────────────────────────────────────────────────┘│   │
+│ │ [📧 Reply] [⏫ Escalate] [✅ Resolve] [🔄 Self-Service]          │   │
+│ └─────────────────────────────────────────────────────────────────┘   │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### **Features:**
-- [ ] Statistics overview
-- [ ] Recent executions
-- [ ] Scheduled tasks preview
-- [ ] Manual workflow triggers
-- [ ] Email log viewer
-- [ ] Knowledge base editor
+- [ ] Ticket list with filters (status, category, priority)
+- [ ] VIP badge and priority sorting
+- [ ] KB match suggestions with confidence score
+- [ ] Canned response suggestions (top 3)
+- [ ] Self-service redirect suggestions
+- [ ] Customer context panel (plan, age, history)
+- [ ] Quick action buttons (Reply, Escalate, Resolve, Self-Service)
+- [ ] Conversation thread view
+- [ ] "Save as Canned Response" after manual reply
+- [ ] Bulk actions (close, assign, escalate)
+
+### **Ticket View Modal:**
+- [ ] Full conversation history
+- [ ] Customer profile sidebar
+- [ ] Suggested responses panel
+- [ ] Reply editor with variable insertion
+- [ ] Attachment support
+- [ ] Internal notes (not sent to customer)
 
 ### **Verification:**
-- [ ] Dashboard loads
-- [ ] Stats accurate
-- [ ] Can trigger workflows manually
+- [ ] Tickets display correctly
+- [ ] Suggestions appear based on content
+- [ ] 1-click send works
+- [ ] Self-service redirect works
+- [ ] Save as canned response works
+
+---
+
+## 📡 TASK 17.11: Support Automation API
+
+**Time:** 1 hour  
+**Lines:** ~350 lines  
+**File:** `/admin/automation/support-api.php`
+
+### **Endpoints:**
+
+```php
+// Ticket Operations
+POST   /api/support/tickets              // Create new ticket
+GET    /api/support/tickets              // List tickets (with filters)
+GET    /api/support/tickets/{id}         // Get single ticket
+PUT    /api/support/tickets/{id}         // Update ticket
+DELETE /api/support/tickets/{id}         // Delete ticket (admin only)
+
+// Ticket Responses
+POST   /api/support/tickets/{id}/reply   // Add response
+GET    /api/support/tickets/{id}/history // Get conversation
+
+// Auto-Resolution
+POST   /api/support/auto-resolve         // Attempt auto-resolution
+POST   /api/support/self-service-check   // Check self-service options
+
+// Canned Responses
+GET    /api/support/canned               // List canned responses
+POST   /api/support/canned               // Create canned response
+GET    /api/support/canned/suggest       // Get suggestions for ticket
+
+// Knowledge Base
+GET    /api/support/kb                   // List KB entries
+POST   /api/support/kb                   // Create KB entry
+GET    /api/support/kb/search            // Search KB
+
+// Statistics
+GET    /api/support/stats                // Dashboard statistics
+GET    /api/support/stats/resolution     // Resolution tier breakdown
+```
+
+### **Verification:**
+- [ ] All endpoints respond correctly
+- [ ] Authentication required for admin endpoints
+- [ ] Customer can only access their own tickets
+- [ ] Rate limiting in place
 
 ---
 
 ## 🧪 TESTING CHECKLIST
 
-### **Email System:**
-- [ ] Templates render correctly
-- [ ] Variables replaced
-- [ ] SMTP sends to customers
-- [ ] Gmail sends to admin
-- [ ] Logs record sends
+### **Tier 1: Auto-Resolution**
+- [ ] New ticket triggers KB search
+- [ ] High-confidence match sends auto-reply
+- [ ] Ticket marked "auto_resolved, pending_confirmation"
+- [ ] "Didn't work" reply escalates to Tier 3
+- [ ] "Thanks" reply closes ticket
 
-### **Workflows:**
-- [ ] All 12 workflows trigger correctly
-- [ ] Emails send at right times
-- [ ] Tasks schedule properly
-- [ ] Status updates work
-- [ ] VIP workflows stay SECRET
+### **Tier 2: Self-Service Redirect**
+- [ ] Intent detection identifies self-service actions
+- [ ] Auto-reply includes deep link to portal
+- [ ] Portal action completion closes ticket
+- [ ] Tracking records self-service usage
 
-### **Scheduled Tasks:**
-- [ ] Cron job runs every 5 minutes
-- [ ] Tasks execute on time
-- [ ] Errors logged
-- [ ] Completed tasks marked
+### **Tier 3: Canned Responses**
+- [ ] Suggestions appear in ticket dashboard
+- [ ] 1-click send works with variable replacement
+- [ ] Usage tracking increments
+- [ ] Success rate updates after feedback
 
-### **Knowledge Base:**
-- [ ] Auto-resolution works
-- [ ] Returns relevant answers
-- [ ] Success rate tracked
+### **Tier 4: Manual Response**
+- [ ] Reply editor works
+- [ ] "Save as Canned" creates new canned response
+- [ ] Internal notes don't go to customer
+- [ ] Attachments upload correctly
+
+### **Tier 5: VIP Escalation**
+- [ ] VIP tickets bypass Tier 1-2
+- [ ] Admin notification sent immediately
+- [ ] VIP badge visible in dashboard
+- [ ] Priority sorting works
+
+### **Overall**
+- [ ] Escalation chain works correctly
+- [ ] Statistics accurate
+- [ ] Email notifications sent
+- [ ] Resolution tier tracked correctly
 
 ---
 
-## 📦 FILE STRUCTURE
+## 📦 UPDATED FILE STRUCTURE
 
 ```
 /admin/automation/
-├── dashboard.php (control center)
-├── workflows.php (12 workflows)
-├── task-processor.php (cron script)
-├── knowledge-base.php (auto-resolution)
-├── setup-automation.php (database setup)
-├── email-templates-seeder.php (19 templates)
-├── email.php (dual email system)
-└── assets/
-    ├── css/automation.css
-    └── js/automation.js
+├── index.php                    ✅ COMPLETE (dashboard)
+├── workflows.php                ✅ COMPLETE (12 workflows)
+├── task-processor.php           ✅ COMPLETE (cron script)
+├── setup-automation.php         ✅ COMPLETE (base tables + templates)
+├── setup-support.php            ⏳ Task 17.6 (support tables)
+├── knowledge-base.php           ⏳ Task 17.7 (KB admin + engine)
+├── canned-responses.php         ⏳ Task 17.9 (canned admin)
+├── ticket-dashboard.php         ⏳ Task 17.10 (smart dashboard)
+├── support-api.php              ⏳ Task 17.11 (API endpoints)
+├── email-log.php                ⏳ (email viewer)
+└── databases/
+    └── automation.db            ✅ COMPLETE
+
+/customer/self-service/
+├── index.php                    ⏳ Task 17.8 (portal dashboard)
+├── reset-password.php           ⏳ Task 17.8
+├── download-configs.php         ⏳ Task 17.8
+├── view-invoices.php            ⏳ Task 17.8
+├── update-payment.php           ⏳ Task 17.8
+├── view-devices.php             ⏳ Task 17.8
+├── regenerate-keys.php          ⏳ Task 17.8
+├── pause-subscription.php       ⏳ Task 17.8
+├── cancel-subscription.php      ⏳ Task 17.8
+└── connection-test.php          ⏳ Task 17.8
 ```
 
 ---
 
 ## 🚀 DEPLOYMENT CHECKLIST
 
-- [ ] All tables created
-- [ ] 19 email templates inserted
-- [ ] Knowledge base seeded (20+ entries)
-- [ ] Cron job configured (every 5 minutes)
-- [ ] SMTP configured
-- [ ] Gmail API configured
-- [ ] Test workflows work
-- [ ] Test emails send
+**Phase 1 (Complete):**
+- [x] Base automation tables created
+- [x] 19 email templates seeded
+- [x] 12 workflows built
+- [x] Task processor ready
+- [x] Automation dashboard ready
+
+**Phase 2 (Support System):**
+- [ ] Support tables created (Task 17.6)
+- [ ] Knowledge base seeded (Task 17.7)
+- [ ] Self-service portal built (Task 17.8)
+- [ ] Canned responses seeded (Task 17.9)
+- [ ] Ticket dashboard built (Task 17.10)
+- [ ] Support API built (Task 17.11)
+
+**Phase 3 (Integration):**
+- [ ] Workflows trigger support automation
+- [ ] Customer portal links to self-service
+- [ ] Email templates reference self-service
+- [ ] All tiers tested end-to-end
 
 ---
 
 ## 📊 SUMMARY
 
-**Total Tasks:** 6 major tasks  
-**Total Workflows:** 12 automated workflows  
-**Total Email Templates:** 19 professional templates  
-**Total Lines:** ~1,000 lines  
-**Total Time:** 6-8 hours  
+**Total Tasks:** 11 major tasks  
+**Completed:** 5 tasks (17.1-17.5)  
+**Remaining:** 6 tasks (17.6-17.11)  
 
-**Dependencies:**
-- Part 1 (Database infrastructure) ✅
-- Part 5 (Payment integration) ✅
+**Total Workflows:** 12 automated workflows ✅  
+**Total Email Templates:** 19 professional templates ✅  
+**Support Tiers:** 5 failsafe tiers  
+**Self-Service Actions:** 9 portal actions  
+**Canned Responses:** 20+ pre-written replies  
+**Knowledge Base Entries:** 25+ auto-resolution entries  
 
-**Result:** Business runs itself with 5-10 min/day!
+**Total Lines:** ~2,550 lines  
+**Completed Lines:** ~1,970 lines  
+**Remaining Lines:** ~1,850 lines  
+**Total Time:** 10-12 hours  
+
+**Result:** Handle hundreds of customers with 5-10 min/day!
 
 ---
 
-**END OF PART 17 CHECKLIST - BUSINESS AUTOMATION**
+**END OF PART 17 CHECKLIST - BUSINESS AUTOMATION (UPDATED)**

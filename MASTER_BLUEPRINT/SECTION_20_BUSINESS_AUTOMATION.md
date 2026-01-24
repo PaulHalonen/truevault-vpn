@@ -2734,3 +2734,656 @@ $scheduledTasks = $db->query("
 **Created:** January 15, 2026  
 **Last Updated:** January 15, 2026  
 **Status:** âœ… COMPLETE & READY FOR IMPLEMENTATION
+
+
+---
+
+# SECTION 20B: SUPPORT AUTOMATION TIERED SYSTEM
+
+**Added:** January 24, 2026  
+**Status:** Complete Specification  
+**Priority:** CRITICAL - One-Person Operation Enabler  
+
+---
+
+## 🎯 OVERVIEW: 5-TIER FAILSAFE SYSTEM
+
+### **The Problem**
+One person managing hundreds of support tickets = impossible without automation.
+
+### **The Solution**
+5-tier failsafe system that resolves 80-90% of issues WITHOUT human intervention.
+
+```
+TICKET COMES IN
+      ↓
+┌─────────────────────────────────────────────────────────┐
+│ TIER 1: AUTO-RESOLUTION (No human needed)               │
+│ - Knowledge base keyword match → Auto-reply sent        │
+│ - Customer gets resolution steps immediately            │
+│ - Ticket marked "auto-resolved, pending confirmation"   │
+│ - If customer replies "didn't work" → escalate Tier 3   │
+└─────────────────────────────────────────────────────────┘
+      ↓ (no KB match)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 2: SELF-SERVICE REDIRECT (No human needed)         │
+│ - System detects intent (password, billing, config)     │
+│ - Auto-reply: "You can do this yourself! [LINK]"        │
+│ - Links to self-service portal action                   │
+│ - Ticket auto-closed if customer completes action       │
+└─────────────────────────────────────────────────────────┘
+      ↓ (can't self-serve)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 3: CANNED RESPONSE (1-click human action)          │
+│ - Dashboard shows suggested canned response             │
+│ - Admin clicks "Send" - done in 2 seconds               │
+│ - Variables auto-filled ({name}, {ticket_id}, etc.)     │
+└─────────────────────────────────────────────────────────┘
+      ↓ (no canned response fits)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 4: MANUAL RESPONSE (Human writes reply)            │
+│ - Only for unique/complex issues                        │
+│ - After resolving, option to "Save as Canned Response"  │
+│ - System learns from your manual resolutions            │
+└─────────────────────────────────────────────────────────┘
+      ↓ (VIP customer detected)
+┌─────────────────────────────────────────────────────────┐
+│ TIER 5: VIP ESCALATION (Immediate priority)             │
+│ - Bypasses auto-resolution, goes straight to top        │
+│ - SMS/email alert to admin                              │
+│ - Dedicated server issues = highest priority            │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📊 DATABASE SCHEMA: SUPPORT TABLES
+
+### **Table: support_tickets**
+```sql
+CREATE TABLE IF NOT EXISTS support_tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_number TEXT UNIQUE,              -- TV-2026-00001
+    customer_id INTEGER,
+    customer_email TEXT NOT NULL,
+    customer_name TEXT,
+    subject TEXT NOT NULL,
+    message TEXT NOT NULL,
+    category TEXT,                          -- billing, technical, account, general
+    priority TEXT DEFAULT 'normal',         -- low, normal, high, urgent
+    status TEXT DEFAULT 'new',              -- new, auto_resolved, pending_confirmation, 
+                                           -- awaiting_response, in_progress, resolved, closed
+    tier_resolved INTEGER,                  -- 1-5 which tier resolved it
+    resolution_method TEXT,                 -- auto, self_service, canned, manual, vip
+    assigned_to TEXT,
+    is_vip INTEGER DEFAULT 0,
+    auto_resolution_id INTEGER,             -- FK to knowledge_base if auto-resolved
+    canned_response_id INTEGER,             -- FK to canned_responses if used
+    self_service_action TEXT,               -- What self-service action was suggested
+    customer_rating INTEGER,                -- 1-5 satisfaction
+    response_count INTEGER DEFAULT 0,
+    first_response_at TEXT,
+    resolved_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **Table: ticket_responses**
+```sql
+CREATE TABLE IF NOT EXISTS ticket_responses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL,
+    sender_type TEXT NOT NULL,              -- customer, admin, system
+    message TEXT NOT NULL,
+    is_auto_response INTEGER DEFAULT 0,
+    canned_response_id INTEGER,
+    attachments TEXT,                       -- JSON array of file paths
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+);
+```
+
+### **Table: canned_responses**
+```sql
+CREATE TABLE IF NOT EXISTS canned_responses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,                 -- billing, technical, account, general
+    title TEXT NOT NULL,                    -- Short name for admin to identify
+    trigger_keywords TEXT,                  -- Comma-separated keywords that suggest this response
+    subject TEXT,                           -- Optional email subject override
+    body TEXT NOT NULL,                     -- HTML with {variables}
+    variables TEXT,                         -- JSON: list of variables used
+    times_used INTEGER DEFAULT 0,
+    success_rate REAL DEFAULT 0.0,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **Table: self_service_actions**
+```sql
+CREATE TABLE IF NOT EXISTS self_service_actions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action_key TEXT UNIQUE NOT NULL,        -- reset_password, download_config, etc.
+    display_name TEXT NOT NULL,
+    description TEXT,
+    trigger_keywords TEXT,                  -- Keywords that suggest this action
+    portal_url TEXT NOT NULL,               -- Deep link to portal action
+    instructions TEXT,                      -- Step-by-step for customer
+    category TEXT,                          -- account, billing, technical
+    is_active INTEGER DEFAULT 1,
+    times_used INTEGER DEFAULT 0
+);
+```
+
+### **Table: ticket_escalations**
+```sql
+CREATE TABLE IF NOT EXISTS ticket_escalations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL,
+    from_tier INTEGER,
+    to_tier INTEGER,
+    reason TEXT,
+    escalated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+);
+```
+
+---
+
+## 📖 TIER 1: KNOWLEDGE BASE AUTO-RESOLUTION
+
+### **How It Works**
+1. New ticket arrives
+2. System extracts keywords from subject + message
+3. Matches against knowledge_base.keywords
+4. If confidence >= 60%, sends auto-reply with resolution steps
+5. Ticket marked "auto_resolved, pending_confirmation"
+6. Customer can reply "didn't work" to escalate
+
+### **Auto-Resolution Class**
+```php
+class KnowledgeBaseResolver {
+    private $db;
+    private $confidenceThreshold = 0.6;
+    
+    public function attemptResolution($ticketId) {
+        $ticket = $this->getTicket($ticketId);
+        $content = strtolower($ticket['subject'] . ' ' . $ticket['message']);
+        
+        // Extract meaningful keywords (remove stop words)
+        $keywords = $this->extractKeywords($content);
+        
+        // Find best matching KB entry
+        $match = $this->findBestMatch($keywords);
+        
+        if ($match && $match['score'] >= $this->confidenceThreshold) {
+            // Send auto-resolution email
+            $this->sendAutoResolution($ticket, $match['entry']);
+            
+            // Update ticket status
+            $this->updateTicket($ticketId, [
+                'status' => 'auto_resolved',
+                'tier_resolved' => 1,
+                'resolution_method' => 'auto',
+                'auto_resolution_id' => $match['entry']['id']
+            ]);
+            
+            // Track usage
+            $this->incrementKBUsage($match['entry']['id']);
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private function extractKeywords($text) {
+        $stopWords = ['the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'but', 
+                      'in', 'with', 'to', 'for', 'of', 'not', 'be', 'are', 'was', 'were',
+                      'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+                      'could', 'should', 'may', 'might', 'must', 'can', 'i', 'my', 'me',
+                      'you', 'your', 'it', 'its', 'this', 'that', 'these', 'those'];
+        
+        $words = preg_split('/\s+/', $text);
+        $keywords = [];
+        
+        foreach ($words as $word) {
+            $word = preg_replace('/[^a-z0-9]/', '', $word);
+            if (strlen($word) > 2 && !in_array($word, $stopWords)) {
+                $keywords[] = $word;
+            }
+        }
+        
+        return array_unique($keywords);
+    }
+    
+    private function findBestMatch($keywords) {
+        $entries = $this->getAllActiveEntries();
+        $bestMatch = null;
+        $bestScore = 0;
+        
+        foreach ($entries as $entry) {
+            $entryKeywords = array_map('trim', explode(',', strtolower($entry['keywords'])));
+            $matchCount = count(array_intersect($keywords, $entryKeywords));
+            $score = $matchCount / max(count($entryKeywords), 1);
+            
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestMatch = ['entry' => $entry, 'score' => $score];
+            }
+        }
+        
+        return $bestMatch;
+    }
+}
+```
+
+### **25+ Knowledge Base Entries**
+
+**Billing (6 entries):**
+| Keywords | Question | Resolution |
+|----------|----------|------------|
+| payment, failed, declined, card | Why did my payment fail? | 1. Check card expiration 2. Verify funds 3. Update billing address 4. Try different card |
+| refund, money back, cancel payment | How do I get a refund? | 30-day guarantee: Dashboard > Billing > Request Refund |
+| change, plan, upgrade, downgrade | How do I change my plan? | Dashboard > Account > Change Plan (prorated billing) |
+| invoice, receipt, billing history | Where are my invoices? | Dashboard > Billing > Invoice History |
+| pricing, cost, price, how much | What are your prices? | Personal $9.97/mo, Family $14.97/mo, Dedicated $39.97/mo |
+| promo, code, discount, coupon | How do I use a promo code? | Enter during checkout or Dashboard > Billing > Apply Code |
+
+**Technical (8 entries):**
+| Keywords | Question | Resolution |
+|----------|----------|------------|
+| slow, speed, connection, lag | VPN is slow | 1. Switch to closer server 2. Try WireGuard protocol 3. Check base internet speed |
+| connect, can't, unable, error | Can't connect | 1. Check internet 2. Restart app 3. Try different server 4. Switch protocol |
+| leak, ip, dns, exposed | IP/DNS leak detected | Dashboard > Security > Leak Test. Enable Kill Switch + DNS Protection |
+| kill, switch, disconnect | What is kill switch? | Blocks internet if VPN drops. Settings > Security > Kill Switch |
+| split, tunneling, exclude, app | Split tunneling | Settings > Split Tunneling > Add apps (Windows/Android only) |
+| streaming, netflix, blocked | Streaming not working | 1. Clear cookies 2. Try streaming-optimized server 3. Different region |
+| protocol, wireguard, openvpn | Which protocol to use? | WireGuard = fastest, OpenVPN = most compatible, IKEv2 = best for mobile |
+| router, setup, whole house | Router VPN setup | Dashboard > Setup Guides > Router (may reduce speeds) |
+
+**Account (6 entries):**
+| Keywords | Question | Resolution |
+|----------|----------|------------|
+| email, change, update email | Change email address | Dashboard > Account > Change Email (verification required) |
+| password, reset, forgot | Reset password | Dashboard > Account > Change Password OR Login > Forgot Password |
+| 2fa, authenticator, two factor | Enable 2FA | Dashboard > Security > Two-Factor Auth (save backup codes!) |
+| delete, account, close | Delete my account | Cancel subscription first, then Account > Delete Account |
+| device, limit, too many | Device limit reached | Personal=5, Family=10, Dedicated=Unlimited. Remove old devices first |
+| username, change name | Change username | Dashboard > Profile > Edit (changes display name only) |
+
+**Setup (3 entries):**
+| Keywords | Question | Resolution |
+|----------|----------|------------|
+| install, download, setup | How to install | Dashboard > Download > Select device > Follow installer |
+| config, wireguard, file | Download config file | Dashboard > Devices > Download Config (select device type) |
+| first, connection, start | First connection | Install app > Login > Click Connect > Select server |
+
+**General (2 entries):**
+| Keywords | Question | Resolution |
+|----------|----------|------------|
+| what, vpn, how work | What is a VPN? | Encrypts traffic + masks IP for privacy, security, geo-access |
+| log, logging, privacy, store | Logging policy | Strict no-logs. Only store: email, payment status (no activity) |
+
+---
+
+## 🔧 TIER 2: SELF-SERVICE PORTAL
+
+### **9 Self-Service Actions**
+
+| Action Key | Display Name | Ticket-Deflecting | Portal URL |
+|------------|--------------|-------------------|------------|
+| reset_password | Reset Password | HIGH | /self-service/reset-password |
+| download_configs | Download VPN Configs | HIGH | /self-service/download-configs |
+| view_invoices | View Invoices | MEDIUM | /self-service/view-invoices |
+| update_payment | Update Payment Method | HIGH | /self-service/update-payment |
+| view_devices | View Connected Devices | MEDIUM | /self-service/view-devices |
+| regenerate_keys | Regenerate WireGuard Keys | HIGH | /self-service/regenerate-keys |
+| pause_subscription | Pause Subscription | MEDIUM | /self-service/pause-subscription |
+| cancel_subscription | Cancel Subscription | MEDIUM | /self-service/cancel-subscription |
+| connection_test | Run Connection Test | HIGH | /self-service/connection-test |
+
+### **Intent Detection**
+```php
+class SelfServiceDetector {
+    private $actionMappings = [
+        'reset_password' => ['password', 'forgot', 'login', 'can\'t sign in', 'locked out', 'reset'],
+        'download_configs' => ['config', 'download', 'setup', 'install', 'wireguard file', 'ovpn'],
+        'view_invoices' => ['invoice', 'receipt', 'billing history', 'payment history', 'statement'],
+        'update_payment' => ['card', 'payment method', 'update billing', 'new card', 'credit card'],
+        'regenerate_keys' => ['new key', 'regenerate', 'keypair', 'certificate', 'key expired'],
+        'connection_test' => ['not working', 'can\'t connect', 'connection issue', 'troubleshoot', 'diagnose'],
+        'pause_subscription' => ['pause', 'hold', 'temporary stop', 'vacation'],
+        'cancel_subscription' => ['cancel', 'stop', 'end subscription', 'unsubscribe'],
+        'view_devices' => ['devices', 'connected', 'sessions', 'logged in where']
+    ];
+    
+    public function detectIntent($content) {
+        $content = strtolower($content);
+        
+        foreach ($this->actionMappings as $action => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (strpos($content, $keyword) !== false) {
+                    return $action;
+                }
+            }
+        }
+        
+        return null;
+    }
+}
+```
+
+### **Auto-Redirect Email Template**
+```html
+<h2>Hi {first_name}!</h2>
+
+<p>Good news! You can handle this yourself in just a few clicks:</p>
+
+<div style="background: #f0f8ff; padding: 20px; border-radius: 10px; text-align: center;">
+    <h3>{action_name}</h3>
+    <p>{action_description}</p>
+    <a href="{portal_url}" style="display: inline-block; padding: 12px 30px; 
+       background: linear-gradient(135deg, #00d4ff, #7b2cbf); color: white; 
+       text-decoration: none; border-radius: 8px; font-weight: bold;">
+       Do It Now →
+    </a>
+</div>
+
+<p style="margin-top: 20px;">
+    <strong>Still need help?</strong> Just reply to this email and a human will assist you.
+</p>
+```
+
+---
+
+## 💬 TIER 3: CANNED RESPONSES
+
+### **20+ Canned Responses**
+
+**Billing (5):**
+```
+1. PAYMENT_RETRY
+   Title: Payment Retry Instructions
+   Body: "Your payment didn't go through. Please try: 1) Update card... 2) Check funds..."
+
+2. REFUND_CONFIRMED
+   Title: Refund Confirmation
+   Body: "Your refund of {amount} has been processed. Allow 3-5 business days..."
+
+3. PLAN_UPGRADE_CONFIRMED
+   Title: Plan Upgrade Confirmation
+   Body: "You've been upgraded to {new_plan}! New features: ..."
+
+4. INVOICE_RESENT
+   Title: Invoice Resent
+   Body: "Your invoice #{invoice_number} has been resent to {email}..."
+
+5. PROMO_APPLIED
+   Title: Promo Code Applied
+   Body: "Code {promo_code} applied! You saved {discount_amount}..."
+```
+
+**Technical (8):**
+```
+6. SERVER_SWITCH_GUIDE
+   Title: Server Switching Guide
+   Body: "To get better speeds: 1) Open app 2) Click server list 3) Choose closest..."
+
+7. CLEAR_CACHE_REINSTALL
+   Title: Clear Cache & Reinstall
+   Body: "Let's do a fresh start: 1) Uninstall app 2) Restart device 3) Download fresh..."
+
+8. FIREWALL_CHECK
+   Title: Firewall/Antivirus Check
+   Body: "Your security software may be blocking VPN. Allow TrueVault in: ..."
+
+9. PROTOCOL_CHANGE
+   Title: Protocol Change Guide
+   Body: "Try switching protocols: Settings > Protocol > WireGuard (fastest)..."
+
+10. SPEED_TEST_INSTRUCTIONS
+    Title: Speed Test Instructions
+    Body: "Let's diagnose: 1) Disconnect VPN 2) Run speedtest.net 3) Connect VPN..."
+
+11. ROUTER_RESET
+    Title: Router Reset Guide
+    Body: "Router issues? Try: 1) Unplug router 30 seconds 2) Reconnect 3) Wait 2 min..."
+
+12. DNS_LEAK_FIX
+    Title: DNS Leak Fix
+    Body: "To fix DNS leaks: Dashboard > Security > Enable DNS Leak Protection..."
+
+13. KILL_SWITCH_ENABLE
+    Title: Kill Switch Enable
+    Body: "Enable kill switch for safety: Settings > Security > Kill Switch ON..."
+```
+
+**Account (5):**
+```
+14. PASSWORD_RESET_SENT
+    Title: Password Reset Sent
+    Body: "Password reset link sent to {email}. Check spam folder. Link expires in 1 hour..."
+
+15. 2FA_SETUP_GUIDE
+    Title: 2FA Setup Guide
+    Body: "To enable 2FA: 1) Download authenticator app 2) Dashboard > Security..."
+
+16. DEVICE_LIMIT_REACHED
+    Title: Device Limit Reached
+    Body: "You've hit your {device_limit} device limit. Remove old devices: Dashboard > Devices..."
+
+17. ACCOUNT_DELETION_CONFIRMED
+    Title: Account Deletion Confirmed
+    Body: "Your account is scheduled for deletion. Data removed in 30 days..."
+
+18. EMAIL_CHANGE_CONFIRMED
+    Title: Email Change Confirmed
+    Body: "Your email has been changed to {new_email}. Verification sent..."
+```
+
+**General (2):**
+```
+19. THANK_YOU_PATIENCE
+    Title: Thank You for Patience
+    Body: "Thank you for your patience! We're working on this and will update you soon..."
+
+20. ESCALATION_NOTICE
+    Title: Escalation Notice
+    Body: "I've escalated your issue to our senior team. You'll hear back within 24 hours..."
+```
+
+### **Variable Support**
+```
+{first_name}        - Customer first name
+{email}             - Customer email
+{ticket_id}         - Ticket number (TV-2026-00001)
+{plan_name}         - Current plan (Personal, Family, Dedicated)
+{device_limit}      - Plan device limit (5, 10, unlimited)
+{device_count}      - Current device count
+{days_as_customer}  - Account age in days
+{amount}            - Dollar amount
+{invoice_number}    - Invoice ID
+{promo_code}        - Promo code used
+{discount_amount}   - Discount amount
+{new_plan}          - Upgraded plan name
+{new_email}         - New email address
+{dashboard_url}     - https://vpn.the-truth-publishing.com/dashboard
+{self_service_url}  - Specific self-service action URL
+```
+
+---
+
+## 🎫 TIER 3-4: SMART TICKET DASHBOARD
+
+### **Dashboard Layout Specification**
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🎫 SUPPORT TICKETS                              [📊 Stats] [⚙️ Settings]    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ QUICK STATS:  Open: 12  |  Urgent: 2  |  VIP: 1  |  Avg Response: 2.3 hrs   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ FILTERS: [Status ▼] [Category ▼] [Priority ▼]  SEARCH: [__________] 🔍      │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│ ┌────────────────────────────────────────────────────────────────────────┐  │
+│ │ ⚡ #TV-2026-00042  URGENT  👑 VIP                         5 min ago    │  │
+│ │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │  │
+│ │ Subject: Can't connect to dedicated server                             │  │
+│ │ From: john@example.com • Category: Technical                           │  │
+│ │                                                                         │  │
+│ │ ┌─────────────────────────────────────────────────────────────────────┐│  │
+│ │ │ 🤖 AUTO-SUGGESTION                                                  ││  │
+│ │ │ KB Match: 85% confidence - "Connection Issues"                      ││  │
+│ │ │ [📧 Send Auto-Reply] [👁️ Preview] [❌ Dismiss]                      ││  │
+│ │ └─────────────────────────────────────────────────────────────────────┘│  │
+│ │                                                                         │  │
+│ │ ┌─────────────────────────────────────────────────────────────────────┐│  │
+│ │ │ 💬 SUGGESTED CANNED RESPONSES                                       ││  │
+│ │ │ 1. Server Switching Guide .......................... [Send] [View]  ││  │
+│ │ │ 2. Clear Cache & Reinstall ......................... [Send] [View]  ││  │
+│ │ │ 3. Protocol Change Guide ........................... [Send] [View]  ││  │
+│ │ └─────────────────────────────────────────────────────────────────────┘│  │
+│ │                                                                         │  │
+│ │ 👤 CUSTOMER: VIP • Dedicated Plan • 847 days • 3 previous tickets      │  │
+│ │                                                                         │  │
+│ │ [📧 Reply] [⏫ Escalate] [✅ Resolve] [🔄 Self-Service] [🗑️ Delete]    │  │
+│ └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+│ ┌────────────────────────────────────────────────────────────────────────┐  │
+│ │ 🔵 #TV-2026-00041  NORMAL                                 2 hrs ago    │  │
+│ │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │  │
+│ │ Subject: How do I download my config?                                  │  │
+│ │ From: sarah@example.com • Category: Technical                          │  │
+│ │                                                                         │  │
+│ │ ┌─────────────────────────────────────────────────────────────────────┐│  │
+│ │ │ 🔧 SELF-SERVICE REDIRECT AVAILABLE                                  ││  │
+│ │ │ Action: "Download Configs" - Customer can do this themselves        ││  │
+│ │ │ [📧 Send Self-Service Link] [👁️ Preview]                            ││  │
+│ │ └─────────────────────────────────────────────────────────────────────┘│  │
+│ │                                                                         │  │
+│ │ [📧 Reply] [⏫ Escalate] [✅ Resolve] [🔄 Self-Service]                 │  │
+│ └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### **Ticket Detail Modal**
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Ticket #TV-2026-00042                                              [✕ Close]│
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│ ┌─────────────────────────────────┐  ┌────────────────────────────────────┐ │
+│ │ CONVERSATION                     │  │ CUSTOMER PROFILE                   │ │
+│ │                                  │  │                                    │ │
+│ │ 👤 John (5 min ago)              │  │ 👤 john@example.com                │ │
+│ │ ─────────────────────────        │  │ Plan: Dedicated ($39.97/mo)        │ │
+│ │ Can't connect to my dedicated    │  │ Status: Active                     │ │
+│ │ server. Getting timeout errors.  │  │ Member since: May 2023 (847 days)  │ │
+│ │ I've tried restarting the app    │  │ 👑 VIP Customer                    │ │
+│ │ but still nothing works.         │  │                                    │ │
+│ │                                  │  │ TICKET HISTORY                     │ │
+│ │ [Attached: screenshot.png]       │  │ • #00039 - Billing (Resolved)      │ │
+│ │                                  │  │ • #00028 - Technical (Resolved)    │ │
+│ │ ─────────────────────────        │  │ • #00015 - Account (Resolved)      │ │
+│ │ 🤖 System (5 min ago)            │  │                                    │ │
+│ │ Ticket received. We're looking   │  │ QUICK ACTIONS                      │ │
+│ │ into this for you.               │  │ [💰 Refund] [⬆️ Upgrade]          │ │
+│ │                                  │  │ [🎁 Add Credit] [⏸️ Pause]        │ │
+│ └─────────────────────────────────┘  └────────────────────────────────────┘ │
+│                                                                              │
+│ ┌──────────────────────────────────────────────────────────────────────────┐│
+│ │ 📝 REPLY                                                                 ││
+│ │                                                                          ││
+│ │ [Variables: {first_name} {ticket_id} {plan_name} ▼]                      ││
+│ │                                                                          ││
+│ │ ┌──────────────────────────────────────────────────────────────────────┐││
+│ │ │ Hi John,                                                             │││
+│ │ │                                                                      │││
+│ │ │ [Type your response here...]                                         │││
+│ │ │                                                                      │││
+│ │ └──────────────────────────────────────────────────────────────────────┘││
+│ │                                                                          ││
+│ │ [📎 Attach] [💾 Save as Canned] [📧 Send & Resolve] [📤 Send Reply]     ││
+│ └──────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│ ┌──────────────────────────────────────────────────────────────────────────┐│
+│ │ 📝 INTERNAL NOTES (Not sent to customer)                                ││
+│ │ ┌──────────────────────────────────────────────────────────────────────┐││
+│ │ │ [Add internal note for team reference...]                            │││
+│ │ └──────────────────────────────────────────────────────────────────────┘││
+│ └──────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📡 API ENDPOINTS
+
+### **Ticket Operations**
+```
+POST   /api/support/tickets              - Create new ticket
+GET    /api/support/tickets              - List tickets (with filters)
+GET    /api/support/tickets/{id}         - Get single ticket
+PUT    /api/support/tickets/{id}         - Update ticket
+DELETE /api/support/tickets/{id}         - Delete ticket (admin only)
+POST   /api/support/tickets/{id}/reply   - Add response
+GET    /api/support/tickets/{id}/history - Get conversation thread
+```
+
+### **Auto-Resolution**
+```
+POST   /api/support/auto-resolve         - Attempt auto-resolution for ticket
+POST   /api/support/self-service-check   - Check if self-service can handle
+GET    /api/support/suggestions/{id}     - Get all suggestions for ticket
+```
+
+### **Canned Responses**
+```
+GET    /api/support/canned               - List all canned responses
+POST   /api/support/canned               - Create new canned response
+PUT    /api/support/canned/{id}          - Update canned response
+DELETE /api/support/canned/{id}          - Delete canned response
+GET    /api/support/canned/suggest/{id}  - Get matching canned for ticket
+```
+
+### **Knowledge Base**
+```
+GET    /api/support/kb                   - List KB entries
+POST   /api/support/kb                   - Create KB entry
+PUT    /api/support/kb/{id}              - Update KB entry
+DELETE /api/support/kb/{id}              - Delete KB entry
+GET    /api/support/kb/search            - Search KB by keywords
+```
+
+### **Statistics**
+```
+GET    /api/support/stats                - Dashboard statistics
+GET    /api/support/stats/resolution     - Resolution tier breakdown
+GET    /api/support/stats/trends         - Ticket trends over time
+```
+
+---
+
+## 📊 EXPECTED RESOLUTION DISTRIBUTION
+
+With properly seeded KB and canned responses:
+
+| Tier | Method | Expected % | Human Time |
+|------|--------|------------|------------|
+| 1 | Auto-Resolution | 30-40% | 0 seconds |
+| 2 | Self-Service Redirect | 20-25% | 0 seconds |
+| 3 | Canned Response | 25-30% | 2-5 seconds |
+| 4 | Manual Response | 10-15% | 2-5 minutes |
+| 5 | VIP Escalation | 5% | Varies |
+
+**Result:** 50-65% of tickets resolved with ZERO human interaction!
+
+---
+
+**END OF SECTION 20B - SUPPORT AUTOMATION TIERED SYSTEM**
