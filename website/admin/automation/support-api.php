@@ -1,605 +1,567 @@
 <?php
 /**
  * TrueVault VPN - Support Automation API
- * Task 17.11: REST API for Support Operations
+ * Task 17.11: REST API for Support System
  * Created: January 24, 2026
  * 
  * Endpoints:
- * - tickets: CRUD operations
- * - conversation: Get ticket thread
- * - auto_resolve: Attempt KB resolution
- * - suggest: Get response suggestions
- * - self_service: Check for self-service actions
- * - stats: Dashboard statistics
+ * - GET ?action=conversation&ticket_id=X - Get ticket conversation
+ * - GET ?action=ticket&id=X - Get single ticket details
+ * - GET ?action=tickets - List tickets with filters
+ * - POST ?action=create_ticket - Create new ticket
+ * - POST ?action=add_response - Add response to ticket
+ * - GET ?action=suggest_kb&content=X - Get KB suggestions
+ * - GET ?action=suggest_canned&content=X - Get canned suggestions
+ * - GET ?action=stats - Get support statistics
+ * - POST ?action=feedback - Record resolution feedback
  */
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
+    exit(0);
 }
 
 // Database connection
-$automationDb = new SQLite3(__DIR__ . '/databases/automation.db');
-
-// Get action
-$action = $_GET['action'] ?? '';
-
-// Response helper
-function jsonResponse($data, $code = 200) {
-    http_response_code($code);
-    echo json_encode($data);
+$dbPath = __DIR__ . '/databases/automation.db';
+if (!file_exists($dbPath)) {
+    echo json_encode(['success' => false, 'error' => 'Database not found']);
     exit;
 }
 
-// Auth check (simplified - in production use JWT)
-function checkAuth() {
-    // For now, check session or API key
-    session_start();
-    if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-        if ($apiKey !== 'tv_support_api_key_2026') {
-            jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
-        }
-    }
-}
+$db = new SQLite3($dbPath);
+
+// Include resolver classes
+require_once __DIR__ . '/knowledge-base.php';
+require_once __DIR__ . '/canned-responses.php';
+
+$kbResolver = new KnowledgeBaseResolver($db);
+$cannedSuggester = new CannedResponseSuggester($db);
+
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 switch ($action) {
     
-    // ==================== TICKETS ====================
-    
-    case 'tickets':
-        checkAuth();
-        $method = $_SERVER['REQUEST_METHOD'];
-        
-        if ($method === 'GET') {
-            // List or get single ticket
-            $ticketId = $_GET['id'] ?? null;
-            
-            if ($ticketId) {
-                // Get single ticket
-                $ticket = $automationDb->querySingle("SELECT * FROM support_tickets WHERE id = $ticketId", true);
-                if ($ticket) {
-                    jsonResponse(['success' => true, 'ticket' => $ticket]);
-                } else {
-                    jsonResponse(['success' => false, 'error' => 'Ticket not found'], 404);
-                }
-            } else {
-                // List tickets with filters
-                $status = $_GET['status'] ?? '';
-                $category = $_GET['category'] ?? '';
-                $priority = $_GET['priority'] ?? '';
-                $limit = min(100, intval($_GET['limit'] ?? 50));
-                $offset = intval($_GET['offset'] ?? 0);
-                
-                $sql = "SELECT * FROM support_tickets WHERE 1=1";
-                if ($status) $sql .= " AND status = '$status'";
-                if ($category) $sql .= " AND category = '$category'";
-                if ($priority) $sql .= " AND priority = '$priority'";
-                $sql .= " ORDER BY is_vip DESC, 
-                          CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,
-                          created_at DESC";
-                $sql .= " LIMIT $limit OFFSET $offset";
-                
-                $result = $automationDb->query($sql);
-                $tickets = [];
-                while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-                    $tickets[] = $row;
-                }
-                
-                $total = $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets");
-                jsonResponse(['success' => true, 'tickets' => $tickets, 'total' => $total]);
-            }
-        }
-        
-        if ($method === 'POST') {
-            // Create new ticket
-            $data = json_decode(file_get_contents('php://input'), true);
-            
-            $ticketNumber = 'TKT-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            $email = $automationDb->escapeString($data['customer_email'] ?? '');
-            $subject = $automationDb->escapeString($data['subject'] ?? '');
-            $message = $automationDb->escapeString($data['message'] ?? '');
-            $category = $automationDb->escapeString($data['category'] ?? 'general');
-            $priority = $automationDb->escapeString($data['priority'] ?? 'normal');
-            $customerId = intval($data['customer_id'] ?? 0);
-            $isVip = $data['is_vip'] ?? false;
-            
-            $sql = "INSERT INTO support_tickets 
-                (ticket_number, customer_id, customer_email, subject, message, category, priority, is_vip, status)
-                VALUES ('$ticketNumber', $customerId, '$email', '$subject', '$message', '$category', '$priority', " . ($isVip ? 1 : 0) . ", 'new')";
-            
-            if ($automationDb->exec($sql)) {
-                $id = $automationDb->lastInsertRowID();
-                jsonResponse(['success' => true, 'ticket_id' => $id, 'ticket_number' => $ticketNumber], 201);
-            } else {
-                jsonResponse(['success' => false, 'error' => 'Failed to create ticket'], 500);
-            }
-        }
-        
-        if ($method === 'PUT') {
-            // Update ticket
-            $ticketId = $_GET['id'] ?? null;
-            if (!$ticketId) {
-                jsonResponse(['success' => false, 'error' => 'Ticket ID required'], 400);
-            }
-            
-            $data = json_decode(file_get_contents('php://input'), true);
-            $updates = [];
-            
-            $allowedFields = ['status', 'priority', 'category', 'tier_resolved', 'resolution_method', 'assigned_to'];
-            foreach ($allowedFields as $field) {
-                if (isset($data[$field])) {
-                    $value = $automationDb->escapeString($data[$field]);
-                    $updates[] = "$field = '$value'";
-                }
-            }
-            
-            if (empty($updates)) {
-                jsonResponse(['success' => false, 'error' => 'No valid fields to update'], 400);
-            }
-            
-            $updates[] = "updated_at = datetime('now')";
-            
-            if (isset($data['status']) && in_array($data['status'], ['resolved', 'closed'])) {
-                $updates[] = "resolved_at = datetime('now')";
-            }
-            
-            $sql = "UPDATE support_tickets SET " . implode(', ', $updates) . " WHERE id = $ticketId";
-            
-            if ($automationDb->exec($sql)) {
-                jsonResponse(['success' => true, 'message' => 'Ticket updated']);
-            } else {
-                jsonResponse(['success' => false, 'error' => 'Update failed'], 500);
-            }
-        }
-        break;
-    
-    // ==================== CONVERSATION ====================
-    
+    // ==================== GET CONVERSATION ====================
     case 'conversation':
-        checkAuth();
         $ticketId = intval($_GET['ticket_id'] ?? 0);
-        
         if (!$ticketId) {
-            jsonResponse(['success' => false, 'error' => 'Ticket ID required'], 400);
+            echo json_encode(['success' => false, 'error' => 'Ticket ID required']);
+            exit;
         }
         
-        // Get ticket info
-        $ticket = $automationDb->querySingle("SELECT * FROM support_tickets WHERE id = $ticketId", true);
+        // Get ticket
+        $ticket = $db->querySingle("SELECT * FROM support_tickets WHERE id = $ticketId", true);
         if (!$ticket) {
-            jsonResponse(['success' => false, 'error' => 'Ticket not found'], 404);
+            echo json_encode(['success' => false, 'error' => 'Ticket not found']);
+            exit;
         }
         
-        // Get messages
-        $result = $automationDb->query("SELECT * FROM ticket_responses WHERE ticket_id = $ticketId ORDER BY created_at ASC");
-        $messages = [];
+        // Get responses
+        $responses = [];
+        $result = $db->query("SELECT * FROM ticket_responses WHERE ticket_id = $ticketId ORDER BY created_at ASC");
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $responses[] = $row;
+        }
         
-        // Add original ticket message as first
-        $messages[] = [
+        // Add original message as first item
+        array_unshift($responses, [
             'id' => 0,
+            'ticket_id' => $ticketId,
             'sender_type' => 'customer',
             'message' => $ticket['message'],
             'created_at' => $ticket['created_at'],
-            'is_auto_response' => false
-        ];
+            'is_auto_response' => 0
+        ]);
         
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $messages[] = $row;
-        }
-        
-        jsonResponse([
-            'success' => true, 
+        echo json_encode([
+            'success' => true,
             'ticket' => $ticket,
-            'messages' => $messages
+            'messages' => $responses
         ]);
         break;
     
-    // ==================== ADD RESPONSE ====================
-    
-    case 'respond':
-        checkAuth();
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            jsonResponse(['success' => false, 'error' => 'POST required'], 405);
+    // ==================== GET SINGLE TICKET ====================
+    case 'ticket':
+        $id = intval($_GET['id'] ?? 0);
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'Ticket ID required']);
+            exit;
         }
         
-        $data = json_decode(file_get_contents('php://input'), true);
+        $ticket = $db->querySingle("SELECT * FROM support_tickets WHERE id = $id", true);
+        if (!$ticket) {
+            echo json_encode(['success' => false, 'error' => 'Ticket not found']);
+            exit;
+        }
+        
+        // Get suggestions
+        $content = $ticket['subject'] . ' ' . $ticket['message'];
+        $ticket['kb_suggestion'] = $kbResolver->findBestMatch($content);
+        $ticket['canned_suggestions'] = $cannedSuggester->getSuggestions($content, $ticket['category'], 3);
+        $ticket['self_service_suggestion'] = detectSelfServiceAPI($db, $content);
+        
+        // Response count
+        $ticket['response_count'] = $db->querySingle("SELECT COUNT(*) FROM ticket_responses WHERE ticket_id = $id");
+        
+        echo json_encode(['success' => true, 'ticket' => $ticket]);
+        break;
+    
+    // ==================== LIST TICKETS ====================
+    case 'tickets':
+        $status = $_GET['status'] ?? '';
+        $category = $_GET['category'] ?? '';
+        $priority = $_GET['priority'] ?? '';
+        $search = $_GET['search'] ?? '';
+        $limit = intval($_GET['limit'] ?? 50);
+        $offset = intval($_GET['offset'] ?? 0);
+        
+        $sql = "SELECT * FROM support_tickets WHERE 1=1";
+        $countSql = "SELECT COUNT(*) FROM support_tickets WHERE 1=1";
+        
+        if ($status) {
+            $status = SQLite3::escapeString($status);
+            $sql .= " AND status = '$status'";
+            $countSql .= " AND status = '$status'";
+        }
+        if ($category) {
+            $category = SQLite3::escapeString($category);
+            $sql .= " AND category = '$category'";
+            $countSql .= " AND category = '$category'";
+        }
+        if ($priority) {
+            $priority = SQLite3::escapeString($priority);
+            $sql .= " AND priority = '$priority'";
+            $countSql .= " AND priority = '$priority'";
+        }
+        if ($search) {
+            $search = SQLite3::escapeString($search);
+            $sql .= " AND (ticket_number LIKE '%$search%' OR subject LIKE '%$search%' OR customer_email LIKE '%$search%')";
+            $countSql .= " AND (ticket_number LIKE '%$search%' OR subject LIKE '%$search%' OR customer_email LIKE '%$search%')";
+        }
+        
+        $sql .= " ORDER BY is_vip DESC, 
+                  CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,
+                  created_at DESC
+                  LIMIT $limit OFFSET $offset";
+        
+        $total = $db->querySingle($countSql);
+        $tickets = [];
+        $result = $db->query($sql);
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $tickets[] = $row;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'tickets' => $tickets,
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset
+        ]);
+        break;
+    
+    // ==================== CREATE TICKET ====================
+    case 'create_ticket':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'POST required']);
+            exit;
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        
+        $email = $data['email'] ?? '';
+        $subject = $data['subject'] ?? '';
+        $message = $data['message'] ?? '';
+        $category = $data['category'] ?? 'general';
+        $customerId = intval($data['customer_id'] ?? 0);
+        
+        if (!$email || !$subject || !$message) {
+            echo json_encode(['success' => false, 'error' => 'Email, subject, and message required']);
+            exit;
+        }
+        
+        // Generate ticket number
+        $ticketNumber = 'TKT-' . strtoupper(substr(md5(uniqid()), 0, 8));
+        
+        // Check if VIP
+        $isVip = 0;
+        if ($customerId) {
+            // In real implementation, check VIP status from customers table
+            // For now, check if email is in VIP list
+            $vipEmails = ['seige235@yahoo.com', 'paulhalonen@gmail.com'];
+            $isVip = in_array(strtolower($email), $vipEmails) ? 1 : 0;
+        }
+        
+        // Auto-categorize based on keywords
+        $content = strtolower($subject . ' ' . $message);
+        if (strpos($content, 'payment') !== false || strpos($content, 'invoice') !== false || 
+            strpos($content, 'refund') !== false || strpos($content, 'charge') !== false ||
+            strpos($content, 'billing') !== false || strpos($content, 'subscription') !== false) {
+            $category = 'billing';
+        } elseif (strpos($content, 'connect') !== false || strpos($content, 'slow') !== false ||
+                  strpos($content, 'error') !== false || strpos($content, 'not working') !== false ||
+                  strpos($content, 'vpn') !== false || strpos($content, 'server') !== false) {
+            $category = 'technical';
+        } elseif (strpos($content, 'password') !== false || strpos($content, 'email') !== false ||
+                  strpos($content, 'account') !== false || strpos($content, 'login') !== false ||
+                  strpos($content, 'device') !== false) {
+            $category = 'account';
+        }
+        
+        // Set priority based on keywords
+        $priority = 'normal';
+        if (strpos($content, 'urgent') !== false || strpos($content, 'emergency') !== false ||
+            strpos($content, 'asap') !== false || strpos($content, 'critical') !== false) {
+            $priority = 'urgent';
+        } elseif (strpos($content, 'important') !== false || strpos($content, 'please help') !== false) {
+            $priority = 'high';
+        }
+        
+        // VIP gets high priority minimum
+        if ($isVip && $priority === 'normal') {
+            $priority = 'high';
+        }
+        
+        $stmt = $db->prepare("INSERT INTO support_tickets 
+            (ticket_number, customer_id, customer_email, category, priority, subject, message, status, is_vip)
+            VALUES (:num, :cid, :email, :cat, :pri, :subj, :msg, 'new', :vip)");
+        
+        $stmt->bindValue(':num', $ticketNumber, SQLITE3_TEXT);
+        $stmt->bindValue(':cid', $customerId, SQLITE3_INTEGER);
+        $stmt->bindValue(':email', $email, SQLITE3_TEXT);
+        $stmt->bindValue(':cat', $category, SQLITE3_TEXT);
+        $stmt->bindValue(':pri', $priority, SQLITE3_TEXT);
+        $stmt->bindValue(':subj', $subject, SQLITE3_TEXT);
+        $stmt->bindValue(':msg', $message, SQLITE3_TEXT);
+        $stmt->bindValue(':vip', $isVip, SQLITE3_INTEGER);
+        
+        if ($stmt->execute()) {
+            $ticketId = $db->lastInsertRowID();
+            
+            // Try auto-resolution (Tier 1)
+            $kbMatch = $kbResolver->findBestMatch($subject . ' ' . $message);
+            $autoResolved = false;
+            
+            if ($kbMatch && $kbMatch['score'] >= 0.7) {
+                // High confidence - auto-resolve
+                $kbEntry = $kbMatch['entry'];
+                
+                // Build auto-response
+                $autoBody = "Hi " . explode('@', $email)[0] . ",\n\n";
+                $autoBody .= "I found a solution that might help with your issue:\n\n";
+                $autoBody .= "**" . $kbEntry['question'] . "**\n\n";
+                $autoBody .= $kbEntry['answer'] . "\n\n";
+                
+                $steps = json_decode($kbEntry['resolution_steps'], true);
+                if (!empty($steps)) {
+                    $autoBody .= "**Steps to resolve:**\n";
+                    foreach ($steps as $i => $step) {
+                        $autoBody .= ($i + 1) . ". " . $step . "\n";
+                    }
+                    $autoBody .= "\n";
+                }
+                
+                $autoBody .= "Did this solve your issue? Please reply to let us know!\n\n";
+                $autoBody .= "If you need more help, a human support agent will assist you.";
+                
+                // Add auto-response
+                $respStmt = $db->prepare("INSERT INTO ticket_responses 
+                    (ticket_id, sender_type, message, is_auto_response) 
+                    VALUES (:tid, 'system', :msg, 1)");
+                $respStmt->bindValue(':tid', $ticketId, SQLITE3_INTEGER);
+                $respStmt->bindValue(':msg', $autoBody, SQLITE3_TEXT);
+                $respStmt->execute();
+                
+                // Update ticket as auto-resolved
+                $db->exec("UPDATE support_tickets SET 
+                    status = 'auto_resolved',
+                    tier_resolved = 1,
+                    resolution_method = 'auto',
+                    auto_resolution_id = {$kbEntry['id']},
+                    response_count = 1,
+                    first_response_at = datetime('now')
+                    WHERE id = $ticketId");
+                
+                // Update KB usage
+                $db->exec("UPDATE knowledge_base SET times_used = times_used + 1 WHERE id = {$kbEntry['id']}");
+                
+                $autoResolved = true;
+            }
+            
+            // Check for self-service redirect (Tier 2)
+            $selfService = detectSelfServiceAPI($db, $subject . ' ' . $message);
+            
+            echo json_encode([
+                'success' => true,
+                'ticket_id' => $ticketId,
+                'ticket_number' => $ticketNumber,
+                'category' => $category,
+                'priority' => $priority,
+                'is_vip' => $isVip,
+                'auto_resolved' => $autoResolved,
+                'kb_match' => $kbMatch,
+                'self_service_available' => $selfService ? true : false,
+                'self_service_action' => $selfService
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Failed to create ticket']);
+        }
+        break;
+    
+    // ==================== ADD RESPONSE ====================
+    case 'add_response':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'POST required']);
+            exit;
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        
         $ticketId = intval($data['ticket_id'] ?? 0);
-        $message = $automationDb->escapeString($data['message'] ?? '');
-        $senderType = $data['sender_type'] ?? 'admin';
-        $isAuto = $data['is_auto'] ?? false;
-        $cannedId = intval($data['canned_id'] ?? 0) ?: 'NULL';
+        $senderType = $data['sender_type'] ?? 'customer';
+        $message = $data['message'] ?? '';
         
         if (!$ticketId || !$message) {
-            jsonResponse(['success' => false, 'error' => 'Ticket ID and message required'], 400);
+            echo json_encode(['success' => false, 'error' => 'Ticket ID and message required']);
+            exit;
         }
         
-        $sql = "INSERT INTO ticket_responses 
-            (ticket_id, sender_type, message, is_auto_response, canned_response_id)
-            VALUES ($ticketId, '$senderType', '$message', " . ($isAuto ? 1 : 0) . ", $cannedId)";
+        // Verify ticket exists
+        $ticket = $db->querySingle("SELECT * FROM support_tickets WHERE id = $ticketId", true);
+        if (!$ticket) {
+            echo json_encode(['success' => false, 'error' => 'Ticket not found']);
+            exit;
+        }
         
-        if ($automationDb->exec($sql)) {
+        $stmt = $db->prepare("INSERT INTO ticket_responses 
+            (ticket_id, sender_type, message, is_auto_response) 
+            VALUES (:tid, :sender, :msg, 0)");
+        $stmt->bindValue(':tid', $ticketId, SQLITE3_INTEGER);
+        $stmt->bindValue(':sender', $senderType, SQLITE3_TEXT);
+        $stmt->bindValue(':msg', $message, SQLITE3_TEXT);
+        
+        if ($stmt->execute()) {
+            $responseId = $db->lastInsertRowID();
+            
             // Update ticket
-            $automationDb->exec("UPDATE support_tickets SET 
+            $newStatus = $senderType === 'customer' ? 'in_progress' : 'awaiting_response';
+            $db->exec("UPDATE support_tickets SET 
+                status = '$newStatus',
                 response_count = response_count + 1,
                 first_response_at = COALESCE(first_response_at, datetime('now')),
                 updated_at = datetime('now')
                 WHERE id = $ticketId");
             
-            jsonResponse(['success' => true, 'response_id' => $automationDb->lastInsertRowID()]);
-        } else {
-            jsonResponse(['success' => false, 'error' => 'Failed to add response'], 500);
-        }
-        break;
-    
-    // ==================== AUTO RESOLUTION ====================
-    
-    case 'auto_resolve':
-        checkAuth();
-        $data = json_decode(file_get_contents('php://input'), true);
-        $content = $data['content'] ?? '';
-        $ticketId = $data['ticket_id'] ?? null;
-        
-        if (!$content) {
-            jsonResponse(['success' => false, 'error' => 'Content required'], 400);
-        }
-        
-        // Find best KB match
-        $kbMatch = findKBMatch($automationDb, $content);
-        
-        if ($kbMatch && $kbMatch['score'] >= 0.6) {
-            // If ticket ID provided, apply resolution
-            if ($ticketId) {
-                $kbId = $kbMatch['entry']['id'];
-                $answer = $automationDb->escapeString($kbMatch['entry']['answer']);
-                
-                // Add auto-response
-                $automationDb->exec("INSERT INTO ticket_responses 
-                    (ticket_id, sender_type, message, is_auto_response)
-                    VALUES ($ticketId, 'system', '$answer', 1)");
-                
-                // Update ticket
-                $automationDb->exec("UPDATE support_tickets SET 
-                    status = 'auto_resolved',
-                    tier_resolved = 1,
-                    resolution_method = 'auto',
-                    auto_resolution_id = $kbId,
-                    first_response_at = COALESCE(first_response_at, datetime('now')),
-                    updated_at = datetime('now')
-                    WHERE id = $ticketId");
-                
-                // Update KB usage
-                $automationDb->exec("UPDATE knowledge_base SET times_used = times_used + 1 WHERE id = $kbId");
+            // If customer replied to auto-resolved, check if they need more help
+            if ($senderType === 'customer' && $ticket['status'] === 'auto_resolved') {
+                $lowerMsg = strtolower($message);
+                if (strpos($lowerMsg, 'not work') !== false || strpos($lowerMsg, 'still') !== false ||
+                    strpos($lowerMsg, 'didn\'t help') !== false || strpos($lowerMsg, 'need help') !== false) {
+                    // Re-open for human handling
+                    $db->exec("UPDATE support_tickets SET 
+                        status = 'in_progress',
+                        tier_resolved = 3
+                        WHERE id = $ticketId");
+                    
+                    // Record negative feedback
+                    if ($ticket['auto_resolution_id']) {
+                        $kbResolver->recordFeedback($ticket['auto_resolution_id'], false);
+                    }
+                }
             }
             
-            jsonResponse([
+            echo json_encode([
                 'success' => true,
-                'resolved' => true,
-                'confidence' => $kbMatch['score'],
-                'kb_entry' => $kbMatch['entry']
+                'response_id' => $responseId,
+                'ticket_status' => $newStatus
             ]);
         } else {
-            jsonResponse([
-                'success' => true,
-                'resolved' => false,
-                'best_match' => $kbMatch,
-                'message' => 'No confident match found'
-            ]);
+            echo json_encode(['success' => false, 'error' => 'Failed to add response']);
         }
         break;
     
-    // ==================== SUGGESTIONS ====================
-    
-    case 'suggest':
-        checkAuth();
+    // ==================== KB SUGGESTIONS ====================
+    case 'suggest_kb':
         $content = $_GET['content'] ?? '';
-        $category = $_GET['category'] ?? '';
-        
         if (!$content) {
-            jsonResponse(['success' => false, 'error' => 'Content required'], 400);
+            echo json_encode(['success' => false, 'error' => 'Content required']);
+            exit;
         }
         
-        // Get KB match
-        $kbMatch = findKBMatch($automationDb, $content);
+        $match = $kbResolver->findBestMatch($content);
         
-        // Get canned response suggestions
-        $cannedSuggestions = findCannedMatches($automationDb, $content, $category);
-        
-        // Check for self-service action
-        $selfService = findSelfServiceAction($automationDb, $content);
-        
-        jsonResponse([
+        echo json_encode([
             'success' => true,
-            'kb_suggestion' => $kbMatch,
-            'canned_suggestions' => $cannedSuggestions,
-            'self_service_suggestion' => $selfService
+            'suggestion' => $match
         ]);
         break;
     
-    // ==================== SELF SERVICE CHECK ====================
-    
-    case 'self_service':
+    // ==================== CANNED SUGGESTIONS ====================
+    case 'suggest_canned':
         $content = $_GET['content'] ?? '';
+        $category = $_GET['category'] ?? null;
+        $limit = intval($_GET['limit'] ?? 3);
         
         if (!$content) {
-            jsonResponse(['success' => false, 'error' => 'Content required'], 400);
+            echo json_encode(['success' => false, 'error' => 'Content required']);
+            exit;
         }
         
-        $action = findSelfServiceAction($automationDb, $content);
+        $suggestions = $cannedSuggester->getSuggestions($content, $category, $limit);
         
-        if ($action) {
-            jsonResponse([
-                'success' => true,
-                'can_self_service' => true,
-                'action' => $action
-            ]);
-        } else {
-            jsonResponse([
-                'success' => true,
-                'can_self_service' => false
-            ]);
-        }
+        echo json_encode([
+            'success' => true,
+            'suggestions' => $suggestions
+        ]);
         break;
     
-    // ==================== KB SEARCH ====================
-    
-    case 'kb_search':
-        $query = $_GET['query'] ?? '';
-        $category = $_GET['category'] ?? '';
-        
-        if (!$query) {
-            jsonResponse(['success' => false, 'error' => 'Query required'], 400);
-        }
-        
-        $sql = "SELECT * FROM knowledge_base WHERE 
-            (question LIKE '%$query%' OR keywords LIKE '%$query%' OR answer LIKE '%$query%')";
-        if ($category) {
-            $sql .= " AND category = '$category'";
-        }
-        $sql .= " ORDER BY times_used DESC LIMIT 10";
-        
-        $result = $automationDb->query($sql);
-        $entries = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $entries[] = $row;
-        }
-        
-        jsonResponse(['success' => true, 'entries' => $entries]);
-        break;
-    
-    // ==================== CANNED RESPONSES ====================
-    
-    case 'canned':
-        checkAuth();
-        $category = $_GET['category'] ?? '';
-        
-        $sql = "SELECT * FROM canned_responses WHERE is_active = 1";
-        if ($category) {
-            $sql .= " AND category = '$category'";
-        }
-        $sql .= " ORDER BY times_used DESC";
-        
-        $result = $automationDb->query($sql);
-        $responses = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $responses[] = $row;
-        }
-        
-        jsonResponse(['success' => true, 'responses' => $responses]);
-        break;
-    
-    // ==================== STATISTICS ====================
-    
+    // ==================== SUPPORT STATS ====================
     case 'stats':
-        checkAuth();
+        $period = $_GET['period'] ?? 'today';
+        
+        switch ($period) {
+            case 'week':
+                $dateFilter = "datetime('now', '-7 days')";
+                break;
+            case 'month':
+                $dateFilter = "datetime('now', '-30 days')";
+                break;
+            default:
+                $dateFilter = "datetime('now', 'start of day')";
+        }
         
         $stats = [
-            'tickets' => [
-                'total' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets"),
-                'open' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE status NOT IN ('resolved', 'closed')"),
-                'new' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE status = 'new'"),
-                'urgent' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE priority = 'urgent' AND status NOT IN ('resolved', 'closed')"),
-                'vip' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE is_vip = 1 AND status NOT IN ('resolved', 'closed')"),
-                'auto_resolved' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 1"),
-                'self_service' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 2"),
-                'canned' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 3"),
-                'manual' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 4")
-            ],
-            'today' => [
-                'created' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE date(created_at) = date('now')"),
-                'resolved' => $automationDb->querySingle("SELECT COUNT(*) FROM support_tickets WHERE date(resolved_at) = date('now')")
-            ],
-            'knowledge_base' => [
-                'total' => $automationDb->querySingle("SELECT COUNT(*) FROM knowledge_base"),
-                'total_uses' => $automationDb->querySingle("SELECT COALESCE(SUM(times_used), 0) FROM knowledge_base")
-            ],
-            'canned_responses' => [
-                'total' => $automationDb->querySingle("SELECT COUNT(*) FROM canned_responses"),
-                'active' => $automationDb->querySingle("SELECT COUNT(*) FROM canned_responses WHERE is_active = 1"),
-                'total_uses' => $automationDb->querySingle("SELECT COALESCE(SUM(times_used), 0) FROM canned_responses")
-            ],
-            'resolution_distribution' => getResolutionDistribution($automationDb)
+            // Ticket counts
+            'total_tickets' => $db->querySingle("SELECT COUNT(*) FROM support_tickets"),
+            'open_tickets' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE status NOT IN ('resolved', 'closed')"),
+            'new_tickets' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE created_at >= $dateFilter"),
+            'resolved_tickets' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE resolved_at >= $dateFilter"),
+            
+            // Priority breakdown
+            'urgent_count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE priority = 'urgent' AND status NOT IN ('resolved', 'closed')"),
+            'vip_count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE is_vip = 1 AND status NOT IN ('resolved', 'closed')"),
+            
+            // Resolution stats
+            'auto_resolved' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 1 AND resolved_at >= $dateFilter"),
+            'self_service' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 2 AND resolved_at >= $dateFilter"),
+            'canned_resolved' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 3 AND resolved_at >= $dateFilter"),
+            'manual_resolved' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 4 AND resolved_at >= $dateFilter"),
+            
+            // Category breakdown
+            'by_category' => [],
+            
+            // Response times
+            'avg_first_response' => null,
+            'avg_resolution_time' => null
         ];
         
-        jsonResponse(['success' => true, 'stats' => $stats]);
+        // Category breakdown
+        $catResult = $db->query("SELECT category, COUNT(*) as count FROM support_tickets WHERE created_at >= $dateFilter GROUP BY category");
+        while ($row = $catResult->fetchArray(SQLITE3_ASSOC)) {
+            $stats['by_category'][$row['category']] = $row['count'];
+        }
+        
+        // Calculate resolution rates
+        $totalResolved = $stats['auto_resolved'] + $stats['self_service'] + $stats['canned_resolved'] + $stats['manual_resolved'];
+        if ($totalResolved > 0) {
+            $stats['auto_resolution_rate'] = round(($stats['auto_resolved'] / $totalResolved) * 100, 1);
+            $stats['self_service_rate'] = round(($stats['self_service'] / $totalResolved) * 100, 1);
+            $stats['human_touch_rate'] = round((($stats['canned_resolved'] + $stats['manual_resolved']) / $totalResolved) * 100, 1);
+        }
+        
+        echo json_encode(['success' => true, 'stats' => $stats, 'period' => $period]);
         break;
     
     // ==================== RECORD FEEDBACK ====================
-    
     case 'feedback':
-        checkAuth();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            jsonResponse(['success' => false, 'error' => 'POST required'], 405);
+            echo json_encode(['success' => false, 'error' => 'POST required']);
+            exit;
         }
         
-        $data = json_decode(file_get_contents('php://input'), true);
-        $type = $data['type'] ?? ''; // 'kb' or 'canned'
-        $id = intval($data['id'] ?? 0);
-        $positive = $data['positive'] ?? true;
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         
-        if (!$type || !$id) {
-            jsonResponse(['success' => false, 'error' => 'Type and ID required'], 400);
+        $ticketId = intval($data['ticket_id'] ?? 0);
+        $helpful = isset($data['helpful']) ? (bool)$data['helpful'] : null;
+        $rating = intval($data['rating'] ?? 0);
+        $comment = $data['comment'] ?? '';
+        
+        if (!$ticketId) {
+            echo json_encode(['success' => false, 'error' => 'Ticket ID required']);
+            exit;
         }
         
-        $table = $type === 'kb' ? 'knowledge_base' : 'canned_responses';
-        
-        // Update success rate (simplified weighted average)
-        $current = $automationDb->querySingle("SELECT times_used, success_rate FROM $table WHERE id = $id", true);
-        if ($current) {
-            $uses = $current['times_used'];
-            $rate = $current['success_rate'] ?? 0.5;
-            $newRate = (($rate * $uses) + ($positive ? 1 : 0)) / ($uses + 1);
-            
-            $automationDb->exec("UPDATE $table SET success_rate = $newRate WHERE id = $id");
-            jsonResponse(['success' => true, 'new_rate' => $newRate]);
-        } else {
-            jsonResponse(['success' => false, 'error' => 'Entry not found'], 404);
+        $ticket = $db->querySingle("SELECT * FROM support_tickets WHERE id = $ticketId", true);
+        if (!$ticket) {
+            echo json_encode(['success' => false, 'error' => 'Ticket not found']);
+            exit;
         }
+        
+        // Update ticket rating
+        if ($rating >= 1 && $rating <= 5) {
+            $db->exec("UPDATE support_tickets SET customer_rating = $rating WHERE id = $ticketId");
+        }
+        
+        // Record KB feedback if applicable
+        if ($ticket['auto_resolution_id'] && $helpful !== null) {
+            $kbResolver->recordFeedback($ticket['auto_resolution_id'], $helpful);
+        }
+        
+        // Record canned response feedback if applicable
+        if ($ticket['canned_response_id'] && $helpful !== null) {
+            $cannedSuggester->recordFeedback($ticket['canned_response_id'], $helpful);
+        }
+        
+        echo json_encode(['success' => true, 'message' => 'Feedback recorded']);
+        break;
+    
+    // ==================== SELF-SERVICE ACTIONS ====================
+    case 'self_service_actions':
+        $result = $db->query("SELECT * FROM self_service_actions WHERE is_active = 1 ORDER BY display_order");
+        $actions = [];
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $actions[] = $row;
+        }
+        echo json_encode(['success' => true, 'actions' => $actions]);
         break;
     
     default:
-        jsonResponse([
-            'success' => false, 
+        echo json_encode([
+            'success' => false,
             'error' => 'Unknown action',
             'available_actions' => [
-                'tickets', 'conversation', 'respond', 'auto_resolve', 
-                'suggest', 'self_service', 'kb_search', 'canned', 
-                'stats', 'feedback'
+                'GET conversation' => 'Get ticket conversation thread',
+                'GET ticket' => 'Get single ticket with suggestions',
+                'GET tickets' => 'List tickets with filters',
+                'POST create_ticket' => 'Create new support ticket',
+                'POST add_response' => 'Add response to ticket',
+                'GET suggest_kb' => 'Get KB suggestions for content',
+                'GET suggest_canned' => 'Get canned response suggestions',
+                'GET stats' => 'Get support statistics',
+                'POST feedback' => 'Record resolution feedback',
+                'GET self_service_actions' => 'List available self-service actions'
             ]
-        ], 400);
+        ]);
 }
 
-// ==================== HELPER FUNCTIONS ====================
-
-function findKBMatch($db, $content) {
+// Helper function
+function detectSelfServiceAPI($db, $content) {
     $content = strtolower($content);
-    $stopWords = ['the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'but', 'in', 'with', 'to', 'for', 'of', 'my', 'i', 'me', 'can', 'how', 'do', 'does', 'what', 'why', 'when', 'help', 'please', 'need'];
-    
-    $words = preg_split('/[\s\W]+/', $content);
-    $keywords = array_filter($words, function($w) use ($stopWords) {
-        return strlen($w) > 2 && !in_array($w, $stopWords);
-    });
-    
-    if (empty($keywords)) return null;
-    
-    $result = $db->query("SELECT * FROM knowledge_base WHERE is_active = 1");
-    $bestMatch = null;
-    $bestScore = 0;
-    
-    while ($entry = $result->fetchArray(SQLITE3_ASSOC)) {
-        $entryKeywords = array_map('trim', explode(',', strtolower($entry['keywords'])));
-        $matchCount = 0;
-        
-        foreach ($keywords as $keyword) {
-            foreach ($entryKeywords as $ek) {
-                if (strpos($ek, $keyword) !== false || strpos($keyword, $ek) !== false) {
-                    $matchCount++;
-                    break;
-                }
-            }
-        }
-        
-        $score = count($keywords) > 0 ? $matchCount / count($keywords) : 0;
-        
-        if ($score > $bestScore) {
-            $bestScore = $score;
-            $bestMatch = $entry;
-        }
-    }
-    
-    if ($bestMatch) {
-        return ['entry' => $bestMatch, 'score' => $bestScore];
-    }
-    return null;
-}
-
-function findCannedMatches($db, $content, $category = null) {
-    $content = strtolower($content);
-    $words = preg_split('/[\s\W]+/', $content);
-    
-    $sql = "SELECT * FROM canned_responses WHERE is_active = 1";
-    if ($category) {
-        $sql .= " AND category = '$category'";
-    }
-    
-    $result = $db->query($sql);
-    $matches = [];
-    
-    while ($response = $result->fetchArray(SQLITE3_ASSOC)) {
-        $keywords = array_map('trim', explode(',', strtolower($response['trigger_keywords'])));
-        $matchCount = 0;
-        
-        foreach ($words as $word) {
-            foreach ($keywords as $keyword) {
-                if (strpos($keyword, $word) !== false || strpos($word, $keyword) !== false) {
-                    $matchCount++;
-                    break;
-                }
-            }
-        }
-        
-        if ($matchCount > 0) {
-            $score = count($keywords) > 0 ? $matchCount / count($keywords) : 0;
-            $matches[] = ['response' => $response, 'score' => $score];
-        }
-    }
-    
-    // Sort by score desc
-    usort($matches, function($a, $b) {
-        return $b['score'] <=> $a['score'];
-    });
-    
-    return array_slice($matches, 0, 3);
-}
-
-function findSelfServiceAction($db, $content) {
-    $content = strtolower($content);
-    
     $result = $db->query("SELECT * FROM self_service_actions WHERE is_active = 1");
     
     while ($action = $result->fetchArray(SQLITE3_ASSOC)) {
         $keywords = array_map('trim', explode(',', strtolower($action['trigger_keywords'])));
-        
         foreach ($keywords as $keyword) {
             if (strpos($content, $keyword) !== false) {
                 return $action;
             }
         }
     }
-    
     return null;
 }
 
-function getResolutionDistribution($db) {
-    $total = $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved IS NOT NULL");
-    if ($total == 0) return [];
-    
-    return [
-        'tier_1_auto' => [
-            'count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 1"),
-            'percentage' => round(($db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 1") / $total) * 100, 1)
-        ],
-        'tier_2_self_service' => [
-            'count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 2"),
-            'percentage' => round(($db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 2") / $total) * 100, 1)
-        ],
-        'tier_3_canned' => [
-            'count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 3"),
-            'percentage' => round(($db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 3") / $total) * 100, 1)
-        ],
-        'tier_4_manual' => [
-            'count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 4"),
-            'percentage' => round(($db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 4") / $total) * 100, 1)
-        ],
-        'tier_5_vip' => [
-            'count' => $db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 5"),
-            'percentage' => round(($db->querySingle("SELECT COUNT(*) FROM support_tickets WHERE tier_resolved = 5") / $total) * 100, 1)
-        ]
-    ];
-}
-
-$automationDb->close();
+$db->close();
