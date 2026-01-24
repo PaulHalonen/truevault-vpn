@@ -3,25 +3,36 @@
  * TrueVault VPN - Weekly Parental Report Cron Job
  * Part 11 - Task 11.8
  * Run weekly: 0 8 * * 0 (Sunday 8 AM)
+ * 
+ * USES SQLite3 CLASS (NOT PDO!) per Master Checklist
  */
 
-require_once __DIR__ . '/../includes/database.php';
-require_once __DIR__ . '/../includes/email.php';
+require_once __DIR__ . '/../configs/config.php';
 
 echo "=== Weekly Parental Reports ===\n";
 echo "Started: " . date('Y-m-d H:i:s') . "\n\n";
 
+// Helper function for fetchAll with SQLite3
+function fetchAllAssoc($result) {
+    $rows = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $rows[] = $row;
+    }
+    return $rows;
+}
+
 try {
-    $db = getDatabase();
+    $db = new SQLite3(DB_USERS);
+    $db->enableExceptions(true);
     
     // Get all users with parental controls enabled (have data in parental_statistics)
-    $stmt = $db->query("
+    $result = $db->query("
         SELECT DISTINCT u.id, u.email, u.first_name 
         FROM users u
         JOIN parental_statistics ps ON u.id = ps.user_id
         WHERE ps.stat_date >= date('now', '-7 days')
     ");
-    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $users = fetchAllAssoc($result);
     
     echo "Found " . count($users) . " users with parental data\n\n";
     
@@ -40,8 +51,9 @@ try {
             FROM parental_statistics 
             WHERE user_id = ? AND stat_date >= date('now', '-7 days')
         ");
-        $stmt->execute([$user['id']]);
-        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $user['id'], SQLITE3_INTEGER);
+        $result = $stmt->execute();
+        $stats = $result->fetchArray(SQLITE3_ASSOC);
         
         // Get top blocked sites
         $stmt = $db->prepare("
@@ -50,8 +62,9 @@ try {
             WHERE user_id = ? AND blocked_at >= datetime('now', '-7 days')
             GROUP BY domain ORDER BY count DESC LIMIT 5
         ");
-        $stmt->execute([$user['id']]);
-        $blocked = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $user['id'], SQLITE3_INTEGER);
+        $result = $stmt->execute();
+        $blocked = fetchAllAssoc($result);
         
         // Get daily breakdown
         $stmt = $db->prepare("
@@ -60,15 +73,20 @@ try {
             WHERE user_id = ? AND stat_date >= date('now', '-7 days')
             ORDER BY stat_date
         ");
-        $stmt->execute([$user['id']]);
-        $daily = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $user['id'], SQLITE3_INTEGER);
+        $result = $stmt->execute();
+        $daily = fetchAllAssoc($result);
         
         // Build email HTML
         $html = buildReportEmail($user, $stats, $blocked, $daily);
         
         // Send email
         $subject = "TrueVault VPN - Weekly Parental Report";
-        $sent = sendEmail($user['email'], $subject, $html);
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: TrueVault VPN <noreply@the-truth-publishing.com>\r\n";
+        
+        $sent = mail($user['email'], $subject, $html, $headers);
         
         if ($sent) {
             echo "  ✓ Email sent successfully\n";
@@ -106,7 +124,7 @@ function buildReportEmail($user, $stats, $blocked, $daily) {
     foreach ($daily as $d) {
         $mins = $d['total_minutes'] ?? 0;
         $day = date('D M j', strtotime($d['stat_date']));
-        $bar = min(100, round($mins / 3)); // Scale: 300 mins = 100%
+        $bar = min(100, round($mins / 3));
         $dailyHtml .= "
             <div style='margin-bottom:8px;'>
                 <div style='display:flex;justify-content:space-between;font-size:12px;'>
@@ -129,18 +147,15 @@ function buildReportEmail($user, $stats, $blocked, $daily) {
     </head>
     <body style='margin:0;padding:0;background:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,sans-serif;'>
         <div style='max-width:600px;margin:0 auto;padding:20px;'>
-            <!-- Header -->
             <div style='text-align:center;padding:30px 0;'>
                 <h1 style='color:#00d9ff;margin:0;font-size:24px;'>🛡️ TrueVault VPN</h1>
                 <p style='color:#888;margin:10px 0 0;'>Weekly Parental Report</p>
             </div>
             
-            <!-- Main Card -->
             <div style='background:#1a1a2e;border-radius:16px;padding:25px;margin-bottom:20px;'>
                 <h2 style='color:#fff;margin:0 0 20px;font-size:18px;'>Hi {$firstName},</h2>
                 <p style='color:#aaa;margin:0 0 25px;line-height:1.6;'>Here's your family's internet usage summary for the past week.</p>
                 
-                <!-- Stats Grid -->
                 <div style='display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:25px;'>
                     <div style='background:rgba(0,217,255,0.1);border-radius:12px;padding:20px;text-align:center;'>
                         <div style='font-size:28px;font-weight:700;color:#00d9ff;'>{$screenHours}h {$screenMins}m</div>
@@ -152,29 +167,24 @@ function buildReportEmail($user, $stats, $blocked, $daily) {
                     </div>
                 </div>
                 
-                <!-- Daily Breakdown -->
                 <h3 style='color:#fff;font-size:14px;margin:0 0 15px;'>📊 Daily Breakdown</h3>
                 {$dailyHtml}
                 
-                <!-- Blocked Sites -->
                 <h3 style='color:#fff;font-size:14px;margin:25px 0 10px;'>🚫 Top Blocked Sites</h3>
                 <div style='color:#aaa;font-size:14px;'>
                     {$blockedHtml}
                 </div>
                 
-                <!-- Blocked Count -->
                 <div style='background:rgba(255,80,80,0.1);border-radius:8px;padding:15px;margin-top:20px;text-align:center;'>
                     <span style='font-size:24px;font-weight:700;color:#ff5050;'>" . ($stats['blocked'] ?? 0) . "</span>
                     <span style='color:#888;font-size:14px;'> requests blocked this week</span>
                 </div>
             </div>
             
-            <!-- CTA -->
             <div style='text-align:center;padding:20px 0;'>
                 <a href='https://vpn.the-truth-publishing.com/dashboard/parental-controls.php' style='display:inline-block;background:linear-gradient(90deg,#00d9ff,#00ff88);color:#0f0f1a;padding:12px 30px;border-radius:8px;text-decoration:none;font-weight:600;'>View Full Dashboard</a>
             </div>
             
-            <!-- Footer -->
             <div style='text-align:center;padding:20px 0;border-top:1px solid #333;'>
                 <p style='color:#555;font-size:12px;margin:0;'>
                     TrueVault VPN - Protecting Your Family Online<br>

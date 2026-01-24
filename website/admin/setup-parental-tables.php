@@ -16,8 +16,8 @@ if (!file_exists(dirname($dbPath))) {
 }
 
 try {
-    $db = new PDO("sqlite:$dbPath");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db = new SQLite3($dbPath);
+    $db->enableExceptions(true);
     
     $tables = [];
     
@@ -227,8 +227,9 @@ try {
     $db->exec("CREATE INDEX IF NOT EXISTS idx_stats_user_date ON parental_statistics(user_id, stat_date)");
     
     // Insert default schedule templates
-    $checkTemplates = $db->query("SELECT COUNT(*) FROM parental_schedules WHERE is_template = 1");
-    if ($checkTemplates->fetchColumn() == 0) {
+    $checkResult = $db->query("SELECT COUNT(*) as cnt FROM parental_schedules WHERE is_template = 1");
+    $checkRow = $checkResult->fetchArray(SQLITE3_ASSOC);
+    if ($checkRow['cnt'] == 0) {
         // System templates (user_id = 0)
         $db->exec("
             INSERT INTO parental_schedules (user_id, schedule_name, description, is_template, is_active) VALUES
@@ -240,7 +241,11 @@ try {
         ");
         
         // Get template IDs
-        $templates = $db->query("SELECT id, schedule_name FROM parental_schedules WHERE is_template = 1")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $templates = [];
+        $tplResult = $db->query("SELECT id, schedule_name FROM parental_schedules WHERE is_template = 1");
+        while ($row = $tplResult->fetchArray(SQLITE3_ASSOC)) {
+            $templates[$row['schedule_name']] = $row['id'];
+        }
         
         // School Day windows (Monday-Friday)
         if (isset($templates['School Day'])) {
@@ -319,7 +324,7 @@ try {
         'default_whitelist' => 10
     ], JSON_PRETTY_PRINT);
     
-} catch (PDOException $e) {
+} catch (Exception $e) {
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()

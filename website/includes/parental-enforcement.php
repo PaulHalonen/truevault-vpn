@@ -3,6 +3,8 @@
  * TrueVault VPN - Parental Enforcement Engine
  * Part 11 - Task 11.9
  * Master function to check if domain/port access is allowed
+ * 
+ * USES SQLite3 CLASS (NOT PDO!) per Master Checklist
  */
 
 /**
@@ -16,6 +18,7 @@
  * 6. Category filters
  * 7. Gaming restrictions
  * 
+ * @param SQLite3 $db Database connection
  * @return array ['allowed' => bool, 'reason' => string, 'access_type' => string]
  */
 function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port = null) {
@@ -30,8 +33,10 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
     // 1. CHECK BLACKLIST (always block)
     if ($domain) {
         $stmt = $db->prepare("SELECT id FROM blocked_domains WHERE user_id = ? AND ? LIKE '%' || domain || '%'");
-        $stmt->execute([$userId, $domain]);
-        if ($stmt->fetch()) {
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $domain, SQLITE3_TEXT);
+        $result_db = $stmt->execute();
+        if ($result_db->fetchArray()) {
             return ['allowed' => false, 'reason' => 'Domain blacklisted', 'access_type' => 'blocked'];
         }
     }
@@ -43,8 +48,11 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
             WHERE user_id = ? AND ? LIKE '%' || domain || '%' AND blocked_until > CURRENT_TIMESTAMP
             AND (device_id IS NULL OR device_id = ?)
         ");
-        $stmt->execute([$userId, $domain, $deviceId]);
-        $tempBlock = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $domain, SQLITE3_TEXT);
+        $stmt->bindValue(3, $deviceId, SQLITE3_INTEGER);
+        $result_db = $stmt->execute();
+        $tempBlock = $result_db->fetchArray(SQLITE3_ASSOC);
         if ($tempBlock) {
             return ['allowed' => false, 'reason' => 'Temporarily blocked until ' . $tempBlock['blocked_until'], 'access_type' => 'blocked'];
         }
@@ -56,8 +64,10 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
         WHERE user_id = ? AND override_enabled = 1 AND override_until > CURRENT_TIMESTAMP
         AND (device_id IS NULL OR device_id = ?)
     ");
-    $stmt->execute([$userId, $deviceId]);
-    $override = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+    $stmt->bindValue(2, $deviceId, SQLITE3_INTEGER);
+    $result_db = $stmt->execute();
+    $override = $result_db->fetchArray(SQLITE3_ASSOC);
     
     if ($override) {
         switch ($override['override_type']) {
@@ -68,9 +78,11 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
             case 'homework_mode':
                 // Only whitelist allowed
                 if ($domain) {
-                    $stmt = $db->prepare("SELECT id FROM parental_whitelist WHERE (user_id = ? OR user_id = 0) AND ? LIKE '%' || domain || '%'");
-                    $stmt->execute([$userId, $domain]);
-                    if (!$stmt->fetch()) {
+                    $stmt2 = $db->prepare("SELECT id FROM parental_whitelist WHERE (user_id = ? OR user_id = 0) AND ? LIKE '%' || domain || '%'");
+                    $stmt2->bindValue(1, $userId, SQLITE3_INTEGER);
+                    $stmt2->bindValue(2, $domain, SQLITE3_TEXT);
+                    $result2 = $stmt2->execute();
+                    if (!$result2->fetchArray()) {
                         return ['allowed' => false, 'reason' => 'Homework mode - educational sites only', 'access_type' => 'homework_only'];
                     }
                 }
@@ -97,8 +109,11 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
             WHERE (user_id = ? OR user_id = 0) AND ? LIKE '%' || domain || '%'
             AND (device_id IS NULL OR device_id = ?)
         ");
-        $stmt->execute([$userId, $domain, $deviceId]);
-        if ($stmt->fetch()) {
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $domain, SQLITE3_TEXT);
+        $stmt->bindValue(3, $deviceId, SQLITE3_INTEGER);
+        $result_db = $stmt->execute();
+        if ($result_db->fetchArray()) {
             return ['allowed' => true, 'reason' => 'Domain whitelisted', 'access_type' => 'full'];
         }
     }
@@ -111,9 +126,11 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
                 return ['allowed' => false, 'reason' => 'Blocked by schedule: ' . ($currentWindow['notes'] ?? 'Schedule rule'), 'access_type' => 'blocked'];
                 
             case 'homework_only':
-                $stmt = $db->prepare("SELECT id FROM parental_whitelist WHERE (user_id = ? OR user_id = 0) AND ? LIKE '%' || domain || '%'");
-                $stmt->execute([$userId, $domain]);
-                if (!$stmt->fetch()) {
+                $stmt2 = $db->prepare("SELECT id FROM parental_whitelist WHERE (user_id = ? OR user_id = 0) AND ? LIKE '%' || domain || '%'");
+                $stmt2->bindValue(1, $userId, SQLITE3_INTEGER);
+                $stmt2->bindValue(2, $domain, SQLITE3_TEXT);
+                $result2 = $stmt2->execute();
+                if (!$result2->fetchArray()) {
                     return ['allowed' => false, 'reason' => 'Homework time - educational only', 'access_type' => 'homework_only'];
                 }
                 break;
@@ -140,8 +157,10 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
             JOIN domain_categories dc ON bc.category = dc.category
             WHERE bc.user_id = ? AND ? LIKE '%' || dc.domain || '%'
         ");
-        $stmt->execute([$userId, $domain]);
-        $blocked = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $domain, SQLITE3_TEXT);
+        $result_db = $stmt->execute();
+        $blocked = $result_db->fetchArray(SQLITE3_ASSOC);
         if ($blocked) {
             return ['allowed' => false, 'reason' => 'Category blocked: ' . $blocked['category'], 'access_type' => 'blocked'];
         }
@@ -155,8 +174,10 @@ function isAccessAllowed($db, $userId, $deviceId = null, $domain = null, $port =
             FROM gaming_restrictions 
             WHERE user_id = ? AND (device_id IS NULL OR device_id = ?)
         ");
-        $stmt->execute([$userId, $deviceId]);
-        $gaming = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $deviceId, SQLITE3_INTEGER);
+        $result_db = $stmt->execute();
+        $gaming = $result_db->fetchArray(SQLITE3_ASSOC);
         
         if ($gaming) {
             if (!$gaming['gaming_enabled']) {
@@ -189,8 +210,13 @@ function getActiveWindow($db, $userId, $deviceId = null) {
         AND (ps.device_id IS NULL OR ps.device_id = ?)
         ORDER BY sw.specific_date DESC LIMIT 1
     ");
-    $stmt->execute([$userId, $today, $currentTime, $currentTime, $deviceId]);
-    $window = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+    $stmt->bindValue(2, $today, SQLITE3_TEXT);
+    $stmt->bindValue(3, $currentTime, SQLITE3_TEXT);
+    $stmt->bindValue(4, $currentTime, SQLITE3_TEXT);
+    $stmt->bindValue(5, $deviceId, SQLITE3_INTEGER);
+    $result = $stmt->execute();
+    $window = $result->fetchArray(SQLITE3_ASSOC);
     if ($window) return $window;
     
     // Check day-of-week patterns
@@ -203,8 +229,13 @@ function getActiveWindow($db, $userId, $deviceId = null) {
         AND (ps.device_id IS NULL OR ps.device_id = ?)
         LIMIT 1
     ");
-    $stmt->execute([$userId, $dayOfWeek, $currentTime, $currentTime, $deviceId]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+    $stmt->bindValue(2, $dayOfWeek, SQLITE3_INTEGER);
+    $stmt->bindValue(3, $currentTime, SQLITE3_TEXT);
+    $stmt->bindValue(4, $currentTime, SQLITE3_TEXT);
+    $stmt->bindValue(5, $deviceId, SQLITE3_INTEGER);
+    $result = $stmt->execute();
+    return $result->fetchArray(SQLITE3_ASSOC);
 }
 
 /**

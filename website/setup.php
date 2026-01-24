@@ -34,8 +34,17 @@ if (!is_dir($dbDir)) {
 }
 
 try {
-    $db = new PDO("sqlite:$dbPath");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db = new SQLite3($dbPath);
+    $db->enableExceptions(true);
+    
+    // Helper function for prepared statements with arrays (SQLite3 style)
+    function executeWithParams($db, $sql, $params) {
+        $stmt = $db->prepare($sql);
+        foreach ($params as $i => $value) {
+            $stmt->bindValue($i + 1, $value);
+        }
+        return $stmt->execute();
+    }
     
     echo "<h2>Creating Tables...</h2>";
     
@@ -373,9 +382,8 @@ try {
         ['ui_refund_btn_text', 'Learn About Our Refund Policy', 'text', 'ui', 'Refund Button Text', 7],
     ];
     
-    $stmt = $db->prepare("INSERT INTO settings (setting_key, setting_value, setting_type, category, label, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
     foreach ($settings as $s) {
-        $stmt->execute($s);
+        executeWithParams($db, "INSERT INTO settings (setting_key, setting_value, setting_type, category, label, sort_order) VALUES (?, ?, ?, ?, ?, ?)", $s);
     }
     echo "<p>✅ Settings seeded (" . count($settings) . " items)</p>";
     
@@ -399,9 +407,8 @@ try {
         ['footer', 'Refund Policy', '/refund.php', 8],
     ];
     
-    $stmt = $db->prepare("INSERT INTO navigation (location, label, url, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($navItems as $nav) {
-        $stmt->execute($nav);
+        executeWithParams($db, "INSERT INTO navigation (location, label, url, sort_order) VALUES (?, ?, ?, ?)", $nav);
     }
     echo "<p>✅ Navigation seeded (" . count($navItems) . " items)</p>";
 
@@ -449,9 +456,8 @@ try {
          'Start Free Trial', '/register.php?plan=dedicated'],
     ];
     
-    $stmt = $db->prepare("INSERT INTO pages (page_key, page_title, meta_title, meta_description, hero_title, hero_subtitle, hero_cta_text, hero_cta_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($pages as $p) {
-        $stmt->execute($p);
+        executeWithParams($db, "INSERT INTO pages (page_key, page_title, meta_title, meta_description, hero_title, hero_subtitle, hero_cta_text, hero_cta_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", $p);
     }
     echo "<p>✅ Pages seeded (" . count($pages) . " items)</p>";
     
@@ -481,9 +487,8 @@ try {
         ['pricing-comparison', 'badge_guarantee', '30-day money-back guarantee', null, null, '✓', 18],
     ];
     
-    $stmt = $db->prepare("INSERT INTO page_sections (page_key, section_key, title, subtitle, content, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)");
     foreach ($pageSections as $ps) {
-        $stmt->execute($ps);
+        executeWithParams($db, "INSERT INTO page_sections (page_key, section_key, title, subtitle, content, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)", $ps);
     }
     echo "<p>✅ Page sections seeded (" . count($pageSections) . " items)</p>";
 
@@ -498,9 +503,8 @@ try {
         ['perimeter81', 'Perimeter 81', 80.00, 10, '$8/user', '$8/user × 10 minimum\nNo dedicated server option', 0, 0, 0, 0, 0, 0, 0, 'Enterprise', 4],
     ];
     
-    $stmt = $db->prepare("INSERT INTO competitors (competitor_key, name, real_monthly_cost, min_users, advertised_price, price_calculation, has_dedicated_server, has_port_forwarding, has_parental_controls, has_camera_dashboard, has_network_scanner, has_2click_setup, has_own_keys, best_for, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($competitors as $c) {
-        $stmt->execute($c);
+        executeWithParams($db, "INSERT INTO competitors (competitor_key, name, real_monthly_cost, min_users, advertised_price, price_calculation, has_dedicated_server, has_port_forwarding, has_parental_controls, has_camera_dashboard, has_network_scanner, has_2click_setup, has_own_keys, best_for, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $c);
     }
     echo "<p>✅ Competitors seeded (" . count($competitors) . " items)</p>";
     
@@ -520,9 +524,8 @@ try {
         ['Best For', 'Individuals, Families, Small Teams', 'Mid-size teams', 'Enterprise', 'Enterprise', 10],
     ];
     
-    $stmt = $db->prepare("INSERT INTO competitor_comparison (feature_name, truevault_value, goodaccess_value, nordlayer_value, perimeter81_value, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
     foreach ($compComparison as $cc) {
-        $stmt->execute($cc);
+        executeWithParams($db, "INSERT INTO competitor_comparison (feature_name, truevault_value, goodaccess_value, nordlayer_value, perimeter81_value, sort_order) VALUES (?, ?, ?, ?, ?, ?)", $cc);
     }
     echo "<p>✅ Competitor comparison seeded (" . count($compComparison) . " items)</p>";
     
@@ -536,9 +539,8 @@ try {
         ['🔍', 'Network Scanner', 'Auto-discovers home devices - cameras, printers, consoles. One-click sync to VPN for port forwarding.', 'pricing-comparison', 4],
     ];
     
-    $stmt = $db->prepare("INSERT INTO unique_features (icon, title, description, page_key, sort_order) VALUES (?, ?, ?, ?, ?)");
     foreach ($uniqueFeatures as $uf) {
-        $stmt->execute($uf);
+        executeWithParams($db, "INSERT INTO unique_features (icon, title, description, page_key, sort_order) VALUES (?, ?, ?, ?, ?)", $uf);
     }
     echo "<p>✅ Unique features seeded (" . count($uniqueFeatures) . " items)</p>";
     
@@ -554,9 +556,8 @@ try {
         ['🔐', 'Enterprise Security', 'Consider Perimeter 81 or Tailscale', 'For zero-trust architecture, SOC2 compliance, dedicated IT deployment requirements.', 0, 6],
     ];
     
-    $stmt = $db->prepare("INSERT INTO use_cases (icon, title, recommendation, description, recommend_us, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
     foreach ($useCases as $uc) {
-        $stmt->execute($uc);
+        executeWithParams($db, "INSERT INTO use_cases (icon, title, recommendation, description, recommend_us, sort_order) VALUES (?, ?, ?, ?, ?, ?)", $uc);
     }
     echo "<p>✅ Use cases seeded (" . count($useCases) . " items)</p>";
     
@@ -577,9 +578,8 @@ try {
         ['limitation', '⚠', 'Team management - Role-based access, provisioning', 5],
     ];
     
-    $stmt = $db->prepare("INSERT INTO honest_assessment (type, icon, text, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($honestAssessment as $ha) {
-        $stmt->execute($ha);
+        executeWithParams($db, "INSERT INTO honest_assessment (type, icon, text, sort_order) VALUES (?, ?, ?, ?)", $ha);
     }
     echo "<p>✅ Honest assessment seeded (" . count($honestAssessment) . " items)</p>";
 
@@ -599,9 +599,8 @@ try {
          'Get Started', '/register.php?plan=dedicated', 0, 3],
     ];
     
-    $stmt = $db->prepare("INSERT INTO pricing_plans (plan_key, plan_name, description, price_monthly_usd, price_yearly_usd, price_monthly_cad, price_yearly_cad, features, cta_text, cta_url, is_popular, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($plans as $p) {
-        $stmt->execute($p);
+        executeWithParams($db, "INSERT INTO pricing_plans (plan_key, plan_name, description, price_monthly_usd, price_yearly_usd, price_monthly_cad, price_yearly_cad, features, cta_text, cta_url, is_popular, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $p);
     }
     echo "<p>✅ Pricing plans seeded (" . count($plans) . " items)</p>";
     
@@ -623,9 +622,8 @@ try {
         ['Support', 'Email', 'Priority', 'Priority', 12],
     ];
     
-    $stmt = $db->prepare("INSERT INTO plan_comparison (feature_name, personal_value, family_value, dedicated_value, sort_order) VALUES (?, ?, ?, ?, ?)");
     foreach ($planComparison as $pc) {
-        $stmt->execute($pc);
+        executeWithParams($db, "INSERT INTO plan_comparison (feature_name, personal_value, family_value, dedicated_value, sort_order) VALUES (?, ?, ?, ?, ?)", $pc);
     }
     echo "<p>✅ Plan comparison seeded (" . count($planComparison) . " items)</p>";
     
@@ -647,9 +645,8 @@ try {
         ['💬', '24/7 Support', 'Email support with fast response times. We\'re here when you need us.', 'plan', 12],
     ];
     
-    $stmt = $db->prepare("INSERT INTO features (icon, title, description, category, sort_order) VALUES (?, ?, ?, ?, ?)");
     foreach ($features as $f) {
-        $stmt->execute($f);
+        executeWithParams($db, "INSERT INTO features (icon, title, description, category, sort_order) VALUES (?, ?, ?, ?, ?)", $f);
     }
     echo "<p>✅ Features seeded (" . count($features) . " items)</p>";
     
@@ -665,9 +662,8 @@ try {
         ['No minimum users', '✓', 'pricing-comparison', 6],
     ];
     
-    $stmt = $db->prepare("INSERT INTO trust_badges (text, icon, page_key, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($trustBadges as $tb) {
-        $stmt->execute($tb);
+        executeWithParams($db, "INSERT INTO trust_badges (text, icon, page_key, sort_order) VALUES (?, ?, ?, ?)", $tb);
     }
     echo "<p>✅ Trust badges seeded (" . count($trustBadges) . " items)</p>";
 
@@ -681,9 +677,8 @@ try {
         [3, 'Scan & Connect', 'Open WireGuard app, scan QR code, tap connect. Done in under 2 minutes.', '3️⃣', 3],
     ];
     
-    $stmt = $db->prepare("INSERT INTO how_it_works (step_number, title, description, icon, sort_order) VALUES (?, ?, ?, ?, ?)");
     foreach ($steps as $s) {
-        $stmt->execute($s);
+        executeWithParams($db, "INSERT INTO how_it_works (step_number, title, description, icon, sort_order) VALUES (?, ?, ?, ?, ?)", $s);
     }
     echo "<p>✅ How it works seeded (" . count($steps) . " items)</p>";
     
@@ -702,9 +697,8 @@ try {
         ['Home Device Management', '✗', '✓', 9],
     ];
     
-    $stmt = $db->prepare("INSERT INTO feature_comparison (feature_name, traditional_vpn, truevault, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($vsComparison as $v) {
-        $stmt->execute($v);
+        executeWithParams($db, "INSERT INTO feature_comparison (feature_name, traditional_vpn, truevault, sort_order) VALUES (?, ?, ?, ?)", $v);
     }
     echo "<p>✅ Feature comparison seeded (" . count($vsComparison) . " items)</p>";
     
@@ -719,9 +713,8 @@ try {
         ['Dave P.', 'Gamer', 'Port forwarding was always a nightmare with my old VPN. Now I just click one button and my NAT type is open. Perfect for online gaming.', 5, 0],
     ];
     
-    $stmt = $db->prepare("INSERT INTO testimonials (name, role, content, rating, is_featured) VALUES (?, ?, ?, ?, ?)");
     foreach ($testimonials as $t) {
-        $stmt->execute($t);
+        executeWithParams($db, "INSERT INTO testimonials (name, role, content, rating, is_featured) VALUES (?, ?, ?, ?, ?)", $t);
     }
     echo "<p>✅ Testimonials seeded (" . count($testimonials) . " items)</p>";
     
@@ -754,9 +747,8 @@ try {
         ['Is WireGuard secure?', 'Yes! WireGuard is the most modern VPN protocol available. It uses state-of-the-art cryptography and has been audited by security researchers. It\'s faster and more secure than older protocols like OpenVPN.', 'privacy', 2],
     ];
     
-    $stmt = $db->prepare("INSERT INTO faqs (question, answer, category, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($faqs as $faq) {
-        $stmt->execute($faq);
+        executeWithParams($db, "INSERT INTO faqs (question, answer, category, sort_order) VALUES (?, ?, ?, ?)", $faq);
     }
     echo "<p>✅ FAQs seeded (" . count($faqs) . " items)</p>";
     

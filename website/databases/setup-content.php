@@ -17,8 +17,8 @@ echo "<h1>🚀 TrueVault Content Database Setup</h1>";
 $dbPath = __DIR__ . '/content.db';
 
 try {
-    $db = new PDO("sqlite:$dbPath");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db = new SQLite3($dbPath);
+    $db->enableExceptions(true);
     echo "<p class='success'>✅ Database connected: $dbPath</p>";
 
     // ==================== TABLE 1: pages ====================

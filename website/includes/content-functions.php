@@ -4,10 +4,12 @@
  * Part 12 - Database-driven content helpers
  * ALL landing page content comes from database
  * NO HARDCODING - Everything from content.db
+ * 
+ * USES SQLite3 CLASS (NOT PDO!) per Master Checklist
  */
 
 /**
- * Get content database connection
+ * Get content database connection (SQLite3)
  */
 function getContentDB() {
     static $db = null;
@@ -16,10 +18,21 @@ function getContentDB() {
         if (!file_exists($dbPath)) {
             die("Database not found. Please run /setup.php first.");
         }
-        $db = new PDO("sqlite:$dbPath");
-        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $db = new SQLite3($dbPath);
+        $db->enableExceptions(true);
     }
     return $db;
+}
+
+/**
+ * Helper: Fetch all rows as associative array (SQLite3)
+ */
+function fetchAllAssoc($result) {
+    $rows = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $rows[] = $row;
+    }
+    return $rows;
 }
 
 /**
@@ -29,9 +42,10 @@ function getSetting($key, $default = '') {
     try {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-        $stmt->execute([$key]);
-        $result = $stmt->fetchColumn();
-        return $result !== false ? $result : $default;
+        $stmt->bindValue(1, $key, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        $row = $result->fetchArray(SQLITE3_ASSOC);
+        return $row ? $row['setting_value'] : $default;
     } catch (Exception $e) {
         return $default;
     }
@@ -44,9 +58,10 @@ function getSettingsByCategory($category) {
     try {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT setting_key, setting_value FROM settings WHERE category = ? ORDER BY sort_order");
-        $stmt->execute([$category]);
+        $stmt->bindValue(1, $category, SQLITE3_TEXT);
+        $result = $stmt->execute();
         $settings = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             $settings[$row['setting_key']] = $row['setting_value'];
         }
         return $settings;
@@ -61,9 +76,9 @@ function getSettingsByCategory($category) {
 function getAllSettings() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT setting_key, setting_value FROM settings");
+        $result = $db->query("SELECT setting_key, setting_value FROM settings");
         $settings = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             $settings[$row['setting_key']] = $row['setting_value'];
         }
         return $settings;
@@ -79,8 +94,9 @@ function getNavigation($location) {
     try {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT * FROM navigation WHERE location = ? AND is_active = 1 ORDER BY sort_order");
-        $stmt->execute([$location]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $location, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -93,8 +109,9 @@ function getPage($pageKey) {
     try {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT * FROM pages WHERE page_key = ? AND is_published = 1");
-        $stmt->execute([$pageKey]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $stmt->bindValue(1, $pageKey, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        return $result->fetchArray(SQLITE3_ASSOC) ?: [];
     } catch (Exception $e) {
         return [];
     }
@@ -106,8 +123,8 @@ function getPage($pageKey) {
 function getPricingPlans() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM pricing_plans WHERE is_active = 1 ORDER BY sort_order");
-        $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $db->query("SELECT * FROM pricing_plans WHERE is_active = 1 ORDER BY sort_order");
+        $plans = fetchAllAssoc($result);
         foreach ($plans as &$plan) {
             $plan['features'] = json_decode($plan['features'], true) ?: [];
             // Add shorthand for templates
@@ -126,8 +143,8 @@ function getPricingPlans() {
 function getPlanComparison() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM plan_comparison WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $db->query("SELECT * FROM plan_comparison WHERE is_active = 1 ORDER BY sort_order");
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -141,11 +158,12 @@ function getFeatures($category = null) {
         $db = getContentDB();
         if ($category) {
             $stmt = $db->prepare("SELECT * FROM features WHERE is_active = 1 AND category = ? ORDER BY sort_order");
-            $stmt->execute([$category]);
+            $stmt->bindValue(1, $category, SQLITE3_TEXT);
+            $result = $stmt->execute();
         } else {
-            $stmt = $db->query("SELECT * FROM features WHERE is_active = 1 ORDER BY sort_order");
+            $result = $db->query("SELECT * FROM features WHERE is_active = 1 ORDER BY sort_order");
         }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -157,8 +175,8 @@ function getFeatures($category = null) {
 function getFeatureComparison() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM feature_comparison WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $db->query("SELECT * FROM feature_comparison WHERE is_active = 1 ORDER BY sort_order");
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -167,11 +185,13 @@ function getFeatureComparison() {
 /**
  * Get trust badges for hero section
  */
-function getTrustBadges() {
+function getTrustBadges($pageKey = 'all') {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM trust_badges WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $db->prepare("SELECT * FROM trust_badges WHERE is_active = 1 AND (page_key = ? OR page_key = 'all') ORDER BY sort_order");
+        $stmt->bindValue(1, $pageKey, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -183,140 +203,60 @@ function getTrustBadges() {
 function getHowItWorks() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM how_it_works WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $db->query("SELECT * FROM how_it_works WHERE is_active = 1 ORDER BY step_number");
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
 }
 
 /**
- * Get FAQs by category (or all)
+ * Get testimonials, optionally only featured ones
+ */
+function getTestimonials($featuredOnly = false) {
+    try {
+        $db = getContentDB();
+        if ($featuredOnly) {
+            $result = $db->query("SELECT * FROM testimonials WHERE is_active = 1 AND is_featured = 1");
+        } else {
+            $result = $db->query("SELECT * FROM testimonials WHERE is_active = 1");
+        }
+        return fetchAllAssoc($result);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get FAQs, optionally by category
  */
 function getFAQs($category = null) {
     try {
         $db = getContentDB();
         if ($category) {
             $stmt = $db->prepare("SELECT * FROM faqs WHERE is_active = 1 AND category = ? ORDER BY sort_order");
-            $stmt->execute([$category]);
+            $stmt->bindValue(1, $category, SQLITE3_TEXT);
+            $result = $stmt->execute();
         } else {
-            $stmt = $db->query("SELECT * FROM faqs WHERE is_active = 1 ORDER BY category, sort_order");
+            $result = $db->query("SELECT * FROM faqs WHERE is_active = 1 ORDER BY category, sort_order");
         }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
 }
 
 /**
- * Get testimonials
- */
-function getTestimonials($featuredOnly = false) {
-    try {
-        $db = getContentDB();
-        $sql = "SELECT * FROM testimonials WHERE is_active = 1";
-        if ($featuredOnly) $sql .= " AND is_featured = 1";
-        $sql .= " ORDER BY id DESC";
-        $stmt = $db->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        return [];
-    }
-}
-
-/**
- * Get theme from Part 8 themes database
- */
-function getActiveTheme() {
-    try {
-        $themesDb = __DIR__ . '/../databases/themes.db';
-        if (!file_exists($themesDb)) return getDefaultTheme();
-        
-        $db = new PDO("sqlite:$themesDb");
-        $stmt = $db->query("SELECT * FROM themes WHERE is_active = 1 LIMIT 1");
-        $theme = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $theme ?: getDefaultTheme();
-    } catch (Exception $e) {
-        return getDefaultTheme();
-    }
-}
-
-/**
- * Default theme fallback (database-driven when themes.db exists)
- */
-function getDefaultTheme() {
-    return [
-        'primary_color' => '#00d9ff',
-        'secondary_color' => '#00ff88',
-        'background_color' => '#0f0f1a',
-        'card_bg_color' => '#1a1a2e',
-        'text_primary' => '#ffffff',
-        'text_secondary' => '#a0a0a0',
-        'accent_color' => '#ff6b6b',
-        'font_family' => 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    ];
-}
-
-/**
- * Generate CSS variables from theme
- */
-function getThemeCSS() {
-    $theme = getActiveTheme();
-    return "
-        :root {
-            --primary: {$theme['primary_color']};
-            --secondary: {$theme['secondary_color']};
-            --background: {$theme['background_color']};
-            --card-bg: {$theme['card_bg_color']};
-            --text-primary: {$theme['text_primary']};
-            --text-secondary: {$theme['text_secondary']};
-            --accent: {$theme['accent_color']};
-            --font-family: {$theme['font_family']};
-        }
-    ";
-}
-
-/**
- * Render stars for rating
- */
-function renderStars($rating) {
-    $stars = '';
-    for ($i = 1; $i <= 5; $i++) {
-        $stars .= $i <= $rating ? '⭐' : '☆';
-    }
-    return $stars;
-}
-
-/**
- * Safe HTML escape
- */
-function e($str) {
-    return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Format price with currency
- */
-function formatPrice($amount, $currency = 'USD') {
-    $symbol = $currency === 'CAD' ? 'C$' : '$';
-    return $symbol . number_format($amount, 2);
-}
-
-// ===========================================
-// NEW FUNCTIONS FOR PRICING COMPARISON PAGE
-// FROM SECTION 26 - All content from database
-// ===========================================
-
-/**
- * Get page sections by page_key
+ * Get page sections by page key
  */
 function getPageSections($pageKey) {
     try {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT * FROM page_sections WHERE page_key = ? AND is_active = 1 ORDER BY sort_order");
-        $stmt->execute([$pageKey]);
+        $stmt->bindValue(1, $pageKey, SQLITE3_TEXT);
+        $result = $stmt->execute();
         $sections = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             $sections[$row['section_key']] = $row;
         }
         return $sections;
@@ -326,41 +266,29 @@ function getPageSections($pageKey) {
 }
 
 /**
- * Get a single page section
+ * Get a specific page section
  */
 function getPageSection($pageKey, $sectionKey) {
     try {
         $db = getContentDB();
-        $stmt = $db->prepare("SELECT * FROM page_sections WHERE page_key = ? AND section_key = ?");
-        $stmt->execute([$pageKey, $sectionKey]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $stmt = $db->prepare("SELECT * FROM page_sections WHERE page_key = ? AND section_key = ? AND is_active = 1");
+        $stmt->bindValue(1, $pageKey, SQLITE3_TEXT);
+        $stmt->bindValue(2, $sectionKey, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        return $result->fetchArray(SQLITE3_ASSOC) ?: [];
     } catch (Exception $e) {
         return [];
     }
 }
 
 /**
- * Get competitors data
+ * Get all competitors data (FROM SECTION 26)
  */
 function getCompetitors() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM competitors WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        return [];
-    }
-}
-
-/**
- * Get single competitor by key
- */
-function getCompetitor($key) {
-    try {
-        $db = getContentDB();
-        $stmt = $db->prepare("SELECT * FROM competitors WHERE competitor_key = ?");
-        $stmt->execute([$key]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $result = $db->query("SELECT * FROM competitors WHERE is_active = 1 ORDER BY sort_order");
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -372,8 +300,8 @@ function getCompetitor($key) {
 function getCompetitorComparison() {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM competitor_comparison WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $db->query("SELECT * FROM competitor_comparison WHERE is_active = 1 ORDER BY sort_order");
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -386,53 +314,47 @@ function getUniqueFeatures($pageKey = 'pricing-comparison') {
     try {
         $db = getContentDB();
         $stmt = $db->prepare("SELECT * FROM unique_features WHERE page_key = ? AND is_active = 1 ORDER BY sort_order");
-        $stmt->execute([$pageKey]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->bindValue(1, $pageKey, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
 }
 
 /**
- * Get use cases (who should choose what)
+ * Get use cases recommendations
  */
-function getUseCases() {
+function getUseCases($recommendUs = null) {
     try {
         $db = getContentDB();
-        $stmt = $db->query("SELECT * FROM use_cases WHERE is_active = 1 ORDER BY sort_order");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if ($recommendUs !== null) {
+            $stmt = $db->prepare("SELECT * FROM use_cases WHERE is_active = 1 AND recommend_us = ? ORDER BY sort_order");
+            $stmt->bindValue(1, $recommendUs, SQLITE3_INTEGER);
+            $result = $stmt->execute();
+        } else {
+            $result = $db->query("SELECT * FROM use_cases WHERE is_active = 1 ORDER BY sort_order");
+        }
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
 }
 
 /**
- * Get honest assessment items by type
+ * Get honest assessment (pros/cons)
  */
 function getHonestAssessment($type = null) {
     try {
         $db = getContentDB();
         if ($type) {
             $stmt = $db->prepare("SELECT * FROM honest_assessment WHERE type = ? AND is_active = 1 ORDER BY sort_order");
-            $stmt->execute([$type]);
+            $stmt->bindValue(1, $type, SQLITE3_TEXT);
+            $result = $stmt->execute();
         } else {
-            $stmt = $db->query("SELECT * FROM honest_assessment WHERE is_active = 1 ORDER BY type, sort_order");
+            $result = $db->query("SELECT * FROM honest_assessment WHERE is_active = 1 ORDER BY type, sort_order");
         }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        return [];
-    }
-}
-
-/**
- * Get trust badges filtered by page
- */
-function getTrustBadgesByPage($pageKey = 'all') {
-    try {
-        $db = getContentDB();
-        $stmt = $db->prepare("SELECT * FROM trust_badges WHERE (page_key = ? OR page_key = 'all') AND is_active = 1 ORDER BY sort_order");
-        $stmt->execute([$pageKey]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return fetchAllAssoc($result);
     } catch (Exception $e) {
         return [];
     }
@@ -440,12 +362,20 @@ function getTrustBadgesByPage($pageKey = 'all') {
 
 /**
  * Replace template variables in text
- * e.g., {days} becomes the actual value
+ * Example: {days} becomes 30, {percent} becomes 17
  */
-function replaceVars($text, $vars = []) {
-    foreach ($vars as $key => $value) {
-        $text = str_replace('{' . $key . '}', $value, $text);
+function replaceTemplateVars($text, $settings = null) {
+    if (!$settings) {
+        $settings = getAllSettings();
     }
-    return $text;
+    
+    $replacements = [
+        '{days}' => $settings['feature_refund_days'] ?? '30',
+        '{percent}' => $settings['feature_yearly_discount'] ?? '17',
+        '{trial_days}' => $settings['feature_trial_days'] ?? '7',
+        '{company}' => $settings['company_name'] ?? 'TrueVault VPN',
+        '{support_email}' => $settings['support_email'] ?? 'support@truevault.com',
+    ];
+    
+    return str_replace(array_keys($replacements), array_values($replacements), $text);
 }
-?>

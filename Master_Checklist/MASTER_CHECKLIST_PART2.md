@@ -29,8 +29,8 @@ $db = new PDO('sqlite:' . DB_BILLING);  // NO!
 ### **Morning: Finish Database Creation Script (2-3 hours)**
 
 #### Task 2.1: Complete Remaining Databases in setup-databases.php
-- [ ] Open `/admin/setup-databases.php`
-- [ ] Add remaining database code AFTER the servers.db section:
+- [✅] Open `/admin/setup-databases.php`
+- [✅] Add remaining database code AFTER the servers.db section:
 
 ```php
 <?php
@@ -630,19 +630,19 @@ echo '</div>';
 ```
 
 **Verification:**
-- [ ] Code uses SQLite3 - NOT PDO!
-- [ ] All databases use `new SQLite3($path)` 
-- [ ] All databases use `$db->enableExceptions(true)`
-- [ ] All prepared statements use `bindValue()` with SQLITE3_TEXT/SQLITE3_INTEGER
-- [ ] File saved and uploaded
+- [✅] Code uses SQLite3 - NOT PDO!
+- [✅] All databases use `new SQLite3($path)` 
+- [✅] All databases use `$db->enableExceptions(true)`
+- [✅] All prepared statements use `bindValue()` with SQLITE3_TEXT/SQLITE3_INTEGER
+- [✅] File saved and uploaded
 
 ---
 
 #### Task 2.2: Run Database Setup
-- [ ] Visit: https://vpn.the-truth-publishing.com/admin/setup-databases.php
-- [ ] Click through and wait for all databases to create
-- [ ] Verify all 9 databases show ✅ success
-- [ ] Check /databases/ folder - should see 9 .db files
+- [✅] Visit: https://vpn.the-truth-publishing.com/admin/setup-databases.php
+- [✅] Click through and wait for all databases to create
+- [✅] Verify all 9 databases show ✅ success
+- [✅] Check /databases/ folder - should see 9 .db files
 
 **Expected Files:**
 ```
@@ -661,46 +661,46 @@ echo '</div>';
 ---
 
 #### Task 2.3: Update Server Public Keys
-- [ ] Generate WireGuard keys for each server (or use existing)
-- [ ] Open a database tool (like DB Browser for SQLite)
-- [ ] Connect to: `/databases/servers.db`
-- [ ] Update each server's public_key field with real keys
-- [ ] Save changes
+- [✅] Generate WireGuard keys for each server (or use existing)
+- [✅] Open a database tool (like DB Browser for SQLite)
+- [✅] Connect to: `/databases/servers.db`
+- [✅] Update each server's public_key field with real keys
+- [✅] Save changes
 
 ---
 
 ### **Afternoon: Security Setup (2-3 hours)**
 
 #### Task 2.4: Change Default Admin Password
-- [ ] Download `/databases/admin.db`
-- [ ] Open in DB Browser for SQLite
-- [ ] Go to "Browse Data" tab
-- [ ] Select "admin_users" table
-- [ ] Generate new password hash using PHP:
+- [✅] Download `/databases/admin.db`
+- [✅] Open in DB Browser for SQLite
+- [✅] Go to "Browse Data" tab
+- [✅] Select "admin_users" table
+- [✅] Generate new password hash using PHP:
 ```php
 echo password_hash('YOUR_SECURE_PASSWORD', PASSWORD_DEFAULT);
 ```
-- [ ] Update password_hash field with new hash
-- [ ] Save and upload database back to server
+- [✅] Update password_hash field with new hash
+- [✅] Save and upload database back to server
 
 ---
 
 #### Task 2.5: Update JWT Secret
-- [ ] Open `/configs/config.php`
-- [ ] Find line: `define('JWT_SECRET', 'CHANGE_THIS_TO_RANDOM_STRING');`
-- [ ] Generate secure random string (64+ characters)
-- [ ] Replace with your key
-- [ ] Save file
+- [✅] Open `/configs/config.php`
+- [✅] Find line: `define('JWT_SECRET', 'CHANGE_THIS_TO_RANDOM_STRING');`
+- [✅] Generate secure random string (64+ characters)
+- [✅] Replace with your key
+- [✅] Save file
 
 ---
 
 **END OF PART 2**
 
 **Before Moving to Part 3:**
-- [ ] All 9 databases created and verified
-- [ ] Admin password changed
-- [ ] JWT secret updated
-- [ ] Commit to GitHub
+- [✅] All 9 databases created and verified
+- [✅] Admin password changed
+- [✅] JWT secret updated
+- [✅] Commit to GitHub
 
 ---
 

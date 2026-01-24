@@ -19,10 +19,11 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     Deny from all
 </FilesMatch>
 
-# Block access to sensitive folders (HTTP access only, not PHP includes)
+# Block access to sensitive folders
 RewriteRule ^databases/ - [F,L]
 RewriteRule ^logs/ - [F,L]
 RewriteRule ^configs/ - [F,L]
+RewriteRule ^includes/ - [F,L]
 
 # Security headers
 <IfModule mod_headers.c>
